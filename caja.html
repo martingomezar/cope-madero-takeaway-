@@ -1034,8 +1034,8 @@
         Esta pantalla contiene datos de transferencias de Cope Burgers. Ingresá el PIN de seguridad del local para habilitar esta PC.
       </p>
 
-      <form id="pinForm" onsubmit="return false;">
-        <div class="pin-input-group">
+      <form id="pinForm">
+        <div class="pin-input-group" style="position:relative;">
           <input 
             id="pinInput" 
             type="password" 
@@ -1046,6 +1046,7 @@
             class="pin-input" 
             autofocus
           />
+          <button id="btnTogglePinVisibility" type="button" style="position:absolute; right:14px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:18px; padding:4px;" title="Ver/Ocultar PIN">👁️</button>
         </div>
         <div id="lockErrorMsg" class="lock-error-msg"></div>
         <button id="btnUnlockTerminal" type="submit" class="btn-unlock-terminal">
@@ -1254,6 +1255,7 @@
         terminalLockOverlay: document.getElementById('terminalLockOverlay'),
         pinForm: document.getElementById('pinForm'),
         pinInput: document.getElementById('pinInput'),
+        btnTogglePinVisibility: document.getElementById('btnTogglePinVisibility'),
         lockErrorMsg: document.getElementById('lockErrorMsg'),
         btnUnlockTerminal: document.getElementById('btnUnlockTerminal'),
         filterPayChips: document.getElementById('filterPayChips'),
@@ -1527,7 +1529,6 @@
           `;
         }).join('');
       }
-      }
 
       // Consultar API de Mercado Pago con PIN de seguridad
       async function fetchPayments() {
@@ -1652,6 +1653,29 @@
         e.preventDefault();
         handlePinSubmit();
       });
+
+      if (els.btnUnlockTerminal) {
+        els.btnUnlockTerminal.addEventListener('click', (e) => {
+          e.preventDefault();
+          handlePinSubmit();
+        });
+      }
+
+      if (els.pinInput) {
+        els.pinInput.addEventListener('input', () => {
+          if (els.pinInput.value.trim().length === 4) {
+            handlePinSubmit();
+          }
+        });
+      }
+
+      if (els.btnTogglePinVisibility) {
+        els.btnTogglePinVisibility.addEventListener('click', () => {
+          const isPass = els.pinInput.type === 'password';
+          els.pinInput.type = isPass ? 'text' : 'password';
+          els.btnTogglePinVisibility.textContent = isPass ? '🔒' : '👁️';
+        });
+      }
 
       els.btnLockTerminal.addEventListener('click', () => {
         if (confirm('¿Deseás bloquear esta terminal? Se solicitará el PIN nuevamente para entrar.')) {
