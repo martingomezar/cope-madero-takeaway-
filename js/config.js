@@ -20,8 +20,8 @@ window.COPE_CONFIG = {
     openHour: 12,
     openMinute: 0,
     closeHour: 23,
-    closeMinute: 59,
-    display: 'Martes a Domingos: 12:00 a 00:00 hs · Lunes desde las 18:00 hs'
+    closeMinute: 0,
+    display: 'Lunes a Domingos de 12:00 a 23:00 hs'
   },
 
   // Tiempo estimado de preparación base

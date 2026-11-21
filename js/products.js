@@ -192,7 +192,7 @@ window.COPE_PRODUCTS = [
     id: 'sampler-cope',
     name: 'Sampler Cope (3 Burgers + Papas + Bebida)',
     category: 'combos',
-    description: 'El combo definitivo para 2 o 3 personas: 1 Cheese Burger + 1 Cheese & Bacon + 1 Clásica + 1 Porción grande de Papas Fritas + 1 Bebida sin alcohol a elección.',
+    description: '1 Cheese Burger + 1 Cheese & Bacon + 1 Clásica + 1 Porción de Papas Fritas + 1 Bebida sin alcohol a elección.',
     badge: 'Para Compartir (3 Burgers) 👥',
     image: 'img/sampler-cope.jpeg',
     price: 32000,

@@ -161,18 +161,16 @@
     if (els.storeAddress) els.storeAddress.textContent = CFG.ADDRESS + ', ' + CFG.CITY;
     if (els.storeHoursText) els.storeHoursText.textContent = CFG.SCHEDULE.display;
 
-    // Calcular si está abierto
+    // Calcular si está abierto (Lunes a Domingos de 12:00 a 23:00 hs)
     const now = new Date();
     const curHour = now.getHours();
-    const day = now.getDay(); // 0 = Domingo, 1 = Lunes
-    const openHour = day === 1 ? 18 : (CFG.SCHEDULE.openHour || 12);
-    const isOpen = curHour >= openHour || curHour < 1;
+    const isOpen = curHour >= 12 && curHour < 23;
 
     if (els.storeStatusBadge) {
       els.storeStatusBadge.className = 'status-badge ' + (isOpen ? 'open' : 'closed');
       els.storeStatusText.textContent = isOpen
         ? 'Abierto ahora · Retiro en ' + CFG.PREP_MINUTES + ' min'
-        : 'Cerrado ahora · Programá tu pedido para hoy';
+        : 'Cerrado ahora · Abre a las 12:00 hs';
     }
   }
 
@@ -525,14 +523,15 @@
     const curHour = now.getHours();
     const curMin = now.getMinutes();
 
-    let startMin = Math.ceil((curMin + 20) / 15) * 15;
     let startHour = curHour;
+    let startMin = Math.ceil((curMin + 20) / 15) * 15;
     if (startMin >= 60) {
       startHour += Math.floor(startMin / 60);
       startMin = startMin % 60;
     }
 
-    if (startHour < 12) {
+    // Si aún no abrió (antes de las 12) o ya cerró por hoy (a partir de las 23)
+    if (startHour < 12 || startHour >= 23) {
       startHour = 12;
       startMin = 0;
     }
@@ -540,13 +539,14 @@
     for (let h = startHour; h <= 23; h++) {
       const minStart = (h === startHour) ? startMin : 0;
       for (let m = minStart; m < 60; m += 15) {
+        if (h === 23 && m > 0) continue; // Último horario de retiro 23:00 hs
         const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')} hs`;
         slots.push(timeStr);
       }
     }
 
     if (!slots.length) {
-      slots.push('Lo antes posible');
+      slots.push('12:00 hs');
     }
 
     els.scheduledTimeSelect.innerHTML = slots.map((s) => {
