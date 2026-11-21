@@ -681,7 +681,7 @@
         msg += `   ↳ 🥩 Extra: +1 Medallón Carne Smash (+$4.000)\n`;
       }
       if (item.isVeggie) {
-        msg += `   ↳ 🌱 Medallón: NotCo (100% Veggie)\n`;
+        msg += `   ↳ 🌱 Opción Vegetariana: Con Not Burger y pan 100% vegano\n`;
       }
       if (item.drinkChoice) {
         msg += `   ↳ 🥤 Bebida: ${item.drinkChoice}\n`;

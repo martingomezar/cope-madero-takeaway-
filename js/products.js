@@ -33,7 +33,7 @@ window.COPE_PRODUCTS = [
     image: 'img/cheeseburger.jpeg',
     price: 9000,
     hasVeggieOption: true,
-    veggieNote: 'Medallón 100% NotCo'
+    veggieNote: 'Opción con Not Burger y pan 100% vegano'
   },
   {
     id: 'simple-cheese-bacon',
@@ -44,7 +44,7 @@ window.COPE_PRODUCTS = [
     image: 'img/cheesebacon-simple.jpeg',
     price: 9500,
     hasVeggieOption: true,
-    veggieNote: 'Medallón 100% NotCo'
+    veggieNote: 'Opción con Not Burger y pan 100% vegano'
   },
   {
     id: 'simple-clasica',
@@ -55,7 +55,7 @@ window.COPE_PRODUCTS = [
     image: 'img/clasica-simple.jpeg',
     price: 9500,
     hasVeggieOption: true,
-    veggieNote: 'Medallón 100% NotCo'
+    veggieNote: 'Opción con Not Burger y pan 100% vegano'
   },
   {
     id: 'simple-gran-cope',
@@ -66,7 +66,7 @@ window.COPE_PRODUCTS = [
     image: 'img/grancope-simple.jpeg',
     price: 9500,
     hasVeggieOption: true,
-    veggieNote: 'Medallón 100% NotCo'
+    veggieNote: 'Opción con Not Burger y pan 100% vegano'
   },
 
   // =========================================================================
@@ -83,7 +83,7 @@ window.COPE_PRODUCTS = [
     canAddExtraMeat: true,
     extraMeatPrice: 4000,
     hasVeggieOption: true,
-    veggieNote: 'Medallón 100% NotCo'
+    veggieNote: 'Opción con Not Burger y pan 100% vegano'
   },
   {
     id: 'doble-cheese-bacon',
@@ -96,7 +96,7 @@ window.COPE_PRODUCTS = [
     canAddExtraMeat: true,
     extraMeatPrice: 4000,
     hasVeggieOption: true,
-    veggieNote: 'Medallón 100% NotCo'
+    veggieNote: 'Opción con Not Burger y pan 100% vegano'
   },
   {
     id: 'doble-clasica',
@@ -109,7 +109,7 @@ window.COPE_PRODUCTS = [
     canAddExtraMeat: true,
     extraMeatPrice: 4000,
     hasVeggieOption: true,
-    veggieNote: 'Medallón 100% NotCo'
+    veggieNote: 'Opción con Not Burger y pan 100% vegano'
   },
   {
     id: 'doble-gran-cope',
@@ -122,7 +122,7 @@ window.COPE_PRODUCTS = [
     canAddExtraMeat: true,
     extraMeatPrice: 4000,
     hasVeggieOption: true,
-    veggieNote: 'Medallón 100% NotCo'
+    veggieNote: 'Opción con Not Burger y pan 100% vegano'
   },
 
   // =========================================================================
@@ -141,7 +141,7 @@ window.COPE_PRODUCTS = [
     hasDrinkSelection: true,
     drinks: DRINKS_OPTIONS,
     hasVeggieOption: true,
-    veggieNote: 'Medallón 100% NotCo'
+    veggieNote: 'Opción con Not Burger y pan 100% vegano'
   },
   {
     id: 'combo-cheese-bacon',
@@ -156,7 +156,7 @@ window.COPE_PRODUCTS = [
     hasDrinkSelection: true,
     drinks: DRINKS_OPTIONS,
     hasVeggieOption: true,
-    veggieNote: 'Medallón 100% NotCo'
+    veggieNote: 'Opción con Not Burger y pan 100% vegano'
   },
   {
     id: 'combo-clasica',
@@ -171,7 +171,7 @@ window.COPE_PRODUCTS = [
     hasDrinkSelection: true,
     drinks: DRINKS_OPTIONS,
     hasVeggieOption: true,
-    veggieNote: 'Medallón 100% NotCo'
+    veggieNote: 'Opción con Not Burger y pan 100% vegano'
   },
   {
     id: 'combo-gran-cope',
@@ -186,7 +186,7 @@ window.COPE_PRODUCTS = [
     hasDrinkSelection: true,
     drinks: DRINKS_OPTIONS,
     hasVeggieOption: true,
-    veggieNote: 'Medallón 100% NotCo'
+    veggieNote: 'Opción con Not Burger y pan 100% vegano'
   },
   {
     id: 'sampler-cope',
