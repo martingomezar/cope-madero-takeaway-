@@ -151,15 +151,6 @@ window.COPE_PRODUCTS = [
     description: 'Agua de alta montaña con gas en botella de 500ml.',
     image: 'img/agua-con-gas.webp',
     price: 3000
-  },
-  {
-    id: 'quilmes-tirada',
-    name: 'Cerveza Quilmes Tirada 330cc',
-    category: 'bebidas',
-    description: 'Cerveza rubia tirada servida en vaso de 330cc, fresca y con cremosa espuma.',
-    badge: 'Tirada 🍺',
-    image: 'img/quilmes-tirada.png',
-    price: 5000
   }
 ];
 

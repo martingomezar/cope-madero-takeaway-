@@ -12,7 +12,7 @@ Aplicación web móvil y de escritorio optimizada para que los clientes de **Cop
    - **Opción Veggie:** Botón para convertir cualquier hamburguesa en 100% vegetariana con medallón NotCo.
    - **Papas Fritas:** Porción crujiente clásica estilo americano.
    - **Sampler Cope (Para compartir):** Combo con 3 burgers + papas + elección de bebida sin alcohol.
-   - **Bebidas:** Gaseosas (Pepsi, Pepsi Black, 7up), Aguas (Pureza Vital sin gas, Eco de los Andes con gas) y Cerveza Quilmes Tirada 330cc.
+   - **Bebidas:** Gaseosas (Pepsi, Pepsi Black, 7up) y Aguas (Pureza Vital sin gas, Eco de los Andes con gas).
    - **Fotos reales:** Cada producto cuenta con su foto oficial optimizada.
 
 2. **Horario de Retiro (Take Away):**
