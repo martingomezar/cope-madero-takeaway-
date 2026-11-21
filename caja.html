@@ -1163,8 +1163,8 @@
           <button type="button" class="chip active" data-time="all">Todo Hoy</button>
           <button type="button" class="chip" data-time="1h">⏳ Última 1h</button>
           <button type="button" class="chip" data-time="3h">⏳ Últimas 3h</button>
-          <button type="button" class="chip" data-time="lunch">☀️ Turno Mediodía (12 a 17h)</button>
-          <button type="button" class="chip" data-time="dinner">🌙 Turno Noche (19 a Cierre)</button>
+          <button type="button" class="chip" data-time="lunch">☀️ Turno Mediodía (Apertura a 17h)</button>
+          <button type="button" class="chip" data-time="dinner">🌙 Turno Tarde/Noche (17h al Cierre)</button>
           <button type="button" class="chip" data-time="custom">🕒 Elegir Rango</button>
         </div>
       </div>
@@ -1431,7 +1431,7 @@
               if (h < 12 || h >= 17) return false;
             } else if (activeFilters.time === 'dinner') {
               const h = pDate.getHours();
-              if (h >= 4 && h < 19) return false;
+              if (h >= 4 && h < 17) return false; // Turno tarde/noche: de 17:00 hs al cierre (hasta las 03:59 am)
             } else if (activeFilters.time === 'custom') {
               const pMinutes = pDate.getHours() * 60 + pDate.getMinutes();
               const [fH, fM] = (activeFilters.timeFrom || '12:00').split(':').map(Number);
