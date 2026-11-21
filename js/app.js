@@ -461,7 +461,7 @@
       const details = [];
       if (item.variantLabel) details.push(item.variantLabel);
       if (item.hasExtraMeat) details.push('🥩 +1 Extra Carne Smash');
-      if (item.isVeggie) details.push('🌱 Medallón NotCo (Veggie)');
+      if (item.isVeggie) details.push('<span class="cart-notburger-badge"><img src="img/notco-cross.svg" alt="✕" class="notco-cart-cross" /> Not Burger (Veggie)</span>');
       if (item.drinkChoice) details.push('🥤 ' + item.drinkChoice);
       if (item.notes) details.push('📝 ' + item.notes);
 

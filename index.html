@@ -84,18 +84,21 @@
   <main class="main-content">
     <!-- Banner Destacado: Opción Vegetariana Not Burger -->
     <section class="veggie-banner-card" aria-label="Aviso opción vegetariana">
-      <div class="veggie-banner-icon-wrap" aria-hidden="true">🌱</div>
+      <div class="veggie-banner-icon-wrap" aria-hidden="true">
+        <img src="img/notburger-badge.svg" alt="Not Burger Logo Oficial" class="notburger-banner-badge" />
+      </div>
       <div class="veggie-banner-body">
         <div class="veggie-banner-pill">
-          <span>🌿</span>
+          <img src="img/notco-cross.svg" alt="✕" class="notco-pill-cross" />
           <span>100% PLANT BASED DISPONIBLE</span>
         </div>
         <p class="veggie-banner-text">
-          Cualquiera de nuestras hamburguesas las podés cambiar por <strong>opción vegetariana</strong> con <strong>Not Burger</strong> y nuestro pan <strong>100% vegano</strong>.
+          Cualquiera de nuestras hamburguesas las podés cambiar por <strong>opción vegetariana</strong> con <span class="notburger-inline-chip"><img src="img/notco-cross.svg" alt="✕" class="notco-chip-cross" /> Not Burger</span> y nuestro pan <strong>100% vegano</strong>.
         </p>
       </div>
       <div class="veggie-banner-tag">
-        <span>¡Pedila Veggie! 🌱</span>
+        <img src="img/notco-cross.svg" alt="✕" class="notco-tag-cross" />
+        <span>¡Pedila Not Burger!</span>
       </div>
     </section>
 
@@ -239,7 +242,13 @@
         <div id="modalVeggieGroup" class="veggie-toggle-box hidden">
           <label class="veggie-label">
             <input id="modalVeggieCheckbox" type="checkbox" />
-            <span>🌱 Hacerla Vegetariana (con Not Burger y pan 100% vegano)</span>
+            <div class="veggie-label-content">
+              <div class="veggie-label-header">
+                <span class="veggie-label-title">Hacerla Vegetariana</span>
+                <img src="img/notburger-pill.svg" alt="Not Burger" class="notburger-modal-badge" />
+              </div>
+              <p class="veggie-label-desc">Reemplazá el medallón por <strong>Not Burger®</strong> y pan artesanal 100% vegano (sin costo adicional).</p>
+            </div>
           </label>
         </div>
 
