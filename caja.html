@@ -384,14 +384,130 @@
     }
 
     .payment-row.row-new {
-      border-color: #10b981;
-      background: rgba(16, 185, 129, 0.08);
       animation: rowGlow 3s ease-out;
     }
 
     @keyframes rowGlow {
-      0% { background: rgba(16, 185, 129, 0.25); }
-      100% { background: rgba(16, 185, 129, 0.08); }
+      0% { transform: scale(1.01); box-shadow: 0 0 20px rgba(16, 185, 129, 0.3); }
+      100% { transform: scale(1); box-shadow: none; }
+    }
+
+    /* =========================================================================
+       DIFERENCIACIÓN DE TONOS SEGÚN LA FORMA DE PAGO
+       ========================================================================= */
+    /* 1. Transferencia Bancaria (CBU / CVU) -> Celeste / Cyan Eléctrico */
+    .payment-row.pay-tone-transfer {
+      border-left: 5px solid #0ea5e9;
+    }
+    .payment-row.pay-tone-transfer .p-icon {
+      background: rgba(14, 165, 233, 0.12);
+      border: 1px solid rgba(14, 165, 233, 0.35);
+      color: #38bdf8;
+    }
+    .payment-row.pay-tone-transfer .p-amount {
+      color: #38bdf8;
+    }
+    .payment-row.pay-tone-transfer .p-method-tag {
+      color: #7dd3fc;
+      font-weight: 700;
+    }
+
+    /* 2. Dinero en Cuenta MP -> Azul Mercado Pago / Verde Menta */
+    .payment-row.pay-tone-money {
+      border-left: 5px solid #009ee3;
+    }
+    .payment-row.pay-tone-money .p-icon {
+      background: rgba(0, 158, 227, 0.12);
+      border: 1px solid rgba(0, 158, 227, 0.35);
+      color: #009ee3;
+    }
+    .payment-row.pay-tone-money .p-amount {
+      color: #10b981;
+    }
+    .payment-row.pay-tone-money .p-method-tag {
+      color: #38bdf8;
+      font-weight: 700;
+    }
+
+    /* 3. Tarjetas (Débito / Crédito) -> Violeta / Púrpura */
+    .payment-row.pay-tone-card {
+      border-left: 5px solid #a855f7;
+    }
+    .payment-row.pay-tone-card .p-icon {
+      background: rgba(168, 85, 247, 0.12);
+      border: 1px solid rgba(168, 85, 247, 0.35);
+      color: #c084fc;
+    }
+    .payment-row.pay-tone-card .p-amount {
+      color: #c084fc;
+    }
+    .payment-row.pay-tone-card .p-method-tag {
+      color: #d8b4fe;
+      font-weight: 700;
+    }
+
+    .payment-row.pay-tone-other {
+      border-left: 5px solid #10b981;
+    }
+
+    /* =========================================================================
+       PAGOS RECHAZADOS EN ROJO
+       ========================================================================= */
+    .payment-row.is-rejected {
+      border-left: 6px solid #ef4444 !important;
+      border-color: rgba(239, 68, 68, 0.35) !important;
+      background: rgba(239, 68, 68, 0.06) !important;
+    }
+    .payment-row.is-rejected:hover {
+      background: rgba(239, 68, 68, 0.12) !important;
+    }
+    .payment-row.is-rejected .p-icon {
+      background: rgba(239, 68, 68, 0.18) !important;
+      border-color: rgba(239, 68, 68, 0.45) !important;
+      color: #ef4444 !important;
+    }
+    .payment-row.is-rejected .p-name {
+      color: #fca5a5 !important;
+    }
+    .payment-row.is-rejected .p-amount {
+      color: #ef4444 !important;
+      text-decoration: line-through;
+      opacity: 0.9;
+    }
+    .payment-row.is-rejected .p-status {
+      color: #ffffff !important;
+      background: #dc2626 !important;
+      border: 1px solid #ef4444 !important;
+      box-shadow: 0 0 10px rgba(220, 38, 38, 0.4);
+    }
+    .payment-row.is-rejected .p-method-tag {
+      color: #f87171 !important;
+    }
+
+    /* PAGOS PENDIENTES EN AMARILLO / ÁMBAR */
+    .payment-row.is-pending {
+      border-left: 5px solid #f59e0b !important;
+      background: rgba(245, 158, 11, 0.04) !important;
+    }
+    .payment-row.is-pending .p-status {
+      color: #fde68a !important;
+      background: rgba(245, 158, 11, 0.25) !important;
+      border: 1px solid rgba(245, 158, 11, 0.45) !important;
+    }
+    .payment-row.is-pending .p-amount {
+      color: #fbbf24 !important;
+    }
+
+    /* HERO CARD EN ROJO SI EL ÚLTIMO ES RECHAZADO */
+    .hero-amount.is-rejected {
+      color: #ef4444 !important;
+      text-shadow: 0 0 20px rgba(239, 68, 68, 0.5) !important;
+      text-decoration: line-through;
+    }
+    .hero-status-badge.is-rejected {
+      background: #ef4444 !important;
+      color: #ffffff !important;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5) !important;
     }
 
     .p-left {
@@ -1036,6 +1152,7 @@
           <button type="button" class="chip" data-pay="bank_transfer">📱 Transferencias (CBU/CVU)</button>
           <button type="button" class="chip" data-pay="account_money">💵 Dinero en MP</button>
           <button type="button" class="chip" data-pay="card">💳 Tarjetas</button>
+          <button type="button" class="chip" data-pay="rejected" style="border-color:rgba(239,68,68,0.4); color:#f87171;">❌ Rechazados</button>
         </div>
       </div>
 
@@ -1121,6 +1238,7 @@
         heroPayer: document.getElementById('heroPayer'),
         heroMethod: document.getElementById('heroMethod'),
         heroId: document.getElementById('heroId'),
+        heroBadge: document.getElementById('heroBadge'),
         heroTimeAgo: document.getElementById('heroTimeAgo'),
         statTotalToday: document.getElementById('statTotalToday'),
         statCountToday: document.getElementById('statCountToday'),
@@ -1254,6 +1372,21 @@
         els.heroMethod.textContent = '💳 ' + latest.payment_method;
         els.heroId.textContent = 'ID: ' + latest.id;
 
+        const isLatestApproved = latest.status === 'approved';
+        if (isLatestApproved) {
+          els.heroAmount.classList.remove('is-rejected');
+          if (els.heroBadge) {
+            els.heroBadge.classList.remove('is-rejected');
+            els.heroBadge.textContent = '✓ Acreditado en MP';
+          }
+        } else {
+          els.heroAmount.classList.add('is-rejected');
+          if (els.heroBadge) {
+            els.heroBadge.classList.add('is-rejected');
+            els.heroBadge.textContent = '✕ ' + (latest.status === 'rejected' ? 'Rechazado' : latest.status);
+          }
+        }
+
         const dateObj = new Date(latest.date_created);
         const timeStr = dateObj.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) + ' hs';
         els.heroTimeAgo.textContent = `A las ${timeStr}`;
@@ -1269,15 +1402,19 @@
         const filtered = sorted.filter((p) => {
           // 1. Filtro Forma de Pago
           if (activeFilters.payment !== 'all') {
-            const pType = (p.payment_type || '').toLowerCase();
-            const pMethod = (p.payment_method || '').toLowerCase();
+            if (activeFilters.payment === 'rejected') {
+              if (p.status !== 'rejected' && p.status !== 'cancelled') return false;
+            } else {
+              const pType = (p.payment_type || '').toLowerCase();
+              const pMethod = (p.payment_method || '').toLowerCase();
 
-            if (activeFilters.payment === 'bank_transfer') {
-              if (pType !== 'bank_transfer' && !pMethod.includes('transferencia')) return false;
-            } else if (activeFilters.payment === 'account_money') {
-              if (pType !== 'account_money' && !pMethod.includes('cuenta')) return false;
-            } else if (activeFilters.payment === 'card') {
-              if (!pType.includes('card') && !pMethod.includes('tarjeta')) return false;
+              if (activeFilters.payment === 'bank_transfer') {
+                if (pType !== 'bank_transfer' && !pMethod.includes('transferencia')) return false;
+              } else if (activeFilters.payment === 'account_money') {
+                if (pType !== 'account_money' && !pMethod.includes('cuenta')) return false;
+              } else if (activeFilters.payment === 'card') {
+                if (!pType.includes('card') && !pMethod.includes('tarjeta')) return false;
+              }
             }
           }
 
@@ -1331,21 +1468,44 @@
           return;
         }
 
-        // Renderizar Lista
+        // Renderizar Lista con estilos y tonos
         els.historyList.innerHTML = filtered.map((p, idx) => {
           const pDate = new Date(p.date_created);
           const pHour = pDate.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) + ' hs';
           const isLatest = idx === 0 && !isFiltered;
 
-          let icon = '🍔';
           const pType = (p.payment_type || '').toLowerCase();
           const pMethod = (p.payment_method || '').toLowerCase();
-          if (pType.includes('transfer') || pMethod.includes('transferencia')) icon = '📱';
-          else if (pType.includes('card') || pMethod.includes('tarjeta')) icon = '💳';
-          else if (pType.includes('money') || pMethod.includes('cuenta')) icon = '💵';
+          const isRejected = p.status === 'rejected' || p.status === 'cancelled';
+          const isPending = p.status === 'in_process' || p.status === 'pending';
+
+          // Asignar tono y estilo según Forma de Pago
+          let payToneClass = 'pay-tone-other';
+          let icon = '🍔';
+          if (pType.includes('transfer') || pMethod.includes('transferencia')) {
+            payToneClass = 'pay-tone-transfer';
+            icon = '📱';
+          } else if (pType.includes('money') || pMethod.includes('cuenta')) {
+            payToneClass = 'pay-tone-money';
+            icon = '💵';
+          } else if (pType.includes('card') || pMethod.includes('tarjeta')) {
+            payToneClass = 'pay-tone-card';
+            icon = '💳';
+          }
+
+          let statusClass = 'is-approved';
+          let statusLabel = '✓ Acreditado';
+          if (isRejected) {
+            statusClass = 'is-rejected';
+            statusLabel = '✕ Rechazado';
+            icon = '❌';
+          } else if (isPending) {
+            statusClass = 'is-pending';
+            statusLabel = '⏳ Pendiente';
+          }
 
           return `
-            <div class="payment-row ${isLatest ? 'row-new' : ''}">
+            <div class="payment-row ${payToneClass} ${statusClass} ${isLatest ? 'row-new' : ''}">
               <div class="p-left">
                 <div class="p-icon">${icon}</div>
                 <div class="p-info">
@@ -1353,18 +1513,20 @@
                   <div class="p-sub">
                     <span>${pHour}</span>
                     <span>·</span>
-                    <span>${p.payment_method}</span>
+                    <span class="p-method-tag">${p.payment_method}</span>
                     ${p.order_id ? `<span>· Ref: ${p.order_id}</span>` : ''}
+                    ${isRejected && p.status_detail ? `<span style="color:#f87171; font-weight:700;">· Motivo: ${p.status_detail}</span>` : ''}
                   </div>
                 </div>
               </div>
               <div class="p-right">
                 <div class="p-amount">${formatMoney(p.amount)}</div>
-                <div class="p-status">✓ ${p.status === 'approved' ? 'Acreditado' : p.status}</div>
+                <div class="p-status">${statusLabel}</div>
               </div>
             </div>
           `;
         }).join('');
+      }
       }
 
       // Consultar API de Mercado Pago con PIN de seguridad
