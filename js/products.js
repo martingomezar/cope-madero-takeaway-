@@ -126,22 +126,16 @@ window.COPE_PRODUCTS = [
   },
 
   // =========================================================================
-  // 3. COMBOS (Burger + Papas Fritas + Bebida a elección)
+  // 3. COMBOS (Burger Simple + Papas Fritas + Bebida a elección)
   // =========================================================================
   {
     id: 'combo-cheese-burger',
     name: 'Combo Cheese Burger',
     category: 'combos',
-    description: 'Cheese Burger + Porción de Papas Fritas Cope + Bebida sin alcohol a elección (Pepsi, 7up o Agua).',
-    badge: 'Combo Completo 🍟🥤',
-    image: 'img/cheeseburger-doble.jpeg',
-    imageSimple: 'img/cheeseburger.jpeg',
-    imageDoble: 'img/cheeseburger-doble.jpeg',
-    hasVariants: true,
-    variants: [
-      { id: 'simple', label: 'Combo Simple (1 Medallón 110g)', price: 15000 },
-      { id: 'doble', label: 'Combo Doble (2 Medallones 220g)', price: 19000, isDefault: true }
-    ],
+    description: 'Cheese Burger Simple (110g) + Porción de Papas Fritas Cope + Bebida sin alcohol a elección (Pepsi, 7up o Agua). Podés sumar Extra Carne smash.',
+    badge: 'Combo Simple 🍟🥤',
+    image: 'img/cheeseburger.jpeg',
+    price: 15000,
     canAddExtraMeat: true,
     extraMeatPrice: 4000,
     hasDrinkSelection: true,
@@ -153,16 +147,10 @@ window.COPE_PRODUCTS = [
     id: 'combo-cheese-bacon',
     name: 'Combo Cheese & Bacon',
     category: 'combos',
-    description: 'Cheese & Bacon + Porción de Papas Fritas Cope + Bebida sin alcohol a elección.',
+    description: 'Cheese & Bacon Simple (110g) + Porción de Papas Fritas Cope + Bebida sin alcohol a elección. Podés sumar Extra Carne smash.',
     badge: 'Combo Favorito 🔥🍟',
-    image: 'img/cheesebacon-doble.jpeg',
-    imageSimple: 'img/cheesebacon-simple.jpeg',
-    imageDoble: 'img/cheesebacon-doble.jpeg',
-    hasVariants: true,
-    variants: [
-      { id: 'simple', label: 'Combo Simple (1 Medallón 110g)', price: 15500 },
-      { id: 'doble', label: 'Combo Doble (2 Medallones 220g)', price: 19500, isDefault: true }
-    ],
+    image: 'img/cheesebacon-simple.jpeg',
+    price: 15500,
     canAddExtraMeat: true,
     extraMeatPrice: 4000,
     hasDrinkSelection: true,
@@ -174,16 +162,10 @@ window.COPE_PRODUCTS = [
     id: 'combo-clasica',
     name: 'Combo Clásica',
     category: 'combos',
-    description: 'Clásica (lechuga, tomate, cheddar, salsa Cope) + Papas Fritas Cope + Bebida sin alcohol a elección.',
+    description: 'Clásica Simple (110g) + Porción de Papas Fritas Cope + Bebida sin alcohol a elección. Podés sumar Extra Carne smash.',
     badge: 'Combo Fresco 🍟🥤',
-    image: 'img/clasica-doble.jpeg',
-    imageSimple: 'img/clasica-simple.jpeg',
-    imageDoble: 'img/clasica-doble.jpeg',
-    hasVariants: true,
-    variants: [
-      { id: 'simple', label: 'Combo Simple (1 Medallón 110g)', price: 15500 },
-      { id: 'doble', label: 'Combo Doble (2 Medallones 220g)', price: 19500, isDefault: true }
-    ],
+    image: 'img/clasica-simple.jpeg',
+    price: 15500,
     canAddExtraMeat: true,
     extraMeatPrice: 4000,
     hasDrinkSelection: true,
@@ -195,16 +177,10 @@ window.COPE_PRODUCTS = [
     id: 'combo-gran-cope',
     name: 'Combo Gran Cope',
     category: 'combos',
-    description: 'Gran Cope (cebolla, lechuga, pepinillos, Thousand Island) + Papas Fritas Cope + Bebida a elección.',
+    description: 'Gran Cope Simple (110g) + Porción de Papas Fritas Cope + Bebida a elección. Podés sumar Extra Carne smash.',
     badge: 'Combo Especial ⭐🍟',
-    image: 'img/grancope-doble.jpeg',
-    imageSimple: 'img/grancope-simple.jpeg',
-    imageDoble: 'img/grancope-doble.jpeg',
-    hasVariants: true,
-    variants: [
-      { id: 'simple', label: 'Combo Simple (1 Medallón 110g)', price: 15500 },
-      { id: 'doble', label: 'Combo Doble (2 Medallones 220g)', price: 19500, isDefault: true }
-    ],
+    image: 'img/grancope-simple.jpeg',
+    price: 15500,
     canAddExtraMeat: true,
     extraMeatPrice: 4000,
     hasDrinkSelection: true,
