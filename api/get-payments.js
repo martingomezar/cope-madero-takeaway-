@@ -22,7 +22,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const limit = Math.min(Number(req.query.limit) || 30, 50);
+    const limit = Math.min(Number(req.query.limit) || 60, 100);
     const mpUrl = `https://api.mercadopago.com/v1/payments/search?sort=date_created&criteria=desc&limit=${limit}`;
 
     const mpRes = await fetch(mpUrl, {

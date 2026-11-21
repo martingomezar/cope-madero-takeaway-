@@ -1167,6 +1167,7 @@
           <button type="button" class="chip" data-time="lunch">☀️ Turno Mediodía (Apertura a 17h)</button>
           <button type="button" class="chip" data-time="dinner">🌙 Turno Tarde/Noche (17h al Cierre)</button>
           <button type="button" class="chip" data-time="custom">🕒 Elegir Rango</button>
+          <button type="button" class="chip" data-time="history">📜 Días Anteriores</button>
         </div>
       </div>
 
@@ -1278,6 +1279,14 @@
       // Formatear Dinero
       function formatMoney(amount) {
         return '$ ' + Number(amount || 0).toLocaleString('es-AR');
+      }
+
+      // Comparar si dos fechas corresponden al mismo día calendario
+      function isSameCalendarDay(d1, d2) {
+        if (!d1 || !d2) return false;
+        return d1.getFullYear() === d2.getFullYear() &&
+               d1.getMonth() === d2.getMonth() &&
+               d1.getDate() === d2.getDate();
       }
 
       // Sonido de Caja Registradora / Campana usando Web Audio API
@@ -1397,14 +1406,18 @@
         const timeStr = dateObj.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) + ' hs';
         els.heroTimeAgo.textContent = `A las ${timeStr}`;
 
-        // Métricas globales del día (totales sin filtrar)
-        const totalApprovedAll = sorted.filter(p => p.status === 'approved');
-        const sumAll = totalApprovedAll.reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
-        els.statTotalToday.textContent = formatMoney(sumAll);
-        els.statCountToday.textContent = totalApprovedAll.length;
+        const now = new Date();
+
+        // 1. MÉTRICAS EXCLUSIVAS DEL DÍA DE HOY (solo pagos aprobados de hoy)
+        const todayApprovedAll = sorted.filter(p => {
+          if (p.status !== 'approved') return false;
+          return isSameCalendarDay(new Date(p.date_created), now);
+        });
+        const sumToday = todayApprovedAll.reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
+        els.statTotalToday.textContent = formatMoney(sumToday);
+        els.statCountToday.textContent = todayApprovedAll.length;
 
         // FILTRADO DINÁMICO
-        const now = new Date();
         const filtered = sorted.filter((p) => {
           // 1. Filtro Forma de Pago
           if (activeFilters.payment !== 'all') {
@@ -1425,27 +1438,34 @@
           }
 
           // 2. Filtro Horario
-          if (activeFilters.time !== 'all') {
-            const pDate = new Date(p.date_created);
+          const pDate = new Date(p.date_created);
+          const isToday = isSameCalendarDay(pDate, now);
 
-            if (activeFilters.time === '1h') {
-              if (pDate < new Date(now.getTime() - 60 * 60 * 1000)) return false;
-            } else if (activeFilters.time === '3h') {
-              if (pDate < new Date(now.getTime() - 3 * 60 * 60 * 1000)) return false;
-            } else if (activeFilters.time === 'lunch') {
-              const h = pDate.getHours();
-              if (h < 12 || h >= 17) return false;
-            } else if (activeFilters.time === 'dinner') {
-              const h = pDate.getHours();
-              if (h >= 4 && h < 17) return false;
-            } else if (activeFilters.time === 'custom') {
-              const pMinutes = pDate.getHours() * 60 + pDate.getMinutes();
-              const [fH, fM] = (activeFilters.timeFrom || '12:00').split(':').map(Number);
-              const [tH, tM] = (activeFilters.timeTo || '23:59').split(':').map(Number);
-              const fromMin = fH * 60 + fM;
-              const toMin = tH * 60 + tM;
-              if (pMinutes < fromMin || pMinutes > toMin) return false;
-            }
+          if (activeFilters.time === 'all') {
+            // "Todo Hoy": Muestra únicamente cobros de hoy
+            if (!isToday) return false;
+          } else if (activeFilters.time === '1h') {
+            if (pDate < new Date(now.getTime() - 60 * 60 * 1000)) return false;
+          } else if (activeFilters.time === '3h') {
+            if (pDate < new Date(now.getTime() - 3 * 60 * 60 * 1000)) return false;
+          } else if (activeFilters.time === 'lunch') {
+            if (!isToday) return false;
+            const h = pDate.getHours();
+            if (h < 12 || h >= 17) return false;
+          } else if (activeFilters.time === 'dinner') {
+            if (!isToday) return false;
+            const h = pDate.getHours();
+            if (h >= 4 && h < 17) return false;
+          } else if (activeFilters.time === 'custom') {
+            if (!isToday) return false;
+            const pMinutes = pDate.getHours() * 60 + pDate.getMinutes();
+            const [fH, fM] = (activeFilters.timeFrom || '12:00').split(':').map(Number);
+            const [tH, tM] = (activeFilters.timeTo || '23:59').split(':').map(Number);
+            const fromMin = fH * 60 + fM;
+            const toMin = tH * 60 + tM;
+            if (pMinutes < fromMin || pMinutes > toMin) return false;
+          } else if (activeFilters.time === 'history') {
+            // "Días Anteriores": muestra todo el historial cargado
           }
 
           return true;
@@ -1572,12 +1592,17 @@
           const now = new Date();
           els.statLastCheck.textContent = now.toLocaleTimeString('es-AR');
 
-          // Detectar si hay pagos nuevos aprobados
+          // Detectar si hay pagos nuevos aprobados EN VIVO (solo de hoy y creados hace menos de 10 min)
           if (!isFirstLoad) {
             for (const p of incoming) {
               if (p.status === 'approved' && !knownPaymentIds.has(p.id)) {
-                triggerNewPaymentAnimation(p);
-                break;
+                const pDate = new Date(p.date_created);
+                const isToday = isSameCalendarDay(pDate, new Date());
+                const isVeryRecent = (Date.now() - pDate.getTime()) < (10 * 60 * 1000);
+                if (isToday && isVeryRecent) {
+                  triggerNewPaymentAnimation(p);
+                  break;
+                }
               }
             }
           }
@@ -1616,14 +1641,19 @@
       function startLiveMonitor() {
         els.terminalLockOverlay.classList.add('hidden');
         els.lockErrorMsg.textContent = '';
+        if (pollTimer) {
+          clearInterval(pollTimer);
+          pollTimer = null;
+        }
         isFirstLoad = true;
         fetchPayments();
-        if (pollTimer) clearInterval(pollTimer);
-        pollTimer = setInterval(fetchPayments, 8000); // Consulta estable cada 8s (sin saturar ni parpadear)
+        pollTimer = setInterval(fetchPayments, 8000);
       }
 
       // Validar PIN ingresado
+      let isSubmittingPin = false;
       async function handlePinSubmit() {
+        if (isSubmittingPin) return;
         const pin = els.pinInput.value.trim();
         if (!pin) {
           els.lockErrorMsg.textContent = 'Por favor ingresá el PIN de seguridad.';
@@ -1631,6 +1661,7 @@
           return;
         }
 
+        isSubmittingPin = true;
         els.btnUnlockTerminal.disabled = true;
         els.btnUnlockTerminal.textContent = 'Verificando PIN...';
         els.lockErrorMsg.textContent = '';
@@ -1662,6 +1693,7 @@
           console.error('Error al validar PIN:', err);
           els.lockErrorMsg.textContent = 'Error de conexión. Intente nuevamente.';
         } finally {
+          isSubmittingPin = false;
           els.btnUnlockTerminal.disabled = false;
           els.btnUnlockTerminal.textContent = '🔓 Autorizar esta Terminal';
         }
