@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b3c6d" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Cope Burgers Puerto Madero — Pedidos Take Away</title>
+  <meta name="description" content="Pedí online tus auténticas smash burgers americanas de Cope Burgers Puerto Madero para retirar en el local por WhatsApp." />
+
+  <!-- OpenGraph -->
+  <meta property="og:title" content="Cope Burgers Puerto Madero — Pedidos Take Away" />
+  <meta property="og:description" content="Elegí tus burgers, papas y bebidas favoritas, definí tu horario de retiro y enviá tu pedido directo por WhatsApp." />
+  <meta property="og:image" content="./img/logo.jpg" />
+  <meta property="og:type" content="website" />
+
+  <!-- Manifest e Íconos -->
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" type="image/jpeg" href="./img/logo.jpg" />
+  <link rel="apple-touch-icon" href="./img/logo.jpg" />
+
+  <!-- Estilos -->
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body>
+
+  <!-- =======================================================================
+       HEADER PRINCIPAL DEL LOCAL
+       ======================================================================= -->
+  <header class="site-header">
+    <div class="header-container">
+      <div class="header-top">
+        <img src="./img/logo.jpg" alt="Cope Burgers Logo" class="brand-logo-img" />
+        <div class="brand-info">
+          <span class="brand-badge-takeaway">Retiro en Local · Take Away</span>
+          <h1 id="storeTitle" class="brand-title">Cope Burgers · Puerto Madero</h1>
+          <p class="brand-slogan">El Auténtico Estilo Americano</p>
+        </div>
+      </div>
+
+      <div class="header-meta-row">
+        <div id="storeStatusBadge" class="status-badge open">
+          <span class="status-dot"></span>
+          <span id="storeStatusText">Abierto · Retiro en 20 min</span>
+        </div>
+        <a id="storeAddressLink" class="meta-item" href="https://maps.google.com/?q=Boulevard+Macacha+G%C3%BCemes+260,+Puerto+Madero,+Buenos+Aires" target="_blank" rel="noopener noreferrer">
+          <span>📍</span>
+          <span id="storeAddress">Blvd. Macacha Güemes 260, Puerto Madero</span>
+        </a>
+        <div class="meta-item">
+          <span>🕒</span>
+          <span id="storeHoursText">12:00 a 00:00 hs</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- =======================================================================
+       BARRA PEGAJOSA DE BÚSQUEDA Y CATEGORÍAS
+       ======================================================================= -->
+  <section class="menu-nav-stage">
+    <div class="menu-nav-container">
+      <div class="search-wrapper">
+        <span class="search-icon">🔍</span>
+        <input id="searchInput" type="search" class="search-input" placeholder="Buscar hamburguesa, papas, bebida..." autocomplete="off" />
+        <button id="clearSearchBtn" type="button" class="search-clear-btn hidden" aria-label="Limpiar búsqueda">✕</button>
+      </div>
+
+      <nav id="categoriesNav" class="categories-scroll" aria-label="Categorías del menú">
+        <!-- Renderizado dinámicamente con JavaScript -->
+      </nav>
+    </div>
+  </section>
+
+  <!-- =======================================================================
+       CONTENIDO PRINCIPAL: GRILLA DE PRODUCTOS
+       ======================================================================= -->
+  <main class="main-content">
+    <div id="productsGrid" class="products-grid">
+      <!-- Tarjetas de menú renderizadas por app.js -->
+    </div>
+
+    <!-- Estado vacío si la búsqueda no arroja resultados -->
+    <div id="emptySearchState" class="empty-state hidden">
+      <div class="empty-state-icon">🍔🔍</div>
+      <h3>No encontramos resultados</h3>
+      <p>Probá buscando con otro nombre o seleccioná una categoría arriba.</p>
+    </div>
+  </main>
+
+  <!-- =======================================================================
+       BARRA INFERIOR FLOTANTE DE CARRITO (BOTTOM STICKY BAR)
+       ======================================================================= -->
+  <div id="bottomCartBar" class="bottom-cart-bar hidden">
+    <div class="bottom-cart-container">
+      <button id="btnOpenCart" type="button" class="btn-cart-floating">
+        <div class="cart-floating-left">
+          <span>🛍️</span>
+          <span>Ver mi pedido</span>
+          <span id="bottomCartCount" class="cart-icon-badge">0 ítems</span>
+        </div>
+        <div id="bottomCartTotal" class="cart-floating-total tabular">$0</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- =======================================================================
+       DRAWER / MODAL DEL CARRITO DE COMPRAS
+       ======================================================================= -->
+  <div id="cartDrawerBackdrop" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="cartDrawerTitle">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 id="cartDrawerTitle">Tu Pedido Take Away</h3>
+        <button id="btnCloseCart" type="button" class="btn-close-modal" aria-label="Cerrar carrito">✕</button>
+      </div>
+
+      <div class="modal-scrollable-body">
+        <div id="cartEmptyNotice" class="empty-state hidden" style="padding:30px 10px;">
+          <div class="empty-state-icon">🛒</div>
+          <h3>Tu carrito está vacío</h3>
+          <p>Elegí tus burgers o bebidas para empezar.</p>
+        </div>
+
+        <div id="cartItemsList" class="cart-items-list">
+          <!-- Items del carrito -->
+        </div>
+
+        <div id="cartSummaryBox" class="cart-summary-box">
+          <div class="summary-line">
+            <span>Subtotal productos</span>
+            <span id="cartSubtotalText" class="tabular">$0</span>
+          </div>
+          <div class="summary-line">
+            <span>Retiro en local</span>
+            <span style="color:#16a34a; font-weight:700;">Gratis</span>
+          </div>
+          <div class="summary-line total-line">
+            <span>Total a pagar</span>
+            <span id="cartTotalText" class="tabular">$0</span>
+          </div>
+
+          <div style="text-align:right;">
+            <button id="btnClearCart" type="button" class="btn-danger-text">Vaciar pedido</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="btnGoToCheckout" type="button" class="btn btn-lg btn-primary btn-block">
+          Definir horario y pedir →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================================================================
+       MODAL DE PERSONALIZACIÓN DE PRODUCTO (SIMPLE / DOBLE / VEGGIE / BEBIDA)
+       ======================================================================= -->
+  <div id="productModalBackdrop" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 id="modalProductName">Personalizar</h3>
+        <button id="btnCloseProductModal" type="button" class="btn-close-modal" aria-label="Cerrar">✕</button>
+      </div>
+
+      <div class="modal-scrollable-body">
+        <div class="product-modal-image-wrap">
+          <img id="modalProductImg" src="" alt="Producto" />
+          <span id="modalProductBadge" class="card-badge hidden">Badge</span>
+        </div>
+
+        <p id="modalProductDesc" class="card-desc" style="font-size:14px; margin-bottom:16px;"></p>
+
+        <!-- Variantes Simple / Doble -->
+        <div id="modalVariantsGroup" class="form-group">
+          <div class="modal-section-title">1. Elegí el tamaño:</div>
+          <div id="modalVariantsList" class="variants-list">
+            <!-- Radios de variantes -->
+          </div>
+        </div>
+
+        <!-- Opción NotCo Veggie -->
+        <div id="modalVeggieGroup" class="veggie-toggle-box hidden">
+          <label class="veggie-label">
+            <input id="modalVeggieCheckbox" type="checkbox" />
+            <span>🌱 Hacerla Veggie (con medallón NotCo)</span>
+          </label>
+        </div>
+
+        <!-- Selección de Bebida (Para Sampler) -->
+        <div id="modalDrinkGroup" class="form-group hidden">
+          <label for="modalDrinkSelect" class="modal-section-title">Elegí la bebida del combo:</label>
+          <select id="modalDrinkSelect" class="select-custom">
+            <!-- Opciones de bebida -->
+          </select>
+        </div>
+
+        <!-- Aclaraciones para la cocina -->
+        <div class="form-group">
+          <label for="modalNotesInput" class="form-label">Aclaraciones para la cocina (opcional):</label>
+          <textarea id="modalNotesInput" class="form-textarea" placeholder="Ej: sin cebolla, aderezo aparte, bien tostada..." maxlength="120"></textarea>
+        </div>
+
+        <!-- Cantidad -->
+        <div class="qty-control-row">
+          <span class="form-label" style="margin-bottom:0;">Cantidad:</span>
+          <div class="qty-pill-large">
+            <button id="modalQtyMinus" type="button" class="qty-btn-large" aria-label="Restar">−</button>
+            <span id="modalQtyVal" class="qty-val-large tabular">1</span>
+            <button id="modalQtyPlus" type="button" class="qty-btn-large" aria-label="Sumar">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="btnModalAddCart" type="button" class="btn btn-lg btn-primary btn-block">
+          <span>Agregar al pedido</span>
+          <span style="opacity:0.6;">·</span>
+          <span id="modalAddCartPrice" class="tabular">$0</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================================================================
+       MODAL DE CHECKOUT: HORARIO DE RETIRO Y CONFIRMACIÓN WHATSAPP
+       ======================================================================= -->
+  <div id="checkoutModalBackdrop" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3>Datos de Retiro (Take Away)</h3>
+        <button id="btnCloseCheckout" type="button" class="btn-close-modal" aria-label="Cerrar">✕</button>
+      </div>
+
+      <form id="checkoutForm" class="modal-scrollable-body">
+        <!-- Datos personales -->
+        <div class="form-group">
+          <label for="checkoutName" class="form-label">Nombre y Apellido *</label>
+          <input id="checkoutName" type="text" class="form-input" placeholder="Tu nombre para retirar" required maxlength="50" />
+        </div>
+
+        <div class="form-group">
+          <label for="checkoutPhone" class="form-label">Teléfono de contacto (WhatsApp) *</label>
+          <input id="checkoutPhone" type="tel" class="form-input" placeholder="Ej: 11 2345-6789" required maxlength="25" />
+        </div>
+
+        <!-- Horario de Retiro -->
+        <div class="form-group">
+          <label class="form-label">¿Cuándo querés retirar tu pedido? *</label>
+          <div class="time-slot-radios">
+            <label class="time-radio-pill">
+              <input id="pickupTimeAsap" type="radio" name="pickup_type" value="asap" checked />
+              <span>🔥 Lo antes posible (~20 min)</span>
+            </label>
+            <label class="time-radio-pill">
+              <input id="pickupTimeScheduled" type="radio" name="pickup_type" value="scheduled" />
+              <span>⏰ Programar horario hoy</span>
+            </label>
+          </div>
+
+          <div id="scheduledTimeWrapper" class="hidden" style="margin-top:10px;">
+            <label for="scheduledTimeSelect" class="form-label" style="font-size:12px; color:#64748b;">Seleccioná la hora exacta de retiro:</label>
+            <select id="scheduledTimeSelect" class="select-custom" style="margin-bottom:0;">
+              <!-- Franjas horarias generadas por app.js -->
+            </select>
+          </div>
+        </div>
+
+        <!-- Forma de Pago -->
+        <div class="form-group">
+          <label class="form-label">Forma de pago estimada *</label>
+          <div id="paymentMethodsList" class="payment-methods-list">
+            <!-- Opciones de pago -->
+          </div>
+        </div>
+
+        <!-- Notas adicionales -->
+        <div class="form-group">
+          <label for="checkoutNotes" class="form-label">Notas adicionales para el local (opcional):</label>
+          <textarea id="checkoutNotes" class="form-textarea" placeholder="Ej: pago con billete de $20.000, pedir servilletas extra..." maxlength="150"></textarea>
+        </div>
+
+        <!-- Previsualización del pedido -->
+        <div class="checkout-recap-box">
+          <div style="font-size:12px; font-weight:800; text-transform:uppercase; color:#0b3c6d; margin-bottom:8px;">
+            Resumen de tu pedido:
+          </div>
+          <div id="checkoutItemsPreview">
+            <!-- Items resumidos -->
+          </div>
+          <div style="display:flex; justify-content:space-between; font-weight:900; font-size:15px; margin-top:8px; padding-top:8px; border-top:1px dashed #cbd5e1;">
+            <span>Total a pagar:</span>
+            <span id="checkoutTotalText" class="tabular" style="color:#0b3c6d;">$0</span>
+          </div>
+        </div>
+
+        <button id="btnSubmitOrder" type="submit" class="btn btn-lg btn-whatsapp btn-block">
+          <span>💬 Enviar Pedido por WhatsApp</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- =======================================================================
+       MODAL DE CONFIRMACIÓN / ÉXITO (POST-WHATSAPP)
+       ======================================================================= -->
+  <div id="successModalBackdrop" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal-sheet">
+      <div class="modal-scrollable-body success-card">
+        <div class="success-icon-wrap">✓</div>
+        <h2 class="success-title">¡Pedido enviado con éxito!</h2>
+        <p class="success-subtitle">
+          Abrimos WhatsApp para que envíes el detalle directo al local de <strong>Cope Burgers Puerto Madero</strong>.
+        </p>
+
+        <div class="success-details-box">
+          <div>👤 <strong>Cliente:</strong> <span id="successCustomerName">—</span></div>
+          <div>⏰ <strong>Horario de retiro:</strong> <span id="successPickupTime">—</span></div>
+          <div>📍 <strong>Retiro en:</strong> Blvd. Macacha Güemes 260, Puerto Madero</div>
+          <div>💰 <strong>Total:</strong> <span id="successTotalText" class="tabular" style="color:#0b3c6d; font-weight:800;">$0</span></div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <button id="btnReopenWhatsApp" type="button" class="btn btn-lg btn-whatsapp btn-block">
+            <span>💬 Volver a abrir WhatsApp</span>
+          </button>
+          <button id="btnNewOrder" type="button" class="btn btn-secondary btn-block" style="padding:12px;">
+            Hacer otro pedido
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================================================================
+       TOAST DE NOTIFICACIÓN RÁPIDA
+       ======================================================================= -->
+  <div id="toast" class="toast" role="status" aria-live="polite">
+    <span id="toastMsg">Ítem agregado</span>
+  </div>
+
+  <!-- Scripts -->
+  <script src="./js/config.js"></script>
+  <script src="./js/products.js"></script>
+  <script src="./js/cart.js"></script>
+  <script src="./js/app.js"></script>
+</body>
+</html>

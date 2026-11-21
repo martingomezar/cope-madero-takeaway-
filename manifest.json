@@ -1,0 +1,23 @@
+{
+  "name": "Cope Burgers Puerto Madero — Take Away",
+  "short_name": "Cope Madero",
+  "description": "Menú y pedidos para retirar en el local de Cope Burgers Puerto Madero vía WhatsApp",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f8fafc",
+  "theme_color": "#0b3c6d",
+  "icons": [
+    {
+      "src": "./img/logo.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "./img/logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}
