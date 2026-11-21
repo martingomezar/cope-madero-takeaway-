@@ -44,7 +44,6 @@
 
     // Cart Drawer / Modal
     cartDrawerBackdrop: document.getElementById('cartDrawerBackdrop'),
-    cartDrawer: document.getElementById('cartDrawer'),
     btnCloseCart: document.getElementById('btnCloseCart'),
     cartItemsList: document.getElementById('cartItemsList'),
     cartEmptyNotice: document.getElementById('cartEmptyNotice'),
@@ -165,16 +164,18 @@
     if (els.storeInstagramLink && CFG.INSTAGRAM_URL) els.storeInstagramLink.href = CFG.INSTAGRAM_URL;
     if (els.storeHoursText) els.storeHoursText.textContent = CFG.SCHEDULE.display;
 
-    // Calcular si está abierto (Lunes a Domingos de 12:00 a 23:00 hs)
+    // Calcular si está abierto
+    const openH = (CFG.SCHEDULE && CFG.SCHEDULE.openHour) || 12;
+    const closeH = (CFG.SCHEDULE && CFG.SCHEDULE.closeHour) || 23;
     const now = new Date();
     const curHour = now.getHours();
-    const isOpen = curHour >= 12 && curHour < 23;
+    const isOpen = curHour >= openH && curHour < closeH;
 
     if (els.storeStatusBadge) {
       els.storeStatusBadge.className = 'status-badge ' + (isOpen ? 'open' : 'closed');
       els.storeStatusText.textContent = isOpen
         ? 'Abierto ahora · Retiro en ' + CFG.PREP_MINUTES + ' min'
-        : 'Cerrado ahora · Abre a las 12:00 hs';
+        : 'Cerrado ahora · Abre a las ' + openH + ':00 hs';
     }
   }
 
@@ -252,7 +253,7 @@
         ? `<span class="card-badge">${prod.badge}</span>`
         : '';
 
-      const btnLabel = prod.hasVariants || prod.hasDrinkSelection || prod.canAddExtraMeat ? 'Personalizar' : '+ Agregar';
+      const btnLabel = prod.hasVariants || prod.hasDrinkSelection || prod.canAddExtraMeat || prod.hasVeggieOption ? 'Personalizar' : '+ Agregar';
 
       return `
         <article class="product-card" data-product-id="${prod.id}">
@@ -283,7 +284,7 @@
       if (!prod) return;
 
       card.addEventListener('click', (e) => {
-        if (e.target.closest('.btn-add') && !prod.hasVariants && !prod.hasDrinkSelection && !prod.canAddExtraMeat) {
+        if (e.target.closest('.btn-add') && !prod.hasVariants && !prod.hasDrinkSelection && !prod.canAddExtraMeat && !prod.hasVeggieOption) {
           e.stopPropagation();
           Cart.addItem(prod, { quantity: 1 });
           showToast(`✓ Agregado: ${prod.name}`);
@@ -347,12 +348,18 @@
     if (prod.canAddExtraMeat) {
       els.modalExtraMeatGroup.classList.remove('hidden');
       els.modalExtraMeatCheckbox.checked = false;
+      els.modalExtraMeatCheckbox.disabled = false;
+      els.modalExtraMeatGroup.style.opacity = '1';
+      els.modalExtraMeatGroup.style.pointerEvents = 'auto';
     } else {
       els.modalExtraMeatGroup.classList.add('hidden');
       els.modalExtraMeatCheckbox.checked = false;
+      els.modalExtraMeatCheckbox.disabled = false;
+      els.modalExtraMeatGroup.style.opacity = '1';
+      els.modalExtraMeatGroup.style.pointerEvents = 'auto';
     }
 
-    // Opción Veggie (NotCo)
+    // Opción Veggie (Not Burger)
     if (prod.hasVeggieOption) {
       els.modalVeggieGroup.classList.remove('hidden');
       els.modalVeggieCheckbox.checked = false;
@@ -522,6 +529,9 @@
   function populatePickupTimeSlots() {
     if (!els.scheduledTimeSelect) return;
 
+    const openH = (CFG.SCHEDULE && CFG.SCHEDULE.openHour) || 12;
+    const closeH = (CFG.SCHEDULE && CFG.SCHEDULE.closeHour) || 23;
+
     const slots = [];
     const now = new Date();
     const curHour = now.getHours();
@@ -534,23 +544,32 @@
       startMin = startMin % 60;
     }
 
-    // Si aún no abrió (antes de las 12) o ya cerró por hoy (a partir de las 23)
-    if (startHour < 12 || startHour >= 23) {
-      startHour = 12;
-      startMin = 0;
-    }
+    const isBeforeOpen = curHour < openH;
+    const isClosed = curHour < openH || curHour >= closeH;
 
-    for (let h = startHour; h <= 23; h++) {
-      const minStart = (h === startHour) ? startMin : 0;
-      for (let m = minStart; m < 60; m += 15) {
-        if (h === 23 && m > 0) continue; // Último horario de retiro 23:00 hs
-        const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')} hs`;
-        slots.push(timeStr);
+    if (isClosed) {
+      // Fuera de horario: ofrecer turnos para la apertura (12:00 hs en adelante)
+      for (let h = openH; h <= closeH; h++) {
+        for (let m = 0; m < 60; m += 15) {
+          if (h === closeH && m > 0) continue;
+          const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')} hs`;
+          slots.push(timeStr);
+        }
+      }
+    } else {
+      // Dentro de horario de atención
+      for (let h = startHour; h <= closeH; h++) {
+        const minStart = (h === startHour) ? startMin : 0;
+        for (let m = minStart; m < 60; m += 15) {
+          if (h === closeH && m > 0) continue; // Último retiro a las 23:00 hs
+          const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')} hs`;
+          slots.push(timeStr);
+        }
       }
     }
 
     if (!slots.length) {
-      slots.push('12:00 hs');
+      slots.push(`${openH}:00 hs (Próxima apertura)`);
     }
 
     els.scheduledTimeSelect.innerHTML = slots.map((s) => {
@@ -598,7 +617,9 @@
     els.checkoutItemsPreview.innerHTML = items.map((i) => {
       const extras = [];
       if (i.variantLabel) extras.push(i.variantLabel.split(' ')[0]);
+      if (i.isVeggie) extras.push('🌱 Not Burger');
       if (i.hasExtraMeat) extras.push('+Extra Carne');
+      if (i.drinkChoice) extras.push(`🥤 ${i.drinkChoice}`);
       const extraText = extras.length ? ` (${extras.join(', ')})` : '';
 
       return `
@@ -642,11 +663,19 @@
     saveUserData({ name, phone });
 
     let pickupTimeStr = '';
+    const now = new Date();
+    const openH = (CFG.SCHEDULE && CFG.SCHEDULE.openHour) || 12;
+    const closeH = (CFG.SCHEDULE && CFG.SCHEDULE.closeHour) || 23;
+    const isClosedNow = now.getHours() < openH || now.getHours() >= closeH;
+
     if (els.pickupTimeAsap.checked) {
-      const now = new Date();
-      now.setMinutes(now.getMinutes() + (CFG.PREP_MINUTES || 20));
-      const approxHour = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} hs`;
-      pickupTimeStr = `Lo antes posible (~${approxHour})`;
+      if (isClosedNow) {
+        pickupTimeStr = `Próxima apertura (${openH}:00 hs) · Local cerrado ahora`;
+      } else {
+        const prep = new Date(now.getTime() + (CFG.PREP_MINUTES || 20) * 60000);
+        const approxHour = `${String(prep.getHours()).padStart(2, '0')}:${String(prep.getMinutes()).padStart(2, '0')} hs`;
+        pickupTimeStr = `Lo antes posible (~${approxHour})`;
+      }
     } else {
       pickupTimeStr = els.scheduledTimeSelect.value || 'A coordinar';
     }
@@ -791,11 +820,27 @@
 
     els.modalExtraMeatCheckbox.addEventListener('change', (e) => {
       activeModalHasExtraMeat = e.target.checked;
+      if (activeModalHasExtraMeat && activeModalIsVeggie) {
+        activeModalIsVeggie = false;
+        els.modalVeggieCheckbox.checked = false;
+      }
       updateModalAddPrice();
     });
 
     els.modalVeggieCheckbox.addEventListener('change', (e) => {
       activeModalIsVeggie = e.target.checked;
+      if (activeModalIsVeggie) {
+        activeModalHasExtraMeat = false;
+        els.modalExtraMeatCheckbox.checked = false;
+        els.modalExtraMeatCheckbox.disabled = true;
+        els.modalExtraMeatGroup.style.opacity = '0.4';
+        els.modalExtraMeatGroup.style.pointerEvents = 'none';
+      } else {
+        els.modalExtraMeatCheckbox.disabled = false;
+        els.modalExtraMeatGroup.style.opacity = '1';
+        els.modalExtraMeatGroup.style.pointerEvents = 'auto';
+      }
+      updateModalAddPrice();
     });
 
     els.modalDrinkSelect.addEventListener('change', (e) => {
