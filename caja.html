@@ -1187,7 +1187,7 @@
           <span id="historyCount" class="history-count">0 pagos</span>
           <span id="filterFeedbackBadge" class="filter-feedback-badge" style="display:none;"></span>
         </h2>
-        <span id="autoRefreshText" style="font-size:12px; color:var(--text-muted); font-weight:600;">Actualización cada 4s</span>
+        <span id="autoRefreshText" style="font-size:12px; color:var(--text-muted); font-weight:600;">Sincronización en vivo</span>
       </div>
 
       <div id="historyList" class="history-list" style="margin-top:14px;">
@@ -1224,7 +1224,9 @@
       let pollTimer = null;
       let alertDismissTimeout = null;
       let savedPin = localStorage.getItem('cope_caja_pin') || '';
+      let allPaymentsMap = new Map();
       let cachedPayments = [];
+      let lastRenderedFingerprint = '';
       let activeFilters = {
         payment: 'all',
         time: 'all',
@@ -1346,8 +1348,10 @@
       }
 
       // Aplicar filtros y renderizar datos en pantalla
-      function applyFiltersAndRender() {
+      function applyFiltersAndRender(force = false) {
         if (!cachedPayments || !cachedPayments.length) {
+          if (!force && lastRenderedFingerprint === 'empty') return;
+          lastRenderedFingerprint = 'empty';
           els.historyList.innerHTML = `
             <div class="empty-state">
               <div class="empty-state-icon">☕</div>
@@ -1433,7 +1437,7 @@
               if (h < 12 || h >= 17) return false;
             } else if (activeFilters.time === 'dinner') {
               const h = pDate.getHours();
-              if (h >= 4 && h < 17) return false; // Turno tarde/noche: de 17:00 hs al cierre (hasta las 03:59 am)
+              if (h >= 4 && h < 17) return false;
             } else if (activeFilters.time === 'custom') {
               const pMinutes = pDate.getHours() * 60 + pDate.getMinutes();
               const [fH, fM] = (activeFilters.timeFrom || '12:00').split(':').map(Number);
@@ -1459,6 +1463,16 @@
           els.filterFeedbackBadge.style.display = 'none';
           els.historyCount.textContent = `${sorted.length} pagos`;
         }
+
+        // CONTROL ANTI-PARPADEO (HUELLA DIGITAL DE LA LISTA)
+        const currentFingerprint = `${activeFilters.payment}_${activeFilters.time}_${activeFilters.timeFrom}_${activeFilters.timeTo}_` + 
+          filtered.map(p => `${p.id}:${p.status}:${p.amount}`).join('|');
+
+        if (!force && currentFingerprint === lastRenderedFingerprint) {
+          // Si no cambió ningún pago ni filtro, NO tocar el DOM para evitar parpadeos
+          return;
+        }
+        lastRenderedFingerprint = currentFingerprint;
 
         if (!filtered.length) {
           els.historyList.innerHTML = `
@@ -1535,10 +1549,7 @@
         if (!savedPin) return;
 
         try {
-          const now = new Date();
-          els.statLastCheck.textContent = now.toLocaleTimeString('es-AR');
-
-          const res = await fetch(`/api/get-payments?limit=30&pin=${encodeURIComponent(savedPin)}`, {
+          const res = await fetch(`/api/get-payments?limit=50&pin=${encodeURIComponent(savedPin)}`, {
             headers: { 'x-caja-pin': savedPin },
             cache: 'no-store'
           });
@@ -1556,12 +1567,14 @@
           }
 
           const data = await res.json();
-          const payments = data.payments || [];
+          const incoming = data.payments || [];
           els.liveStatusText.textContent = 'Conectado a MP';
+          const now = new Date();
+          els.statLastCheck.textContent = now.toLocaleTimeString('es-AR');
 
           // Detectar si hay pagos nuevos aprobados
           if (!isFirstLoad) {
-            for (const p of payments) {
+            for (const p of incoming) {
               if (p.status === 'approved' && !knownPaymentIds.has(p.id)) {
                 triggerNewPaymentAnimation(p);
                 break;
@@ -1569,12 +1582,15 @@
             }
           }
 
-          // Guardar IDs conocidos
-          payments.forEach(p => knownPaymentIds.add(p.id));
+          // Guardar en allPaymentsMap para que no se pierda ningún cobro (incluso rechazados)
+          incoming.forEach(p => {
+            knownPaymentIds.add(p.id);
+            allPaymentsMap.set(p.id, p);
+          });
           isFirstLoad = false;
-          cachedPayments = payments;
+          cachedPayments = Array.from(allPaymentsMap.values());
 
-          applyFiltersAndRender();
+          applyFiltersAndRender(false);
         } catch (err) {
           console.error('Fetch payments error:', err);
           els.liveStatusText.textContent = 'Reconectando...';
@@ -1587,6 +1603,9 @@
         pollTimer = null;
         savedPin = '';
         localStorage.removeItem('cope_caja_pin');
+        allPaymentsMap.clear();
+        cachedPayments = [];
+        lastRenderedFingerprint = '';
         els.terminalLockOverlay.classList.remove('hidden');
         els.pinInput.value = '';
         els.lockErrorMsg.textContent = msg || '';
@@ -1600,7 +1619,7 @@
         isFirstLoad = true;
         fetchPayments();
         if (pollTimer) clearInterval(pollTimer);
-        pollTimer = setInterval(fetchPayments, 4000);
+        pollTimer = setInterval(fetchPayments, 8000); // Consulta estable cada 8s (sin saturar ni parpadear)
       }
 
       // Validar PIN ingresado
@@ -1714,7 +1733,7 @@
           els.filterPayChips.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
           chip.classList.add('active');
           activeFilters.payment = chip.dataset.pay || 'all';
-          applyFiltersAndRender();
+          applyFiltersAndRender(true);
         });
       }
 
@@ -1732,7 +1751,7 @@
           } else {
             els.customTimeBox.classList.add('hidden');
           }
-          applyFiltersAndRender();
+          applyFiltersAndRender(true);
         });
       }
 
@@ -1741,7 +1760,7 @@
         els.btnApplyTimeRange.addEventListener('click', () => {
           activeFilters.timeFrom = els.timeFrom.value || '12:00';
           activeFilters.timeTo = els.timeTo.value || '23:59';
-          applyFiltersAndRender();
+          applyFiltersAndRender(true);
         });
       }
 
