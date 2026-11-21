@@ -24,6 +24,7 @@
     storeTitle: document.getElementById('storeTitle'),
     storeAddress: document.getElementById('storeAddress'),
     storeAddressLink: document.getElementById('storeAddressLink'),
+    storeInstagramLink: document.getElementById('storeInstagramLink'),
     storeStatusBadge: document.getElementById('storeStatusBadge'),
     storeStatusText: document.getElementById('storeStatusText'),
     storeHoursText: document.getElementById('storeHoursText'),
@@ -161,6 +162,7 @@
     if (els.storeTitle) els.storeTitle.textContent = CFG.STORE_NAME + ' · ' + CFG.BRANCH_NAME;
     if (els.storeAddress) els.storeAddress.textContent = CFG.ADDRESS + ', ' + CFG.CITY;
     if (els.storeAddressLink && CFG.MAPS_URL) els.storeAddressLink.href = CFG.MAPS_URL;
+    if (els.storeInstagramLink && CFG.INSTAGRAM_URL) els.storeInstagramLink.href = CFG.INSTAGRAM_URL;
     if (els.storeHoursText) els.storeHoursText.textContent = CFG.SCHEDULE.display;
 
     // Calcular si está abierto (Lunes a Domingos de 12:00 a 23:00 hs)
