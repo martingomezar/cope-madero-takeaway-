@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Caja en Vivo · Cope Burgers Puerto Madero</title>
+  <link rel="icon" type="image/jpeg" href="img/logo.jpg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg-main: #0a0e17;
+      --bg-card: #121826;
+      --bg-card-hover: #1a2234;
+      --border-color: #1f293d;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --cope-blue: #0047bb;
+      --cope-blue-glow: rgba(0, 71, 187, 0.4);
+      --green-glow: #10b981;
+      --green-glow-bg: rgba(16, 185, 129, 0.15);
+      --green-border: rgba(16, 185, 129, 0.4);
+      --yellow-alert: #f59e0b;
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-full: 9999px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      padding-bottom: 40px;
+    }
+
+    /* BARRA SUPERIOR */
+    .top-bar {
+      background: rgba(18, 24, 38, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+      padding: 14px 20px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      object-fit: cover;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .brand-title {
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-badge {
+      font-size: 11px;
+      font-weight: 800;
+      background: var(--cope-blue);
+      color: #ffffff;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .brand-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .live-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: #34d399;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 6px 12px;
+      border-radius: var(--radius-full);
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 10px #10b981;
+      animation: pulseDot 1.5s infinite;
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    .btn-toggle-sound {
+      background: #1e293b;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 7px 12px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-toggle-sound:hover {
+      background: #334155;
+    }
+
+    .btn-test-alert {
+      background: linear-gradient(135deg, #0047bb, #2563eb);
+      color: #ffffff;
+      border: none;
+      padding: 7px 14px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 71, 187, 0.3);
+      transition: all 0.15s ease;
+    }
+
+    .btn-test-alert:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(0, 71, 187, 0.45);
+    }
+
+    /* CONTENEDOR PRINCIPAL */
+    .caja-container {
+      max-width: 1100px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* HERO CARD: ÚLTIMO INGRESO */
+    .hero-last-payment {
+      background: linear-gradient(145deg, #121826 0%, #162033 100%);
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.5);
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .hero-last-payment.is-new-hit {
+      border-color: #10b981;
+      box-shadow: 0 0 35px rgba(16, 185, 129, 0.4), inset 0 0 20px rgba(16, 185, 129, 0.1);
+      animation: cardPulse 1.2s ease-out 3;
+    }
+
+    @keyframes cardPulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+      100% { transform: scale(1); }
+    }
+
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 71, 187, 0.25);
+      border: 1px solid rgba(0, 71, 187, 0.5);
+      color: #93c5fd;
+      font-size: 11.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      margin-bottom: 16px;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .hero-amount-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .hero-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .hero-amount {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 48px;
+      font-weight: 900;
+      color: #10b981;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      text-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .hero-payer {
+      font-size: 20px;
+      font-weight: 800;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .hero-submeta {
+      font-size: 14px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .hero-status-badge {
+      background: #10b981;
+      color: #064e3b;
+      font-size: 13px;
+      font-weight: 900;
+      padding: 6px 14px;
+      border-radius: var(--radius-full);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+    }
+
+    .hero-icon-large {
+      font-size: 64px;
+      opacity: 0.85;
+      text-align: right;
+    }
+
+    /* STATS RÁPIDAS HOY */
+    .quick-stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .stat-val {
+      font-size: 24px;
+      font-weight: 900;
+      color: #ffffff;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* SECCIÓN DE HISTORIAL */
+    .history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+    .history-title {
+      font-size: 18px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .history-count {
+      background: #1e293b;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--text-muted);
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .payment-row {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      transition: all 0.15s ease;
+    }
+
+    .payment-row:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .payment-row.row-new {
+      border-color: #10b981;
+      background: rgba(16, 185, 129, 0.08);
+      animation: rowGlow 3s ease-out;
+    }
+
+    @keyframes rowGlow {
+      0% { background: rgba(16, 185, 129, 0.25); }
+      100% { background: rgba(16, 185, 129, 0.08); }
+    }
+
+    .p-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .p-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .p-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .p-name {
+      font-size: 15px;
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    .p-sub {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .p-right {
+      text-align: right;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 3px;
+    }
+
+    .p-amount {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      font-weight: 900;
+      color: #10b981;
+    }
+
+    .p-status {
+      font-size: 11px;
+      font-weight: 800;
+      color: #34d399;
+      background: rgba(16, 185, 129, 0.15);
+      padding: 2px 7px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    /* EMPTY / LOADING */
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      background: var(--bg-card);
+      border: 1px dashed var(--border-color);
+      border-radius: var(--radius-lg);
+      color: var(--text-muted);
+    }
+
+    .empty-state-icon {
+      font-size: 42px;
+      margin-bottom: 12px;
+    }
+
+    /* =========================================================================
+       OVERLAY ANIMACIÓN ÉPICA AL ENTRAR TRANSFERENCIA
+       ========================================================================= */
+    .incoming-alert-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 14, 23, 0.9);
+      backdrop-filter: blur(10px);
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    .incoming-alert-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .alert-card {
+      background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #0f766e 100%);
+      border: 3px solid #34d399;
+      border-radius: 28px;
+      padding: 36px 40px;
+      max-width: 580px;
+      width: 100%;
+      text-align: center;
+      color: #ffffff;
+      box-shadow: 0 0 60px rgba(16, 185, 129, 0.6), 0 20px 40px rgba(0, 0, 0, 0.6);
+      transform: scale(0.7) translateY(40px);
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .incoming-alert-overlay.active .alert-card {
+      transform: scale(1) translateY(0);
+    }
+
+    .alert-card::before {
+      content: '';
+      position: absolute;
+      top: -60px;
+      left: -60px;
+      right: -60px;
+      bottom: -60px;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 60%);
+      pointer-events: none;
+      animation: rotateGlow 8s linear infinite;
+    }
+
+    @keyframes rotateGlow {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .alert-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #6ee7b7;
+      font-size: 13px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 6px 16px;
+      border-radius: var(--radius-full);
+      margin-bottom: 20px;
+    }
+
+    .alert-amount {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 64px;
+      font-weight: 900;
+      color: #ffffff;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      margin-bottom: 12px;
+      animation: popInAmount 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes popInAmount {
+      0% { transform: scale(0.6); opacity: 0; }
+      70% { transform: scale(1.15); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .alert-payer {
+      font-size: 24px;
+      font-weight: 800;
+      color: #f0fdf4;
+      margin-bottom: 6px;
+    }
+
+    .alert-method {
+      font-size: 15px;
+      color: #a7f3d0;
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+
+    .btn-dismiss-alert {
+      background: #ffffff;
+      color: #064e3b;
+      font-size: 15px;
+      font-weight: 900;
+      padding: 12px 28px;
+      border-radius: var(--radius-full);
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+      transition: all 0.15s ease;
+    }
+
+    .btn-dismiss-alert:hover {
+      background: #f1f5f9;
+      transform: scale(1.03);
+    }
+
+    /* VINCULACIÓN AL BORDE PANTALLA EN ANIMACIÓN */
+    .screen-pulse-border {
+      position: fixed;
+      inset: 0;
+      border: 8px solid #10b981;
+      pointer-events: none;
+      z-index: 998;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .screen-pulse-border.active {
+      opacity: 1;
+      animation: screenBorderPulse 1s ease-in-out infinite alternate;
+    }
+
+    @keyframes screenBorderPulse {
+      from { border-color: #10b981; box-shadow: inset 0 0 40px rgba(16, 185, 129, 0.5); }
+      to { border-color: #34d399; box-shadow: inset 0 0 80px rgba(16, 185, 129, 0.8); }
+    }
+
+    @media (max-width: 640px) {
+      .hero-grid {
+        grid-template-columns: 1fr;
+      }
+      .hero-icon-large {
+        display: none;
+      }
+      .hero-amount {
+        font-size: 38px;
+      }
+      .quick-stats-row {
+        grid-template-columns: 1fr;
+      }
+      .alert-amount {
+        font-size: 48px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- BORDE INTERACTIVO DE PANTALLA -->
+  <div id="screenPulseBorder" class="screen-pulse-border"></div>
+
+  <!-- BARRA SUPERIOR -->
+  <header class="top-bar">
+    <div class="brand-wrap">
+      <img src="img/logo.jpg" alt="Cope Burgers" class="brand-logo" />
+      <div>
+        <div class="brand-title">
+          <span>Cope Burgers</span>
+          <span class="brand-badge">Panel Caja</span>
+        </div>
+        <div class="brand-sub">Puerto Madero · Monitor de Mercado Pago en Vivo</div>
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <div class="live-indicator">
+        <span class="live-dot"></span>
+        <span id="liveStatusText">Conectado a MP</span>
+      </div>
+
+      <button id="btnToggleSound" type="button" class="btn-toggle-sound" title="Activar/Desactivar sonido">
+        <span id="soundIcon">🔊</span>
+        <span id="soundLabel">Sonido ON</span>
+      </button>
+
+      <button id="btnTestAlert" type="button" class="btn-test-alert" title="Simular cobro entrante">
+        ⚡ Probar Animación
+      </button>
+    </div>
+  </header>
+
+  <!-- CONTENIDO CAJA -->
+  <main class="caja-container">
+
+    <!-- HERO CARD: ÚLTIMO INGRESO -->
+    <section id="heroCard" class="hero-last-payment">
+      <div class="hero-tag">
+        <span>⚡ Último Cobro Verificado</span>
+        <span>·</span>
+        <span id="heroTimeAgo">Esperando ingresos</span>
+      </div>
+
+      <div class="hero-grid">
+        <div class="hero-amount-wrap">
+          <div class="hero-label">Monto Acreditado</div>
+          <div id="heroAmount" class="hero-amount">$ 0</div>
+          
+          <div class="hero-meta">
+            <div id="heroPayer" class="hero-payer">Aguardando pagos de clientes...</div>
+            <div class="hero-submeta">
+              <span id="heroMethod">💳 Método: —</span>
+              <span>·</span>
+              <span id="heroId">ID: —</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-icon-large">
+          <span id="heroBadge" class="hero-status-badge">
+            ✓ Acreditado en MP
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ESTADÍSTICAS RÁPIDAS -->
+    <div class="quick-stats-row">
+      <div class="stat-card">
+        <span class="stat-label">Total Facturado Hoy</span>
+        <span id="statTotalToday" class="stat-val">$ 0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Cobros Registrados</span>
+        <span id="statCountToday" class="stat-val">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Última Consulta</span>
+        <span id="statLastCheck" class="stat-val" style="font-size:18px;">--:--:--</span>
+      </div>
+    </div>
+
+    <!-- LISTA DE COBROS RECIENTES -->
+    <div>
+      <div class="history-header">
+        <h2 class="history-title">
+          <span>Movimientos Acreditados</span>
+          <span id="historyCount" class="history-count">0 pagos</span>
+        </h2>
+        <span id="autoRefreshText" style="font-size:12px; color:var(--text-muted); font-weight:600;">Actualización cada 4s</span>
+      </div>
+
+      <div id="historyList" class="history-list" style="margin-top:14px;">
+        <div class="empty-state">
+          <div class="empty-state-icon">⏳</div>
+          <p>Conectando con la cuenta de Mercado Pago de Cope Burgers...</p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- OVERLAY DE ANIMACIÓN ÉPICA AL ENTRAR PAGO -->
+  <div id="incomingAlertOverlay" class="incoming-alert-overlay">
+    <div class="alert-card">
+      <div class="alert-badge">
+        <span>🟢 ¡NUEVO PAGO ACREDITADO!</span>
+      </div>
+      <div id="alertAmount" class="alert-amount">$ 0</div>
+      <div id="alertPayer" class="alert-payer">Nombre Cliente</div>
+      <div id="alertMethod" class="alert-method">Dinero en Cuenta Mercado Pago</div>
+      <button id="btnDismissAlert" type="button" class="btn-dismiss-alert">
+        ✓ Entendido / Cerrar
+      </button>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // Estado
+      let soundEnabled = true;
+      let knownPaymentIds = new Set();
+      let isFirstLoad = true;
+      let pollTimer = null;
+      let alertDismissTimeout = null;
+
+      // Elementos DOM
+      const els = {
+        heroCard: document.getElementById('heroCard'),
+        heroAmount: document.getElementById('heroAmount'),
+        heroPayer: document.getElementById('heroPayer'),
+        heroMethod: document.getElementById('heroMethod'),
+        heroId: document.getElementById('heroId'),
+        heroTimeAgo: document.getElementById('heroTimeAgo'),
+        statTotalToday: document.getElementById('statTotalToday'),
+        statCountToday: document.getElementById('statCountToday'),
+        statLastCheck: document.getElementById('statLastCheck'),
+        historyCount: document.getElementById('historyCount'),
+        historyList: document.getElementById('historyList'),
+        liveStatusText: document.getElementById('liveStatusText'),
+        btnToggleSound: document.getElementById('btnToggleSound'),
+        soundIcon: document.getElementById('soundIcon'),
+        soundLabel: document.getElementById('soundLabel'),
+        btnTestAlert: document.getElementById('btnTestAlert'),
+        incomingAlertOverlay: document.getElementById('incomingAlertOverlay'),
+        screenPulseBorder: document.getElementById('screenPulseBorder'),
+        alertAmount: document.getElementById('alertAmount'),
+        alertPayer: document.getElementById('alertPayer'),
+        alertMethod: document.getElementById('alertMethod'),
+        btnDismissAlert: document.getElementById('btnDismissAlert')
+      };
+
+      // Formatear Dinero
+      function formatMoney(amount) {
+        return '$ ' + Number(amount || 0).toLocaleString('es-AR');
+      }
+
+      // Sonido de Caja Registradora / Campana usando Web Audio API (100% nativo sin archivos mp3)
+      function playCashSound() {
+        if (!soundEnabled) return;
+        try {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContext) return;
+          const ctx = new AudioContext();
+
+          // Tono 1: Campana alta brillante
+          const osc1 = ctx.createOscillator();
+          const gain1 = ctx.createGain();
+          osc1.type = 'triangle';
+          osc1.frequency.setValueAtTime(987.77, ctx.currentTime); // B5
+          osc1.frequency.exponentialRampToValueAtTime(1318.51, ctx.currentTime + 0.1); // E6
+          gain1.gain.setValueAtTime(0.3, ctx.currentTime);
+          gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+          osc1.connect(gain1);
+          gain1.connect(ctx.destination);
+          osc1.start();
+          osc1.stop(ctx.currentTime + 0.8);
+
+          // Tono 2: Timbre de caja registradora armónico
+          const osc2 = ctx.createOscillator();
+          const gain2 = ctx.createGain();
+          osc2.type = 'sine';
+          osc2.frequency.setValueAtTime(1567.98, ctx.currentTime + 0.08); // G6
+          osc2.frequency.exponentialRampToValueAtTime(2093.00, ctx.currentTime + 0.2); // C7
+          gain2.gain.setValueAtTime(0, ctx.currentTime);
+          gain2.gain.setValueAtTime(0.35, ctx.currentTime + 0.08);
+          gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2);
+          osc2.connect(gain2);
+          gain2.connect(ctx.destination);
+          osc2.start(ctx.currentTime + 0.08);
+          osc2.stop(ctx.currentTime + 1.2);
+        } catch (e) {
+          console.warn('AudioContext error:', e);
+        }
+      }
+
+      // Disparar Animación de Nuevo Cobro
+      function triggerNewPaymentAnimation(payment) {
+        playCashSound();
+
+        // Mostrar overlay
+        els.alertAmount.textContent = formatMoney(payment.amount);
+        els.alertPayer.textContent = payment.payer_name || 'Cliente';
+        els.alertMethod.textContent = (payment.payment_method || 'Mercado Pago') + (payment.description ? ' · ' + payment.description : '');
+        
+        els.incomingAlertOverlay.classList.add('active');
+        els.screenPulseBorder.classList.add('active');
+        els.heroCard.classList.add('is-new-hit');
+
+        // Auto cerrar a los 7 segundos
+        clearTimeout(alertDismissTimeout);
+        alertDismissTimeout = setTimeout(() => {
+          dismissAlert();
+        }, 7000);
+      }
+
+      function dismissAlert() {
+        els.incomingAlertOverlay.classList.remove('active');
+        els.screenPulseBorder.classList.remove('active');
+        setTimeout(() => {
+          els.heroCard.classList.remove('is-new-hit');
+        }, 2000);
+      }
+
+      // Renderizar datos en pantalla
+      function renderDashboard(payments) {
+        if (!payments || !payments.length) {
+          els.historyList.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">☕</div>
+              <p>Aún no hay cobros registrados hoy en esta cuenta de Mercado Pago.</p>
+            </div>
+          `;
+          return;
+        }
+
+        // Ordenar del más reciente al más antiguo
+        const sorted = payments.slice().sort((a, b) => new Date(b.date_created) - new Date(a.date_created));
+        const latest = sorted[0];
+
+        // Actualizar Hero
+        els.heroAmount.textContent = formatMoney(latest.amount);
+        els.heroPayer.textContent = latest.payer_name;
+        els.heroMethod.textContent = '💳 ' + latest.payment_method;
+        els.heroId.textContent = 'ID: ' + latest.id;
+
+        const dateObj = new Date(latest.date_created);
+        const timeStr = dateObj.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) + ' hs';
+        els.heroTimeAgo.textContent = `A las ${timeStr}`;
+
+        // Calcular Estadísticas
+        const approvedList = sorted.filter(p => p.status === 'approved');
+        const totalAmount = approvedList.reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
+        els.statTotalToday.textContent = formatMoney(totalAmount);
+        els.statCountToday.textContent = approvedList.length;
+        els.historyCount.textContent = `${sorted.length} pagos`;
+
+        // Renderizar Lista
+        els.historyList.innerHTML = sorted.map((p, idx) => {
+          const pDate = new Date(p.date_created);
+          const pHour = pDate.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) + ' hs';
+          const isLatest = idx === 0;
+
+          return `
+            <div class="payment-row ${isLatest ? 'row-new' : ''}">
+              <div class="p-left">
+                <div class="p-icon">🍔</div>
+                <div class="p-info">
+                  <div class="p-name">${p.payer_name}</div>
+                  <div class="p-sub">
+                    <span>${pHour}</span>
+                    <span>·</span>
+                    <span>${p.payment_method}</span>
+                    ${p.order_id ? `<span>· Ref: ${p.order_id}</span>` : ''}
+                  </div>
+                </div>
+              </div>
+              <div class="p-right">
+                <div class="p-amount">${formatMoney(p.amount)}</div>
+                <div class="p-status">✓ ${p.status === 'approved' ? 'Acreditado' : p.status}</div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Consultar API de Mercado Pago
+      async function fetchPayments() {
+        try {
+          const now = new Date();
+          els.statLastCheck.textContent = now.toLocaleTimeString('es-AR');
+
+          const res = await fetch('/api/get-payments?limit=15', { cache: 'no-store' });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            els.liveStatusText.textContent = 'Error MP';
+            console.warn('API error:', err);
+            return;
+          }
+
+          const data = await res.json();
+          const payments = data.payments || [];
+          els.liveStatusText.textContent = 'Conectado a MP';
+
+          // Detectar si hay pagos nuevos aprobados
+          if (!isFirstLoad) {
+            for (const p of payments) {
+              if (p.status === 'approved' && !knownPaymentIds.has(p.id)) {
+                // ¡PAGO NUEVO DETECTADO! Disparar animación
+                triggerNewPaymentAnimation(p);
+                break; // Alertar el más reciente
+              }
+            }
+          }
+
+          // Guardar IDs conocidos
+          payments.forEach(p => knownPaymentIds.add(p.id));
+          isFirstLoad = false;
+
+          renderDashboard(payments);
+        } catch (err) {
+          console.error('Fetch payments error:', err);
+          els.liveStatusText.textContent = 'Reconectando...';
+        }
+      }
+
+      // Eventos
+      els.btnDismissAlert.addEventListener('click', dismissAlert);
+      els.incomingAlertOverlay.addEventListener('click', (e) => {
+        if (e.target === els.incomingAlertOverlay) dismissAlert();
+      });
+
+      els.btnToggleSound.addEventListener('click', () => {
+        soundEnabled = !soundEnabled;
+        els.soundIcon.textContent = soundEnabled ? '🔊' : '🔇';
+        els.soundLabel.textContent = soundEnabled ? 'Sonido ON' : 'Silencio';
+        if (soundEnabled) playCashSound();
+      });
+
+      // Botón para probar la animación y sonido
+      els.btnTestAlert.addEventListener('click', () => {
+        triggerNewPaymentAnimation({
+          id: 'TEST-' + Math.floor(Math.random() * 900000 + 100000),
+          amount: 15500,
+          payer_name: 'Martín Gómez (Prueba Caja)',
+          payment_method: 'Dinero en Cuenta MP',
+          description: 'Combo Clásica + Papas + Bebida'
+        });
+      });
+
+      // Iniciar polling continuo cada 4 segundos
+      fetchPayments();
+      pollTimer = setInterval(fetchPayments, 4000);
+    })();
+  </script>
+</body>
+</html>
