@@ -9,6 +9,13 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
+  const validPin = process.env.CAJA_PIN || '2904';
+  const providedPin = req.headers['x-caja-pin'] || req.query.pin;
+
+  if (!providedPin || String(providedPin).trim() !== String(validPin).trim()) {
+    return res.status(401).json({ error: 'Terminal no autorizada. PIN incorrecto.' });
+  }
+
   const token = process.env.MP_ACCESS_TOKEN;
   if (!token) {
     return res.status(500).json({ error: 'MP_ACCESS_TOKEN no configurado en Vercel' });

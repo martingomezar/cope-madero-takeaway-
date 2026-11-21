@@ -637,9 +637,177 @@
         font-size: 48px;
       }
     }
+
+    /* =========================================================================
+       MODAL DE BLOQUEO DE TERMINAL (PIN PROTECTION)
+       ========================================================================= */
+    .terminal-lock-overlay {
+      position: fixed;
+      inset: 0;
+      background: #070a12;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .terminal-lock-overlay.hidden {
+      display: none !important;
+    }
+
+    .lock-card {
+      background: #111827;
+      border: 1px solid #1f293d;
+      border-radius: 24px;
+      padding: 40px 32px;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    }
+
+    .lock-icon-wrap {
+      width: 72px;
+      height: 72px;
+      background: rgba(0, 71, 187, 0.15);
+      border: 2px solid rgba(0, 71, 187, 0.4);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 34px;
+      margin: 0 auto 20px auto;
+    }
+
+    .lock-title {
+      font-size: 22px;
+      font-weight: 900;
+      color: #f8fafc;
+      margin-bottom: 8px;
+    }
+
+    .lock-desc {
+      font-size: 13px;
+      color: #94a3b8;
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+
+    .pin-input-group {
+      margin-bottom: 16px;
+    }
+
+    .pin-input {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: 0.35em;
+      text-align: center;
+      width: 100%;
+      padding: 14px 16px;
+      background: #0a0e17;
+      border: 2px solid #1f293d;
+      border-radius: 14px;
+      color: #ffffff;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .pin-input:focus {
+      border-color: #0047bb;
+      box-shadow: 0 0 0 4px rgba(0, 71, 187, 0.25);
+    }
+
+    .pin-input.error {
+      border-color: #ef4444;
+      animation: pinShake 0.35s ease;
+    }
+
+    @keyframes pinShake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
+    }
+
+    .lock-error-msg {
+      font-size: 13px;
+      color: #f87171;
+      font-weight: 700;
+      min-height: 20px;
+      margin-bottom: 16px;
+    }
+
+    .btn-unlock-terminal {
+      width: 100%;
+      background: #0047bb;
+      color: #ffffff;
+      border: none;
+      padding: 14px 20px;
+      font-size: 15px;
+      font-weight: 800;
+      border-radius: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.15s ease;
+    }
+
+    .btn-unlock-terminal:hover {
+      background: #003691;
+    }
+
+    .btn-lock-terminal {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-muted);
+      padding: 7px 10px;
+      border-radius: var(--radius-md);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-lock-terminal:hover {
+      border-color: #ef4444;
+      color: #ef4444;
+    }
   </style>
 </head>
 <body>
+
+  <!-- PANTALLA DE BLOQUEO DE TERMINAL (PIN) -->
+  <div id="terminalLockOverlay" class="terminal-lock-overlay">
+    <div class="lock-card">
+      <div class="lock-icon-wrap">🔒</div>
+      <h2 class="lock-title">Terminal de Caja Protegida</h2>
+      <p class="lock-desc">
+        Esta pantalla contiene datos de transferencias de Cope Burgers. Ingresá el PIN de seguridad del local para habilitar esta PC.
+      </p>
+
+      <form id="pinForm" onsubmit="return false;">
+        <div class="pin-input-group">
+          <input 
+            id="pinInput" 
+            type="password" 
+            maxlength="8" 
+            placeholder="••••" 
+            inputmode="numeric" 
+            autocomplete="off" 
+            class="pin-input" 
+            autofocus
+          />
+        </div>
+        <div id="lockErrorMsg" class="lock-error-msg"></div>
+        <button id="btnUnlockTerminal" type="submit" class="btn-unlock-terminal">
+          🔓 Autorizar esta Terminal
+        </button>
+      </form>
+    </div>
+  </div>
 
   <!-- BORDE INTERACTIVO DE PANTALLA -->
   <div id="screenPulseBorder" class="screen-pulse-border"></div>
@@ -670,6 +838,10 @@
 
       <button id="btnTestAlert" type="button" class="btn-test-alert" title="Simular cobro entrante">
         ⚡ Probar Animación
+      </button>
+
+      <button id="btnLockTerminal" type="button" class="btn-lock-terminal" title="Bloquear esta terminal">
+        🔒 Bloquear
       </button>
     </div>
   </header>
@@ -767,6 +939,7 @@
       let isFirstLoad = true;
       let pollTimer = null;
       let alertDismissTimeout = null;
+      let savedPin = localStorage.getItem('cope_caja_pin') || '';
 
       // Elementos DOM
       const els = {
@@ -786,6 +959,12 @@
         soundIcon: document.getElementById('soundIcon'),
         soundLabel: document.getElementById('soundLabel'),
         btnTestAlert: document.getElementById('btnTestAlert'),
+        btnLockTerminal: document.getElementById('btnLockTerminal'),
+        terminalLockOverlay: document.getElementById('terminalLockOverlay'),
+        pinForm: document.getElementById('pinForm'),
+        pinInput: document.getElementById('pinInput'),
+        lockErrorMsg: document.getElementById('lockErrorMsg'),
+        btnUnlockTerminal: document.getElementById('btnUnlockTerminal'),
         incomingAlertOverlay: document.getElementById('incomingAlertOverlay'),
         screenPulseBorder: document.getElementById('screenPulseBorder'),
         alertAmount: document.getElementById('alertAmount'),
@@ -799,7 +978,7 @@
         return '$ ' + Number(amount || 0).toLocaleString('es-AR');
       }
 
-      // Sonido de Caja Registradora / Campana usando Web Audio API (100% nativo sin archivos mp3)
+      // Sonido de Caja Registradora / Campana usando Web Audio API
       function playCashSound() {
         if (!soundEnabled) return;
         try {
@@ -811,8 +990,8 @@
           const osc1 = ctx.createOscillator();
           const gain1 = ctx.createGain();
           osc1.type = 'triangle';
-          osc1.frequency.setValueAtTime(987.77, ctx.currentTime); // B5
-          osc1.frequency.exponentialRampToValueAtTime(1318.51, ctx.currentTime + 0.1); // E6
+          osc1.frequency.setValueAtTime(987.77, ctx.currentTime);
+          osc1.frequency.exponentialRampToValueAtTime(1318.51, ctx.currentTime + 0.1);
           gain1.gain.setValueAtTime(0.3, ctx.currentTime);
           gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
           osc1.connect(gain1);
@@ -820,12 +999,12 @@
           osc1.start();
           osc1.stop(ctx.currentTime + 0.8);
 
-          // Tono 2: Timbre de caja registradora armónico
+          // Tono 2: Timbre armónico
           const osc2 = ctx.createOscillator();
           const gain2 = ctx.createGain();
           osc2.type = 'sine';
-          osc2.frequency.setValueAtTime(1567.98, ctx.currentTime + 0.08); // G6
-          osc2.frequency.exponentialRampToValueAtTime(2093.00, ctx.currentTime + 0.2); // C7
+          osc2.frequency.setValueAtTime(1567.98, ctx.currentTime + 0.08);
+          osc2.frequency.exponentialRampToValueAtTime(2093.00, ctx.currentTime + 0.2);
           gain2.gain.setValueAtTime(0, ctx.currentTime);
           gain2.gain.setValueAtTime(0.35, ctx.currentTime + 0.08);
           gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2);
@@ -928,13 +1107,24 @@
         }).join('');
       }
 
-      // Consultar API de Mercado Pago
+      // Consultar API de Mercado Pago con PIN de seguridad
       async function fetchPayments() {
+        if (!savedPin) return;
+
         try {
           const now = new Date();
           els.statLastCheck.textContent = now.toLocaleTimeString('es-AR');
 
-          const res = await fetch('/api/get-payments?limit=15', { cache: 'no-store' });
+          const res = await fetch(`/api/get-payments?limit=15&pin=${encodeURIComponent(savedPin)}`, {
+            headers: { 'x-caja-pin': savedPin },
+            cache: 'no-store'
+          });
+
+          if (res.status === 401) {
+            lockTerminal('Terminal no autorizada. PIN inválido.');
+            return;
+          }
+
           if (!res.ok) {
             const err = await res.json().catch(() => ({}));
             els.liveStatusText.textContent = 'Error MP';
@@ -950,9 +1140,8 @@
           if (!isFirstLoad) {
             for (const p of payments) {
               if (p.status === 'approved' && !knownPaymentIds.has(p.id)) {
-                // ¡PAGO NUEVO DETECTADO! Disparar animación
                 triggerNewPaymentAnimation(p);
-                break; // Alertar el más reciente
+                break;
               }
             }
           }
@@ -968,7 +1157,85 @@
         }
       }
 
+      // Bloquear terminal
+      function lockTerminal(msg) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+        savedPin = '';
+        localStorage.removeItem('cope_caja_pin');
+        els.terminalLockOverlay.classList.remove('hidden');
+        els.pinInput.value = '';
+        els.lockErrorMsg.textContent = msg || '';
+        els.pinInput.focus();
+      }
+
+      // Iniciar monitor de caja
+      function startLiveMonitor() {
+        els.terminalLockOverlay.classList.add('hidden');
+        els.lockErrorMsg.textContent = '';
+        isFirstLoad = true;
+        fetchPayments();
+        if (pollTimer) clearInterval(pollTimer);
+        pollTimer = setInterval(fetchPayments, 4000);
+      }
+
+      // Validar PIN ingresado
+      async function handlePinSubmit() {
+        const pin = els.pinInput.value.trim();
+        if (!pin) {
+          els.lockErrorMsg.textContent = 'Por favor ingresá el PIN de seguridad.';
+          els.pinInput.focus();
+          return;
+        }
+
+        els.btnUnlockTerminal.disabled = true;
+        els.btnUnlockTerminal.textContent = 'Verificando PIN...';
+        els.lockErrorMsg.textContent = '';
+
+        try {
+          const res = await fetch(`/api/get-payments?limit=1&pin=${encodeURIComponent(pin)}`, {
+            headers: { 'x-caja-pin': pin },
+            cache: 'no-store'
+          });
+
+          if (res.status === 401) {
+            els.pinInput.classList.add('error');
+            els.lockErrorMsg.textContent = 'PIN incorrecto. Acceso denegado.';
+            setTimeout(() => els.pinInput.classList.remove('error'), 500);
+            els.pinInput.value = '';
+            els.pinInput.focus();
+            return;
+          }
+
+          if (res.ok) {
+            savedPin = pin;
+            localStorage.setItem('cope_caja_pin', pin);
+            startLiveMonitor();
+          } else {
+            const err = await res.json().catch(() => ({}));
+            els.lockErrorMsg.textContent = err.error || 'Error al conectar con el servidor.';
+          }
+        } catch (err) {
+          console.error('Error al validar PIN:', err);
+          els.lockErrorMsg.textContent = 'Error de conexión. Intente nuevamente.';
+        } finally {
+          els.btnUnlockTerminal.disabled = false;
+          els.btnUnlockTerminal.textContent = '🔓 Autorizar esta Terminal';
+        }
+      }
+
       // Eventos
+      els.pinForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        handlePinSubmit();
+      });
+
+      els.btnLockTerminal.addEventListener('click', () => {
+        if (confirm('¿Deseás bloquear esta terminal? Se solicitará el PIN nuevamente para entrar.')) {
+          lockTerminal('Terminal bloqueada manualmente.');
+        }
+      });
+
       els.btnDismissAlert.addEventListener('click', dismissAlert);
       els.incomingAlertOverlay.addEventListener('click', (e) => {
         if (e.target === els.incomingAlertOverlay) dismissAlert();
@@ -992,9 +1259,13 @@
         });
       });
 
-      // Iniciar polling continuo cada 4 segundos
-      fetchPayments();
-      pollTimer = setInterval(fetchPayments, 4000);
+      // Inicialización: Verificar si ya está autorizada esta máquina
+      if (savedPin) {
+        startLiveMonitor();
+      } else {
+        els.terminalLockOverlay.classList.remove('hidden');
+        els.pinInput.focus();
+      }
     })();
   </script>
 </body>
