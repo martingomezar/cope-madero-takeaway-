@@ -39,18 +39,20 @@ window.CopeCart = (function () {
     }
   }
 
-  function buildCartKey(productId, variantId, isVeggie, drinkChoice, notes) {
+  function buildCartKey(productId, variantId, isVeggie, hasExtraMeat, drinkChoice, notes) {
     const pId = productId || '';
     const vId = variantId || 'base';
     const veg = isVeggie ? 'veggie' : 'carne';
+    const ext = hasExtraMeat ? 'extrameat' : 'standard';
     const drk = drinkChoice || 'nodrink';
     const nts = (notes || '').trim().toLowerCase();
-    return [pId, vId, veg, drk, nts].join('::');
+    return [pId, vId, veg, ext, drk, nts].join('::');
   }
 
   function addItem(product, opts) {
     const variantId = opts.variantId || null;
     const isVeggie = Boolean(opts.isVeggie);
+    const hasExtraMeat = Boolean(opts.hasExtraMeat);
     const drinkChoice = opts.drinkChoice || null;
     const notes = (opts.notes || '').trim();
     const qty = Math.max(1, parseInt(opts.quantity || 1, 10));
@@ -67,7 +69,11 @@ window.CopeCart = (function () {
       unitPrice = product.price || 0;
     }
 
-    const key = buildCartKey(product.id, variantId, isVeggie, drinkChoice, notes);
+    if (hasExtraMeat && product.canAddExtraMeat) {
+      unitPrice += (product.extraMeatPrice || 4000);
+    }
+
+    const key = buildCartKey(product.id, variantId, isVeggie, hasExtraMeat, drinkChoice, notes);
     const existing = items.find((i) => i.key === key);
 
     if (existing) {
@@ -83,6 +89,7 @@ window.CopeCart = (function () {
         variantId,
         variantLabel,
         isVeggie,
+        hasExtraMeat,
         drinkChoice,
         notes,
         quantity: qty

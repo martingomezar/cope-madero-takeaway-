@@ -14,6 +14,7 @@
   let activeModalProduct = null;
   let activeModalVariantId = null;
   let activeModalIsVeggie = false;
+  let activeModalHasExtraMeat = false;
   let activeModalDrink = null;
   let activeModalQty = 1;
 
@@ -60,6 +61,8 @@
     modalProductDesc: document.getElementById('modalProductDesc'),
     modalVariantsGroup: document.getElementById('modalVariantsGroup'),
     modalVariantsList: document.getElementById('modalVariantsList'),
+    modalExtraMeatGroup: document.getElementById('modalExtraMeatGroup'),
+    modalExtraMeatCheckbox: document.getElementById('modalExtraMeatCheckbox'),
     modalVeggieGroup: document.getElementById('modalVeggieGroup'),
     modalVeggieCheckbox: document.getElementById('modalVeggieCheckbox'),
     modalDrinkGroup: document.getElementById('modalDrinkGroup'),
@@ -163,7 +166,7 @@
     const curHour = now.getHours();
     const day = now.getDay(); // 0 = Domingo, 1 = Lunes
     const openHour = day === 1 ? 18 : (CFG.SCHEDULE.openHour || 12);
-    const isOpen = curHour >= openHour || curHour < 1; // abierto hasta la 01:00 am
+    const isOpen = curHour >= openHour || curHour < 1;
 
     if (els.storeStatusBadge) {
       els.storeStatusBadge.className = 'status-badge ' + (isOpen ? 'open' : 'closed');
@@ -247,7 +250,7 @@
         ? `<span class="card-badge">${prod.badge}</span>`
         : '';
 
-      const btnLabel = prod.hasVariants || prod.hasDrinkSelection ? 'Personalizar' : '+ Agregar';
+      const btnLabel = prod.hasVariants || prod.hasDrinkSelection || prod.canAddExtraMeat ? 'Personalizar' : '+ Agregar';
 
       return `
         <article class="product-card" data-product-id="${prod.id}">
@@ -277,10 +280,8 @@
       const prod = PRODUCTS.find((x) => x.id === pId);
       if (!prod) return;
 
-      // Click general en la tarjeta para abrir modal de detalle
       card.addEventListener('click', (e) => {
-        // Si clickea directo en botón agregar sin variantes, agregar de inmediato
-        if (e.target.closest('.btn-add') && !prod.hasVariants && !prod.hasDrinkSelection) {
+        if (e.target.closest('.btn-add') && !prod.hasVariants && !prod.hasDrinkSelection && !prod.canAddExtraMeat) {
           e.stopPropagation();
           Cart.addItem(prod, { quantity: 1 });
           showToast(`✓ Agregado: ${prod.name}`);
@@ -298,6 +299,7 @@
     activeModalProduct = prod;
     activeModalQty = 1;
     activeModalIsVeggie = false;
+    activeModalHasExtraMeat = false;
     els.modalNotesInput.value = '';
 
     els.modalProductName.textContent = prod.name;
@@ -305,7 +307,7 @@
     els.modalProductBadge.textContent = prod.badge || '';
     els.modalProductBadge.classList.toggle('hidden', !prod.badge);
 
-    // Variantes (Simple / Doble)
+    // Variantes (Simple / Doble si aplica a combos)
     if (prod.hasVariants && Array.isArray(prod.variants)) {
       els.modalVariantsGroup.classList.remove('hidden');
       const def = prod.variants.find((v) => v.isDefault) || prod.variants[0];
@@ -339,6 +341,15 @@
       activeModalVariantId = null;
     }
 
+    // Extra Carne Smash
+    if (prod.canAddExtraMeat) {
+      els.modalExtraMeatGroup.classList.remove('hidden');
+      els.modalExtraMeatCheckbox.checked = false;
+    } else {
+      els.modalExtraMeatGroup.classList.add('hidden');
+      els.modalExtraMeatCheckbox.checked = false;
+    }
+
     // Opción Veggie (NotCo)
     if (prod.hasVeggieOption) {
       els.modalVeggieGroup.classList.remove('hidden');
@@ -348,7 +359,7 @@
       els.modalVeggieCheckbox.checked = false;
     }
 
-    // Selección de Bebida (Para Sampler)
+    // Selección de Bebida (Para Combos y Sampler)
     if (prod.hasDrinkSelection && Array.isArray(prod.drinks)) {
       els.modalDrinkGroup.classList.remove('hidden');
       activeModalDrink = prod.drinks[0].label;
@@ -399,6 +410,9 @@
     } else {
       unitPrice = activeModalProduct.price || 0;
     }
+    if (activeModalHasExtraMeat && activeModalProduct.canAddExtraMeat) {
+      unitPrice += (activeModalProduct.extraMeatPrice || 4000);
+    }
     const total = unitPrice * activeModalQty;
     els.modalAddCartPrice.textContent = formatMoney(total);
   }
@@ -437,6 +451,7 @@
     els.cartItemsList.innerHTML = items.map((item) => {
       const details = [];
       if (item.variantLabel) details.push(item.variantLabel);
+      if (item.hasExtraMeat) details.push('🥩 +1 Extra Carne Smash');
       if (item.isVeggie) details.push('🌱 Medallón NotCo (Veggie)');
       if (item.drinkChoice) details.push('🥤 ' + item.drinkChoice);
       if (item.notes) details.push('📝 ' + item.notes);
@@ -510,7 +525,6 @@
     const curHour = now.getHours();
     const curMin = now.getMinutes();
 
-    // Comenzar desde 20 minutos en el futuro
     let startMin = Math.ceil((curMin + 20) / 15) * 15;
     let startHour = curHour;
     if (startMin >= 60) {
@@ -518,13 +532,11 @@
       startMin = startMin % 60;
     }
 
-    // Respetar horario mínimo de apertura (12:00)
     if (startHour < 12) {
       startHour = 12;
       startMin = 0;
     }
 
-    // Generar franjas cada 15 min hasta las 23:45
     for (let h = startHour; h <= 23; h++) {
       const minStart = (h === startHour) ? startMin : 0;
       for (let m = minStart; m < 60; m += 15) {
@@ -578,13 +590,16 @@
 
     populatePickupTimeSlots();
 
-    // Resumen de items
     const items = Cart.getItems();
     els.checkoutItemsPreview.innerHTML = items.map((i) => {
-      const extra = i.variantLabel ? ` (${i.variantLabel.split(' ')[0]})` : '';
+      const extras = [];
+      if (i.variantLabel) extras.push(i.variantLabel.split(' ')[0]);
+      if (i.hasExtraMeat) extras.push('+Extra Carne');
+      const extraText = extras.length ? ` (${extras.join(', ')})` : '';
+
       return `
         <div class="checkout-item-line">
-          <span>${i.quantity}x ${i.name}${extra}</span>
+          <span>${i.quantity}x ${i.name}${extraText}</span>
           <span class="tabular">${formatMoney(i.unitPrice * i.quantity)}</span>
         </div>
       `;
@@ -620,10 +635,8 @@
       return;
     }
 
-    // Guardar para futuros pedidos
     saveUserData({ name, phone });
 
-    // Determinar horario de retiro
     let pickupTimeStr = '';
     if (els.pickupTimeAsap.checked) {
       const now = new Date();
@@ -634,20 +647,15 @@
       pickupTimeStr = els.scheduledTimeSelect.value || 'A coordinar';
     }
 
-    // Método de pago
     const selectedPayRadio = document.querySelector('input[name="checkout_payment"]:checked');
     const payMethodId = selectedPayRadio ? selectedPayRadio.value : 'transferencia';
     const payMethodObj = (CFG.PAYMENT_METHODS || []).find((m) => m.id === payMethodId);
     const payLabel = payMethodObj ? payMethodObj.label : 'Mercado Pago / Transferencia';
 
-    // Notas
     const notes = els.checkoutNotes.value.trim();
-
-    // Items
     const items = Cart.getItems();
     const total = Cart.getTotal();
 
-    // Armado del mensaje formateado para WhatsApp
     let msg = `🍔 *NUEVO PEDIDO TAKE AWAY — COPE PUERTO MADERO* 🍔\n`;
     msg += `------------------------------------------\n`;
     msg += `👤 *Cliente:* ${name}\n`;
@@ -666,6 +674,9 @@
       msg += `${idx + 1}. *${item.quantity}x ${item.name}*\n`;
       if (item.variantLabel) {
         msg += `   ↳ Tamaño: ${item.variantLabel}\n`;
+      }
+      if (item.hasExtraMeat) {
+        msg += `   ↳ 🥩 Extra: +1 Medallón Carne Smash (+$4.000)\n`;
       }
       if (item.isVeggie) {
         msg += `   ↳ 🌱 Medallón: NotCo (100% Veggie)\n`;
@@ -689,23 +700,18 @@
 
     msg += `\n_Pedido generado desde la web de Cope Burgers Puerto Madero_`;
 
-    // Generar enlace wa.me
     const waUrl = `https://wa.me/${CFG.WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
     lastGeneratedWaUrl = waUrl;
 
-    // Actualizar pantalla de éxito
     els.successCustomerName.textContent = name;
     els.successPickupTime.textContent = pickupTimeStr;
     els.successTotalText.textContent = formatMoney(total);
 
-    // Vaciar carrito
     Cart.clearCart();
     closeCheckoutModal();
 
-    // Abrir WhatsApp directamente
     window.open(waUrl, '_blank');
 
-    // Mostrar modal de confirmación en la web
     els.successModalBackdrop.classList.remove('hidden');
     document.body.classList.add('modal-open');
   }
@@ -719,7 +725,6 @@
   // EVENT BINDINGS
   // =========================================================================
   function bindEvents() {
-    // Búsqueda
     els.searchInput.addEventListener('input', (e) => {
       searchQuery = e.target.value;
       els.clearSearchBtn.classList.toggle('hidden', !searchQuery);
@@ -734,28 +739,24 @@
       els.searchInput.focus();
     });
 
-    // Abrir Carrito
     els.btnOpenCart.addEventListener('click', openCartDrawer);
     els.btnCloseCart.addEventListener('click', closeCartDrawer);
     els.cartDrawerBackdrop.addEventListener('click', (e) => {
       if (e.target === els.cartDrawerBackdrop) closeCartDrawer();
     });
 
-    // Vaciar Carrito
     els.btnClearCart.addEventListener('click', () => {
       if (confirm('¿Seguro que querés vaciar todo el carrito?')) {
         Cart.clearCart();
       }
     });
 
-    // Ir a Checkout
     els.btnGoToCheckout.addEventListener('click', openCheckoutModal);
     els.btnCloseCheckout.addEventListener('click', closeCheckoutModal);
     els.checkoutModalBackdrop.addEventListener('click', (e) => {
       if (e.target === els.checkoutModalBackdrop) closeCheckoutModal();
     });
 
-    // Toggle Horario Programado vs Lo antes posible
     els.pickupTimeAsap.addEventListener('change', () => {
       els.scheduledTimeWrapper.classList.add('hidden');
     });
@@ -763,10 +764,8 @@
       els.scheduledTimeWrapper.classList.remove('hidden');
     });
 
-    // Formulario de Checkout
     els.checkoutForm.addEventListener('submit', handleSubmitOrder);
 
-    // Modal de Producto (Personalización)
     els.btnCloseProductModal.addEventListener('click', closeProductModal);
     els.productModalBackdrop.addEventListener('click', (e) => {
       if (e.target === els.productModalBackdrop) closeProductModal();
@@ -786,6 +785,11 @@
       }
     });
 
+    els.modalExtraMeatCheckbox.addEventListener('change', (e) => {
+      activeModalHasExtraMeat = e.target.checked;
+      updateModalAddPrice();
+    });
+
     els.modalVeggieCheckbox.addEventListener('change', (e) => {
       activeModalIsVeggie = e.target.checked;
     });
@@ -799,6 +803,7 @@
       Cart.addItem(activeModalProduct, {
         variantId: activeModalVariantId,
         isVeggie: activeModalIsVeggie,
+        hasExtraMeat: activeModalHasExtraMeat,
         drinkChoice: activeModalDrink,
         notes: els.modalNotesInput.value.trim(),
         quantity: activeModalQty
@@ -807,7 +812,6 @@
       closeProductModal();
     });
 
-    // Pantalla de Éxito
     els.btnReopenWhatsApp.addEventListener('click', () => {
       if (lastGeneratedWaUrl) {
         window.open(lastGeneratedWaUrl, '_blank');
@@ -819,7 +823,6 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
-    // Tecla Escape para cerrar modales
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         if (!els.productModalBackdrop.classList.contains('hidden')) closeProductModal();
@@ -829,6 +832,5 @@
     });
   }
 
-  // Ejecutar al cargar
   document.addEventListener('DOMContentLoaded', init);
 })();

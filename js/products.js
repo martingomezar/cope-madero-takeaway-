@@ -1,115 +1,244 @@
 /**
  * Menú Oficial Cope Burgers — Puerto Madero
- * Basado en la carta oficial y recetas de la hamburguesería
+ * Organizado por: Simples, Dobles (con Extra Carne), Combos con Bebida, Papas y Bebidas
  */
+
+const DRINKS_OPTIONS = [
+  { id: 'pepsi-lata', label: 'Pepsi Lata 354ml' },
+  { id: 'pepsi-black-lata', label: 'Pepsi Black (Sin azúcar) 354ml' },
+  { id: '7up-lata', label: '7up Lata 354ml' },
+  { id: 'agua-mineral', label: 'Agua Mineral Pureza Vital 500ml' },
+  { id: 'agua-con-gas', label: 'Agua Eco de los Andes con Gas 500ml' }
+];
+
+window.COPE_CATEGORIES = [
+  { id: 'todas', label: 'Todo el Menú', icon: '✨' },
+  { id: 'simples', label: 'Burgers Simples', icon: '🍔' },
+  { id: 'dobles', label: 'Burgers Dobles', icon: '🍔🍔' },
+  { id: 'combos', label: 'Combos con Bebida', icon: '🍟🥤' },
+  { id: 'acompanamientos', label: 'Papas Fritas', icon: '🍟' },
+  { id: 'bebidas', label: 'Bebidas', icon: '🥤' }
+];
+
 window.COPE_PRODUCTS = [
   // =========================================================================
-  // SMASH BURGERS
+  // 1. HAMBURGUESAS SIMPLES (1 Medallón 110g)
   // =========================================================================
   {
-    id: 'cheese-burger',
-    name: 'Cheese Burger',
-    category: 'burgers',
-    description: 'Carne smash vacuna de corte premium, cheddar fundido y mayo de la casa en pan de papa suave y tostado con manteca.',
-    badge: 'Clásica',
+    id: 'simple-cheese-burger',
+    name: 'Cheese Burger Simple',
+    category: 'simples',
+    description: 'Carne smash vacuna (110g), cheddar americano fundido y mayo de la casa en pan de papa tostado con manteca.',
+    badge: '1 Medallón',
     image: 'img/cheeseburger.jpeg',
-    imageDoble: 'img/cheeseburger-doble.jpeg',
-    hasVariants: true,
-    variants: [
-      { id: 'simple', label: 'Simple (1 Medallón 110g)', price: 9000, isDefault: true },
-      { id: 'doble', label: 'Doble (2 Medallones 220g)', price: 13000 }
-    ],
+    price: 9000,
     hasVeggieOption: true,
     veggieNote: 'Medallón 100% NotCo'
   },
   {
-    id: 'cheese-bacon',
-    name: 'Cheese & Bacon',
-    category: 'burgers',
-    description: 'Carne smash, cheddar americano, abundante bacon crocante ahumado y cebolla crispy en pan de papa tostado.',
-    badge: 'Más Pedida 🔥',
+    id: 'simple-cheese-bacon',
+    name: 'Cheese & Bacon Simple',
+    category: 'simples',
+    description: 'Carne smash (110g), cheddar americano, bacon crocante ahumado y cebolla crispy en pan de papa.',
+    badge: '1 Medallón · Favorita 🔥',
+    image: 'img/cheesebacon-simple.jpeg',
+    price: 9500,
+    hasVeggieOption: true,
+    veggieNote: 'Medallón 100% NotCo'
+  },
+  {
+    id: 'simple-clasica',
+    name: 'Clásica Simple',
+    category: 'simples',
+    description: 'Carne smash (110g), cheddar, rodajas de tomate fresco, lechuga capuchina y la auténtica Salsa Cope.',
+    badge: '1 Medallón · Fresca',
+    image: 'img/clasica-simple.jpeg',
+    price: 9500,
+    hasVeggieOption: true,
+    veggieNote: 'Medallón 100% NotCo'
+  },
+  {
+    id: 'simple-gran-cope',
+    name: 'Gran Cope Simple',
+    category: 'simples',
+    description: 'Carne smash (110g), cheddar americano, cebolla picada, lechuga, pepinillos agridulces y salsa Thousand Island.',
+    badge: '1 Medallón · Especial ⭐',
+    image: 'img/grancope-simple.jpeg',
+    price: 9500,
+    hasVeggieOption: true,
+    veggieNote: 'Medallón 100% NotCo'
+  },
+
+  // =========================================================================
+  // 2. HAMBURGUESAS DOBLES (2 Medallones 220g) — Permiten Extra Carne
+  // =========================================================================
+  {
+    id: 'doble-cheese-burger',
+    name: 'Cheese Burger Doble',
+    category: 'dobles',
+    description: 'Doble carne smash vacuna (220g), doble cheddar americano fundido y mayo de la casa en pan de papa.',
+    badge: '2 Medallones',
+    image: 'img/cheeseburger-doble.jpeg',
+    price: 13000,
+    canAddExtraMeat: true,
+    extraMeatPrice: 4000,
+    hasVeggieOption: true,
+    veggieNote: 'Medallón 100% NotCo'
+  },
+  {
+    id: 'doble-cheese-bacon',
+    name: 'Cheese & Bacon Doble',
+    category: 'dobles',
+    description: 'Doble carne smash (220g), doble cheddar americano, abundante bacon crocante ahumado y cebolla crispy.',
+    badge: '2 Medallones · Más Pedida 🔥',
+    image: 'img/cheesebacon-doble.jpeg',
+    price: 13500,
+    canAddExtraMeat: true,
+    extraMeatPrice: 4000,
+    hasVeggieOption: true,
+    veggieNote: 'Medallón 100% NotCo'
+  },
+  {
+    id: 'doble-clasica',
+    name: 'Clásica Doble',
+    category: 'dobles',
+    description: 'Doble carne smash (220g), doble cheddar, rodajas de tomate fresco, lechuga crujiente y Salsa Cope.',
+    badge: '2 Medallones · Fresca',
+    image: 'img/clasica-doble.jpeg',
+    price: 13500,
+    canAddExtraMeat: true,
+    extraMeatPrice: 4000,
+    hasVeggieOption: true,
+    veggieNote: 'Medallón 100% NotCo'
+  },
+  {
+    id: 'doble-gran-cope',
+    name: 'Gran Cope Doble',
+    category: 'dobles',
+    description: 'Doble carne smash (220g), doble cheddar, cebolla picada, lechuga, pepinillos encurtidos y Thousand Island.',
+    badge: '2 Medallones · Especial de la Casa ⭐',
+    image: 'img/grancope-doble.jpeg',
+    price: 13500,
+    canAddExtraMeat: true,
+    extraMeatPrice: 4000,
+    hasVeggieOption: true,
+    veggieNote: 'Medallón 100% NotCo'
+  },
+
+  // =========================================================================
+  // 3. COMBOS (Burger + Papas Fritas + Bebida a elección)
+  // =========================================================================
+  {
+    id: 'combo-cheese-burger',
+    name: 'Combo Cheese Burger',
+    category: 'combos',
+    description: 'Cheese Burger + Porción de Papas Fritas Cope + Bebida sin alcohol a elección (Pepsi, 7up o Agua).',
+    badge: 'Combo Completo 🍟🥤',
+    image: 'img/cheeseburger-doble.jpeg',
+    imageSimple: 'img/cheeseburger.jpeg',
+    imageDoble: 'img/cheeseburger-doble.jpeg',
+    hasVariants: true,
+    variants: [
+      { id: 'simple', label: 'Combo Simple (1 Medallón 110g)', price: 15000 },
+      { id: 'doble', label: 'Combo Doble (2 Medallones 220g)', price: 19000, isDefault: true }
+    ],
+    canAddExtraMeat: true,
+    extraMeatPrice: 4000,
+    hasDrinkSelection: true,
+    drinks: DRINKS_OPTIONS,
+    hasVeggieOption: true,
+    veggieNote: 'Medallón 100% NotCo'
+  },
+  {
+    id: 'combo-cheese-bacon',
+    name: 'Combo Cheese & Bacon',
+    category: 'combos',
+    description: 'Cheese & Bacon + Porción de Papas Fritas Cope + Bebida sin alcohol a elección.',
+    badge: 'Combo Favorito 🔥🍟',
     image: 'img/cheesebacon-doble.jpeg',
     imageSimple: 'img/cheesebacon-simple.jpeg',
     imageDoble: 'img/cheesebacon-doble.jpeg',
     hasVariants: true,
     variants: [
-      { id: 'simple', label: 'Simple (1 Medallón 110g)', price: 9500 },
-      { id: 'doble', label: 'Doble (2 Medallones 220g)', price: 13500, isDefault: true }
+      { id: 'simple', label: 'Combo Simple (1 Medallón 110g)', price: 15500 },
+      { id: 'doble', label: 'Combo Doble (2 Medallones 220g)', price: 19500, isDefault: true }
     ],
+    canAddExtraMeat: true,
+    extraMeatPrice: 4000,
+    hasDrinkSelection: true,
+    drinks: DRINKS_OPTIONS,
     hasVeggieOption: true,
     veggieNote: 'Medallón 100% NotCo'
   },
   {
-    id: 'clasica',
-    name: 'Clásica',
-    category: 'burgers',
-    description: 'Carne smash, cheddar americano, rodajas de tomate fresco, lechuga capuchina crujiente y la auténtica Salsa Cope.',
-    badge: 'Fresca',
+    id: 'combo-clasica',
+    name: 'Combo Clásica',
+    category: 'combos',
+    description: 'Clásica (lechuga, tomate, cheddar, salsa Cope) + Papas Fritas Cope + Bebida sin alcohol a elección.',
+    badge: 'Combo Fresco 🍟🥤',
     image: 'img/clasica-doble.jpeg',
     imageSimple: 'img/clasica-simple.jpeg',
     imageDoble: 'img/clasica-doble.jpeg',
     hasVariants: true,
     variants: [
-      { id: 'simple', label: 'Simple (1 Medallón 110g)', price: 9500 },
-      { id: 'doble', label: 'Doble (2 Medallones 220g)', price: 13500, isDefault: true }
+      { id: 'simple', label: 'Combo Simple (1 Medallón 110g)', price: 15500 },
+      { id: 'doble', label: 'Combo Doble (2 Medallones 220g)', price: 19500, isDefault: true }
     ],
+    canAddExtraMeat: true,
+    extraMeatPrice: 4000,
+    hasDrinkSelection: true,
+    drinks: DRINKS_OPTIONS,
     hasVeggieOption: true,
     veggieNote: 'Medallón 100% NotCo'
   },
   {
-    id: 'gran-cope',
-    name: 'Gran Cope',
-    category: 'burgers',
-    description: 'Carne smash, doble cheddar americano, cebolla finamente picada, lechuga fresca, pepinillos agridulces y salsa Thousand Island.',
-    badge: 'Especial de la Casa ⭐',
+    id: 'combo-gran-cope',
+    name: 'Combo Gran Cope',
+    category: 'combos',
+    description: 'Gran Cope (cebolla, lechuga, pepinillos, Thousand Island) + Papas Fritas Cope + Bebida a elección.',
+    badge: 'Combo Especial ⭐🍟',
     image: 'img/grancope-doble.jpeg',
     imageSimple: 'img/grancope-simple.jpeg',
     imageDoble: 'img/grancope-doble.jpeg',
     hasVariants: true,
     variants: [
-      { id: 'simple', label: 'Simple (1 Medallón 110g)', price: 9500 },
-      { id: 'doble', label: 'Doble (2 Medallones 220g)', price: 13500, isDefault: true }
+      { id: 'simple', label: 'Combo Simple (1 Medallón 110g)', price: 15500 },
+      { id: 'doble', label: 'Combo Doble (2 Medallones 220g)', price: 19500, isDefault: true }
     ],
+    canAddExtraMeat: true,
+    extraMeatPrice: 4000,
+    hasDrinkSelection: true,
+    drinks: DRINKS_OPTIONS,
     hasVeggieOption: true,
     veggieNote: 'Medallón 100% NotCo'
   },
+  {
+    id: 'sampler-cope',
+    name: 'Sampler Cope (3 Burgers + Papas + Bebida)',
+    category: 'combos',
+    description: 'El combo definitivo para 2 o 3 personas: 1 Cheese Burger + 1 Cheese & Bacon + 1 Clásica + 1 Porción grande de Papas Fritas + 1 Bebida sin alcohol a elección.',
+    badge: 'Para Compartir (3 Burgers) 👥',
+    image: 'img/sampler-cope.jpeg',
+    price: 32000,
+    hasDrinkSelection: true,
+    drinks: DRINKS_OPTIONS
+  },
 
   // =========================================================================
-  // ACOMPAÑAMIENTOS
+  // 4. ACOMPAÑAMIENTOS
   // =========================================================================
   {
     id: 'papas-fritas',
     name: 'Papas Fritas Cope',
     category: 'acompanamientos',
-    description: 'Porción generosa de papas fritas bastón crocantes, doradas en su punto justo al estilo americano con un toque de sal marina.',
-    badge: 'Crujientes',
+    description: 'Porción generosa de papas fritas bastón crujientes, doradas en su punto justo al estilo americano con sal marina.',
+    badge: 'Crujientes 🍟',
     image: 'img/papas-fritas.jpeg',
     price: 4000
   },
 
   // =========================================================================
-  // SAMPLERS & COMBOS PARA COMPARTIR
-  // =========================================================================
-  {
-    id: 'sampler-cope',
-    name: 'Sampler Cope (3 Burgers + Papas + Bebida)',
-    category: 'samplers',
-    description: 'El combo definitivo para 2 o 3 personas: 1 Cheese Burger + 1 Cheese & Bacon + 1 Clásica + 1 Porción de Papas Fritas + 1 Bebida sin alcohol a elección.',
-    badge: 'Ahorro / Para Compartir 👥',
-    image: 'img/sampler-cope.jpeg',
-    price: 32000,
-    hasDrinkSelection: true,
-    drinks: [
-      { id: 'pepsi-lata', label: 'Pepsi Lata 354ml' },
-      { id: 'pepsi-black-lata', label: 'Pepsi Black (Sin azúcar) 354ml' },
-      { id: '7up-lata', label: '7up Lata 354ml' },
-      { id: 'agua-mineral', label: 'Agua Mineral Pureza Vital 500ml' },
-      { id: 'agua-con-gas', label: 'Agua Eco de los Andes con Gas 500ml' }
-    ]
-  },
-
-  // =========================================================================
-  // BEBIDAS
+  // 5. BEBIDAS SIN ALCOHOL
   // =========================================================================
   {
     id: 'pepsi-lata',
@@ -152,12 +281,4 @@ window.COPE_PRODUCTS = [
     image: 'img/agua-con-gas.webp',
     price: 3000
   }
-];
-
-window.COPE_CATEGORIES = [
-  { id: 'todas', label: 'Todo el Menú', icon: '✨' },
-  { id: 'burgers', label: 'Smash Burgers', icon: '🍔' },
-  { id: 'samplers', label: 'Samplers & Combos', icon: '🎁' },
-  { id: 'acompanamientos', label: 'Papas & Acompañamientos', icon: '🍟' },
-  { id: 'bebidas', label: 'Bebidas', icon: '🥤' }
 ];
