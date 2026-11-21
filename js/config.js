@@ -6,9 +6,9 @@ window.COPE_CONFIG = {
   STORE_NAME: 'Cope Burgers',
   BRANCH_NAME: 'Puerto Madero',
   SLOGAN: 'El Auténtico Estilo Americano',
-  ADDRESS: 'Boulevard Macacha Güemes 260',
+  ADDRESS: 'Macacha Güemes 260',
   CITY: 'Puerto Madero, CABA',
-  MAPS_URL: 'https://maps.google.com/?q=Boulevard+Macacha+G%C3%BCemes+260,+Puerto+Madero,+Buenos+Aires',
+  MAPS_URL: 'https://www.google.com/maps/place/Cope+Burgers+Puerto+Madero+Cerveza+y+Hamburguesas/@-34.6049331,-58.3656348,200m/data=!3m1!1e3!4m14!1m7!3m6!1s0x95a3352e601809d3:0x8fcad99007320922!2sMacacha+G%C3%BCemes+260,+C1107+Cdad.+Aut%C3%B3noma+de+Buenos+Aires!3b1!8m2!3d-34.6049993!4d-58.364602!3m5!1s0x95a335b3d6abf36d:0xd054bc12d50e6384!8m2!3d-34.6049118!4d-58.3647468!16s%2Fg%2F11p2tcj8ky?entry=ttu',
 
   // Número de WhatsApp al que llegan los pedidos (formato internacional sin +)
   // Cope Burgers Puerto Madero: +54 9 11 7355-8077

@@ -23,6 +23,7 @@
     // Header & Meta
     storeTitle: document.getElementById('storeTitle'),
     storeAddress: document.getElementById('storeAddress'),
+    storeAddressLink: document.getElementById('storeAddressLink'),
     storeStatusBadge: document.getElementById('storeStatusBadge'),
     storeStatusText: document.getElementById('storeStatusText'),
     storeHoursText: document.getElementById('storeHoursText'),
@@ -159,6 +160,7 @@
   function renderStoreMeta() {
     if (els.storeTitle) els.storeTitle.textContent = CFG.STORE_NAME + ' · ' + CFG.BRANCH_NAME;
     if (els.storeAddress) els.storeAddress.textContent = CFG.ADDRESS + ', ' + CFG.CITY;
+    if (els.storeAddressLink && CFG.MAPS_URL) els.storeAddressLink.href = CFG.MAPS_URL;
     if (els.storeHoursText) els.storeHoursText.textContent = CFG.SCHEDULE.display;
 
     // Calcular si está abierto (Lunes a Domingos de 12:00 a 23:00 hs)
