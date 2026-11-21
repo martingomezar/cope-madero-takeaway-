@@ -882,7 +882,7 @@
 
         // Actualizar Hero
         els.heroAmount.textContent = formatMoney(latest.amount);
-        els.heroPayer.textContent = latest.payer_name;
+        els.heroPayer.textContent = latest.payer_name || 'Cliente';
         els.heroMethod.textContent = '💳 ' + latest.payment_method;
         els.heroId.textContent = 'ID: ' + latest.id;
 
@@ -908,7 +908,7 @@
               <div class="p-left">
                 <div class="p-icon">🍔</div>
                 <div class="p-info">
-                  <div class="p-name">${p.payer_name}</div>
+                  <div class="p-name">${p.payer_name || 'Cliente'}</div>
                   <div class="p-sub">
                     <span>${pHour}</span>
                     <span>·</span>

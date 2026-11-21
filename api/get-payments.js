@@ -31,12 +31,15 @@ export default async function handler(req, res) {
 
     const data = await mpRes.json();
     const results = (data.results || []).map((p) => {
-      let payerName = 'Cliente';
+      let payerName = '';
       if (p.payer) {
         const first = p.payer.first_name || '';
         const last = p.payer.last_name || '';
         payerName = (first + ' ' + last).trim();
         if (!payerName && p.payer.email) payerName = p.payer.email.split('@')[0];
+      }
+      if (!payerName) {
+        payerName = p.payment_type_id === 'bank_transfer' ? 'Transferencia Recibida' : 'Cliente Mercado Pago';
       }
 
       let methodLabel = p.payment_method_id || 'Mercado Pago';
