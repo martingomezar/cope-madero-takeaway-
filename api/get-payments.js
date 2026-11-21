@@ -22,7 +22,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const limit = Math.min(Number(req.query.limit) || 15, 30);
+    const limit = Math.min(Number(req.query.limit) || 30, 50);
     const mpUrl = `https://api.mercadopago.com/v1/payments/search?sort=date_created&criteria=desc&limit=${limit}`;
 
     const mpRes = await fetch(mpUrl, {
@@ -64,6 +64,7 @@ export default async function handler(req, res) {
         date_created: p.date_created,
         date_approved: p.date_approved,
         payer_name: payerName,
+        payment_type: p.payment_type_id || 'other',
         payment_method: methodLabel,
         description: p.description || p.external_reference || 'Venta Cope Burgers',
         order_id: p.external_reference || null

@@ -639,6 +639,136 @@
     }
 
     /* =========================================================================
+       BARRA DE FILTROS: FORMA DE PAGO Y HORARIO
+       ========================================================================= */
+    .caja-filter-bar {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .filter-group-label {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--text-muted);
+      min-width: 140px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .filter-chips {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      background: #1e293b;
+      border: 1px solid var(--border-color);
+      color: #94a3b8;
+      padding: 6px 14px;
+      border-radius: var(--radius-full);
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .chip:hover {
+      background: #27354f;
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .chip.active {
+      background: var(--cope-blue);
+      border-color: #3b82f6;
+      color: #ffffff;
+      box-shadow: 0 0 12px var(--cope-blue-glow);
+    }
+
+    .custom-time-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--border-color);
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 600;
+      flex-wrap: wrap;
+    }
+
+    .custom-time-box.hidden {
+      display: none !important;
+    }
+
+    .time-input {
+      background: #0a0e17;
+      border: 1px solid var(--border-color);
+      color: #ffffff;
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .time-input:focus {
+      border-color: var(--cope-blue);
+    }
+
+    .btn-apply-time {
+      background: var(--cope-blue);
+      border: 1px solid #3b82f6;
+      color: #ffffff;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-apply-time:hover {
+      background: #003691;
+    }
+
+    .filter-feedback-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      margin-left: 8px;
+    }
+
+    /* =========================================================================
        MODAL DE BLOQUEO DE TERMINAL (PIN PROTECTION)
        ========================================================================= */
     .terminal-lock-overlay {
@@ -896,12 +1026,48 @@
       </div>
     </div>
 
+    <!-- PANEL DE FILTROS: FORMA DE PAGO Y HORARIO -->
+    <div class="caja-filter-bar">
+      <!-- Filtro Forma de Pago -->
+      <div class="filter-group">
+        <span class="filter-group-label">💳 Medio de Pago:</span>
+        <div id="filterPayChips" class="filter-chips">
+          <button type="button" class="chip active" data-pay="all">Todos</button>
+          <button type="button" class="chip" data-pay="bank_transfer">📱 Transferencias (CBU/CVU)</button>
+          <button type="button" class="chip" data-pay="account_money">💵 Dinero en MP</button>
+          <button type="button" class="chip" data-pay="card">💳 Tarjetas</button>
+        </div>
+      </div>
+
+      <!-- Filtro Horario / Turno -->
+      <div class="filter-group">
+        <span class="filter-group-label">⏰ Horario / Turno:</span>
+        <div id="filterTimeChips" class="filter-chips">
+          <button type="button" class="chip active" data-time="all">Todo Hoy</button>
+          <button type="button" class="chip" data-time="1h">⏳ Última 1h</button>
+          <button type="button" class="chip" data-time="3h">⏳ Últimas 3h</button>
+          <button type="button" class="chip" data-time="lunch">☀️ Turno Mediodía (12 a 17h)</button>
+          <button type="button" class="chip" data-time="dinner">🌙 Turno Noche (19 a Cierre)</button>
+          <button type="button" class="chip" data-time="custom">🕒 Elegir Rango</button>
+        </div>
+      </div>
+
+      <!-- Rango Horario Personalizado (oculto por defecto) -->
+      <div id="customTimeBox" class="custom-time-box hidden">
+        <span>Filtrar entre:</span>
+        <label>Desde <input id="timeFrom" type="time" class="time-input" value="12:00" /></label>
+        <label>Hasta <input id="timeTo" type="time" class="time-input" value="23:59" /></label>
+        <button id="btnApplyTimeRange" type="button" class="btn-apply-time">Aplicar Rango</button>
+      </div>
+    </div>
+
     <!-- LISTA DE COBROS RECIENTES -->
     <div>
       <div class="history-header">
         <h2 class="history-title">
           <span>Movimientos Acreditados</span>
           <span id="historyCount" class="history-count">0 pagos</span>
+          <span id="filterFeedbackBadge" class="filter-feedback-badge" style="display:none;"></span>
         </h2>
         <span id="autoRefreshText" style="font-size:12px; color:var(--text-muted); font-weight:600;">Actualización cada 4s</span>
       </div>
@@ -940,6 +1106,13 @@
       let pollTimer = null;
       let alertDismissTimeout = null;
       let savedPin = localStorage.getItem('cope_caja_pin') || '';
+      let cachedPayments = [];
+      let activeFilters = {
+        payment: 'all',
+        time: 'all',
+        timeFrom: '12:00',
+        timeTo: '23:59'
+      };
 
       // Elementos DOM
       const els = {
@@ -965,6 +1138,13 @@
         pinInput: document.getElementById('pinInput'),
         lockErrorMsg: document.getElementById('lockErrorMsg'),
         btnUnlockTerminal: document.getElementById('btnUnlockTerminal'),
+        filterPayChips: document.getElementById('filterPayChips'),
+        filterTimeChips: document.getElementById('filterTimeChips'),
+        customTimeBox: document.getElementById('customTimeBox'),
+        timeFrom: document.getElementById('timeFrom'),
+        timeTo: document.getElementById('timeTo'),
+        btnApplyTimeRange: document.getElementById('btnApplyTimeRange'),
+        filterFeedbackBadge: document.getElementById('filterFeedbackBadge'),
         incomingAlertOverlay: document.getElementById('incomingAlertOverlay'),
         screenPulseBorder: document.getElementById('screenPulseBorder'),
         alertAmount: document.getElementById('alertAmount'),
@@ -1045,23 +1225,30 @@
         }, 2000);
       }
 
-      // Renderizar datos en pantalla
-      function renderDashboard(payments) {
-        if (!payments || !payments.length) {
+      // Aplicar filtros y renderizar datos en pantalla
+      function applyFiltersAndRender() {
+        if (!cachedPayments || !cachedPayments.length) {
           els.historyList.innerHTML = `
             <div class="empty-state">
               <div class="empty-state-icon">☕</div>
               <p>Aún no hay cobros registrados hoy en esta cuenta de Mercado Pago.</p>
             </div>
           `;
+          els.heroAmount.textContent = '$ 0';
+          els.heroPayer.textContent = 'Aguardando pagos de clientes...';
+          els.heroMethod.textContent = '💳 Método: —';
+          els.heroId.textContent = 'ID: —';
+          els.statTotalToday.textContent = '$ 0';
+          els.statCountToday.textContent = '0';
+          els.historyCount.textContent = '0 pagos';
+          els.filterFeedbackBadge.style.display = 'none';
           return;
         }
 
-        // Ordenar del más reciente al más antiguo
-        const sorted = payments.slice().sort((a, b) => new Date(b.date_created) - new Date(a.date_created));
+        const sorted = cachedPayments.slice().sort((a, b) => new Date(b.date_created) - new Date(a.date_created));
         const latest = sorted[0];
 
-        // Actualizar Hero
+        // Actualizar Hero con el más reciente
         els.heroAmount.textContent = formatMoney(latest.amount);
         els.heroPayer.textContent = latest.payer_name || 'Cliente';
         els.heroMethod.textContent = '💳 ' + latest.payment_method;
@@ -1071,23 +1258,96 @@
         const timeStr = dateObj.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) + ' hs';
         els.heroTimeAgo.textContent = `A las ${timeStr}`;
 
-        // Calcular Estadísticas
-        const approvedList = sorted.filter(p => p.status === 'approved');
-        const totalAmount = approvedList.reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
-        els.statTotalToday.textContent = formatMoney(totalAmount);
-        els.statCountToday.textContent = approvedList.length;
-        els.historyCount.textContent = `${sorted.length} pagos`;
+        // Métricas globales del día (totales sin filtrar)
+        const totalApprovedAll = sorted.filter(p => p.status === 'approved');
+        const sumAll = totalApprovedAll.reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
+        els.statTotalToday.textContent = formatMoney(sumAll);
+        els.statCountToday.textContent = totalApprovedAll.length;
+
+        // FILTRADO DINÁMICO
+        const now = new Date();
+        const filtered = sorted.filter((p) => {
+          // 1. Filtro Forma de Pago
+          if (activeFilters.payment !== 'all') {
+            const pType = (p.payment_type || '').toLowerCase();
+            const pMethod = (p.payment_method || '').toLowerCase();
+
+            if (activeFilters.payment === 'bank_transfer') {
+              if (pType !== 'bank_transfer' && !pMethod.includes('transferencia')) return false;
+            } else if (activeFilters.payment === 'account_money') {
+              if (pType !== 'account_money' && !pMethod.includes('cuenta')) return false;
+            } else if (activeFilters.payment === 'card') {
+              if (!pType.includes('card') && !pMethod.includes('tarjeta')) return false;
+            }
+          }
+
+          // 2. Filtro Horario
+          if (activeFilters.time !== 'all') {
+            const pDate = new Date(p.date_created);
+
+            if (activeFilters.time === '1h') {
+              if (pDate < new Date(now.getTime() - 60 * 60 * 1000)) return false;
+            } else if (activeFilters.time === '3h') {
+              if (pDate < new Date(now.getTime() - 3 * 60 * 60 * 1000)) return false;
+            } else if (activeFilters.time === 'lunch') {
+              const h = pDate.getHours();
+              if (h < 12 || h >= 17) return false;
+            } else if (activeFilters.time === 'dinner') {
+              const h = pDate.getHours();
+              if (h >= 4 && h < 19) return false;
+            } else if (activeFilters.time === 'custom') {
+              const pMinutes = pDate.getHours() * 60 + pDate.getMinutes();
+              const [fH, fM] = (activeFilters.timeFrom || '12:00').split(':').map(Number);
+              const [tH, tM] = (activeFilters.timeTo || '23:59').split(':').map(Number);
+              const fromMin = fH * 60 + fM;
+              const toMin = tH * 60 + tM;
+              if (pMinutes < fromMin || pMinutes > toMin) return false;
+            }
+          }
+
+          return true;
+        });
+
+        // Indicador de filtro activo
+        const isFiltered = activeFilters.payment !== 'all' || activeFilters.time !== 'all';
+        if (isFiltered) {
+          const filteredApproved = filtered.filter(p => p.status === 'approved');
+          const sumFiltered = filteredApproved.reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
+          els.filterFeedbackBadge.style.display = 'inline-flex';
+          els.filterFeedbackBadge.textContent = `Filtro: ${filtered.length} cobros (${formatMoney(sumFiltered)})`;
+          els.historyCount.textContent = `${filtered.length} de ${sorted.length} pagos`;
+        } else {
+          els.filterFeedbackBadge.style.display = 'none';
+          els.historyCount.textContent = `${sorted.length} pagos`;
+        }
+
+        if (!filtered.length) {
+          els.historyList.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">🔍</div>
+              <p>No se encontraron cobros que coincidan con los filtros aplicados.</p>
+            </div>
+          `;
+          return;
+        }
 
         // Renderizar Lista
-        els.historyList.innerHTML = sorted.map((p, idx) => {
+        els.historyList.innerHTML = filtered.map((p, idx) => {
           const pDate = new Date(p.date_created);
           const pHour = pDate.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) + ' hs';
-          const isLatest = idx === 0;
+          const isLatest = idx === 0 && !isFiltered;
+
+          let icon = '🍔';
+          const pType = (p.payment_type || '').toLowerCase();
+          const pMethod = (p.payment_method || '').toLowerCase();
+          if (pType.includes('transfer') || pMethod.includes('transferencia')) icon = '📱';
+          else if (pType.includes('card') || pMethod.includes('tarjeta')) icon = '💳';
+          else if (pType.includes('money') || pMethod.includes('cuenta')) icon = '💵';
 
           return `
             <div class="payment-row ${isLatest ? 'row-new' : ''}">
               <div class="p-left">
-                <div class="p-icon">🍔</div>
+                <div class="p-icon">${icon}</div>
                 <div class="p-info">
                   <div class="p-name">${p.payer_name || 'Cliente'}</div>
                   <div class="p-sub">
@@ -1115,7 +1375,7 @@
           const now = new Date();
           els.statLastCheck.textContent = now.toLocaleTimeString('es-AR');
 
-          const res = await fetch(`/api/get-payments?limit=15&pin=${encodeURIComponent(savedPin)}`, {
+          const res = await fetch(`/api/get-payments?limit=30&pin=${encodeURIComponent(savedPin)}`, {
             headers: { 'x-caja-pin': savedPin },
             cache: 'no-store'
           });
@@ -1149,8 +1409,9 @@
           // Guardar IDs conocidos
           payments.forEach(p => knownPaymentIds.add(p.id));
           isFirstLoad = false;
+          cachedPayments = payments;
 
-          renderDashboard(payments);
+          applyFiltersAndRender();
         } catch (err) {
           console.error('Fetch payments error:', err);
           els.liveStatusText.textContent = 'Reconectando...';
@@ -1258,6 +1519,45 @@
           description: 'Combo Clásica + Papas + Bebida'
         });
       });
+
+      // Filtros por Forma de Pago
+      if (els.filterPayChips) {
+        els.filterPayChips.addEventListener('click', (e) => {
+          const chip = e.target.closest('.chip');
+          if (!chip) return;
+          els.filterPayChips.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+          activeFilters.payment = chip.dataset.pay || 'all';
+          applyFiltersAndRender();
+        });
+      }
+
+      // Filtros por Horario / Turno
+      if (els.filterTimeChips) {
+        els.filterTimeChips.addEventListener('click', (e) => {
+          const chip = e.target.closest('.chip');
+          if (!chip) return;
+          els.filterTimeChips.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+          activeFilters.time = chip.dataset.time || 'all';
+
+          if (activeFilters.time === 'custom') {
+            els.customTimeBox.classList.remove('hidden');
+          } else {
+            els.customTimeBox.classList.add('hidden');
+          }
+          applyFiltersAndRender();
+        });
+      }
+
+      // Rango de horas personalizado
+      if (els.btnApplyTimeRange) {
+        els.btnApplyTimeRange.addEventListener('click', () => {
+          activeFilters.timeFrom = els.timeFrom.value || '12:00';
+          activeFilters.timeTo = els.timeTo.value || '23:59';
+          applyFiltersAndRender();
+        });
+      }
 
       // Inicialización: Verificar si ya está autorizada esta máquina
       if (savedPin) {
