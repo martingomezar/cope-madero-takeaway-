@@ -378,135 +378,241 @@ body.modal-open {
   pointer-events: none;
 }
 
-.veggie-banner-icon-wrap {
-  width: 54px;
-  height: 54px;
-  border-radius: 14px;
+/* ==========================================================================
+   BANNER DESTACADO: NOTBURGER® 95G (OFICIAL NOTCO)
+   ========================================================================== */
+.notco-banner-card {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 10px 25px -5px rgba(235, 0, 40, 0.22), 0 0 0 1.5px rgba(235, 0, 40, 0.18);
+  margin-bottom: 24px;
   background: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.9);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.notco-banner-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px -5px rgba(235, 0, 40, 0.3), 0 0 0 1.5px rgba(235, 0, 40, 0.35);
+}
+
+/* Parte superior roja oficial NotCo (#eb0028) */
+.notco-banner-top {
+  background: #eb0028;
+  color: #ffffff;
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  position: relative;
+  overflow: hidden;
+}
+
+.notco-banner-pack-wrap {
+  width: 95px;
+  height: 110px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px;
-  flex-shrink: 0;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
 }
 
-.notburger-banner-badge {
-  width: 100%;
-  height: 100%;
+.notco-banner-pack-img {
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
-  display: block;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.35));
+  transform: rotate(-3deg);
+  transition: transform 0.2s ease;
 }
 
-.notco-pill-cross {
-  width: 11px;
-  height: 11px;
-  color: #6ee7b7;
-  flex-shrink: 0;
+.notco-banner-card:hover .notco-banner-pack-img {
+  transform: rotate(0deg) scale(1.04);
 }
 
-.notburger-inline-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: #ffffff;
-  color: #000000;
-  padding: 1px 8px;
-  border-radius: 6px;
-  font-weight: 800;
-  font-size: 13.5px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
-  vertical-align: middle;
-}
-
-.notco-chip-cross {
-  width: 10px;
-  height: 10px;
-  color: #000000;
-}
-
-.notco-tag-cross {
-  width: 11px;
-  height: 11px;
-  color: #064e3b;
-  display: inline-block;
-  vertical-align: middle;
-  margin-right: 4px;
-}
-
-.veggie-banner-body {
+.notco-banner-top-info {
   flex: 1;
 }
 
-.veggie-banner-pill {
+.notco-brand-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.notco-brand-pill {
+  font-size: 11.5px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #ffffff;
+  border-bottom: 2px solid #ffffff;
+  padding-bottom: 1px;
+}
+
+.notco-brand-by {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  background: rgba(0, 0, 0, 0.3);
+  color: #ffffff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.notco-banner-title {
+  font-size: 26px;
+  font-weight: 900;
+  color: #000000;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  margin: 0 0 5px 0;
+  text-transform: uppercase;
+}
+
+.notco-banner-tagline {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #111827;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin: 0;
+  line-height: 1.35;
+}
+
+/* Parte inferior blanca con nutrición tachada y llamado de Cope */
+.notco-banner-bottom {
+  background: #ffffff;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.notco-banner-bottom-main {
+  flex: 1;
+}
+
+.notco-nutrition-strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.notco-nutrition-title {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #94a3b8;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Palabras tachadas con barra negra estilo oficial NotCo */
+.notco-strike-word {
+  position: relative;
+  display: inline-block;
+  color: #eb0028;
+  font-weight: 900;
+  font-size: 13.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.notco-strike-word::after {
+  content: '';
+  position: absolute;
+  left: -3px;
+  right: -3px;
+  top: 50%;
+  height: 3px;
+  background: #000000;
+  transform: translateY(-50%) rotate(-1deg);
+  border-radius: 1px;
+}
+
+.notco-protein-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #111827;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 11.5px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.03em;
+}
+
+.notco-banner-copy {
+  font-size: 14px;
+  color: #475569;
+  margin: 0;
+  line-height: 1.45;
+}
+
+.notco-banner-copy strong {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.notco-banner-cta-wrap {
+  flex-shrink: 0;
+}
+
+.btn-notco-filter {
+  background: #10b981;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 10px 18px;
+  border-radius: var(--radius-full);
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+  transition: all 0.15s ease;
+  white-space: nowrap;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(52, 211, 153, 0.22);
-  border: 1px solid rgba(52, 211, 153, 0.45);
-  color: #6ee7b7;
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 3px 10px;
-  border-radius: 999px;
-  margin-bottom: 6px;
 }
 
-.veggie-banner-text {
-  font-size: 14.5px;
-  line-height: 1.45;
-  color: #f0fdf4;
-  margin: 0;
-  font-weight: 500;
+.btn-notco-filter:hover {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.45);
 }
 
-.veggie-banner-text strong {
-  color: #ffffff;
-  font-weight: 800;
-}
-
-.veggie-banner-tag {
-  flex-shrink: 0;
-  display: none;
-}
-
-@media (min-width: 680px) {
-  .veggie-banner-tag {
-    display: block;
-    background: #10b981;
-    color: #064e3b;
-    font-size: 12px;
-    font-weight: 800;
-    padding: 7px 15px;
-    border-radius: 999px;
-    text-align: center;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    white-space: nowrap;
+@media (max-width: 640px) {
+  .notco-banner-top {
+    padding: 14px 16px;
+    gap: 14px;
   }
-}
-
-@media (max-width: 480px) {
-  .veggie-banner-card {
-    padding: 12px 14px;
-    gap: 12px;
-    margin-bottom: 16px;
+  .notco-banner-pack-wrap {
+    width: 72px;
+    height: 85px;
   }
-  .veggie-banner-icon-wrap {
-    width: 42px;
-    height: 42px;
-    padding: 3px;
-    border-radius: 11px;
+  .notco-banner-title {
+    font-size: 20px;
   }
-  .veggie-banner-pill {
-    font-size: 9.5px;
-    padding: 2px 8px;
+  .notco-banner-tagline {
+    font-size: 11.5px;
   }
-  .veggie-banner-text {
-    font-size: 13px;
-    line-height: 1.35;
+  .notco-banner-bottom {
+    padding: 14px 16px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .notco-banner-cta-wrap {
+    width: 100%;
+  }
+  .btn-notco-filter {
+    width: 100%;
+    justify-content: center;
   }
 }
 
@@ -1121,10 +1227,53 @@ body.modal-open {
   color: #14532d;
 }
 
-.notburger-modal-badge {
-  height: 22px;
-  width: auto;
-  object-fit: contain;
+.notco-modal-pill {
+  background: #166534;
+  color: #ffffff;
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.notco-modal-strikes {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.notco-strike-word-mini {
+  position: relative;
+  font-size: 11.5px;
+  font-weight: 900;
+  color: #eb0028;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.notco-strike-word-mini::after {
+  content: '';
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  top: 50%;
+  height: 2px;
+  background: #000000;
+  transform: translateY(-50%) rotate(-1deg);
+}
+
+.notco-protein-badge-mini {
+  font-size: 10.5px;
+  font-weight: 800;
+  background: #111827;
+  color: #ffffff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
 }
 
 .veggie-label-desc {

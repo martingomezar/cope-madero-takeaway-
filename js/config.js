@@ -32,9 +32,27 @@ window.COPE_CONFIG = {
 
   // Métodos de pago disponibles
   PAYMENT_METHODS: [
-    { id: 'transferencia', label: 'Mercado Pago / Transferencia (Alias)', icon: '📱' },
-    { id: 'efectivo', label: 'Efectivo al retirar en el local', icon: '💵' },
-    { id: 'tarjeta', label: 'Tarjeta Débito / Crédito al retirar', icon: '💳' }
+    {
+      id: 'mp_online',
+      label: 'Mercado Pago Online (Tarjetas / Dinero en cuenta · OK Automático)',
+      icon: '⚡',
+      badge: 'Recomendado'
+    },
+    {
+      id: 'transferencia',
+      label: 'Transferencia por Alias MP (Envío de comprobante)',
+      icon: '📱'
+    },
+    {
+      id: 'efectivo',
+      label: 'Efectivo al retirar en el local',
+      icon: '💵'
+    },
+    {
+      id: 'tarjeta',
+      label: 'Tarjeta Débito / Crédito al retirar',
+      icon: '💳'
+    }
   ],
 
   // Alias Mercado Pago del local para mostrar al cliente

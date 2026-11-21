@@ -155,6 +155,12 @@
     const user = getSavedUserData();
     if (user.name) els.checkoutName.value = user.name;
     if (user.phone) els.checkoutPhone.value = user.phone;
+
+    // Detectar retorno de Mercado Pago
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('payment') === 'success') {
+      showToast('🎉 ¡Pago Acreditado con Éxito en Mercado Pago! Tu pedido ya está confirmado.');
+    }
   }
 
   function renderStoreMeta() {
@@ -189,7 +195,9 @@
       const isActive = cat.id === currentCategory;
       const count = cat.id === 'todas'
         ? PRODUCTS.length
-        : PRODUCTS.filter((p) => p.category === cat.id).length;
+        : (cat.id === 'veggie'
+            ? PRODUCTS.filter((p) => p.hasVeggieOption).length
+            : PRODUCTS.filter((p) => p.category === cat.id).length);
 
       return `
         <button type="button" class="category-pill ${isActive ? 'active' : ''}" data-category="${cat.id}">
@@ -214,8 +222,10 @@
 
     let filtered = PRODUCTS.slice();
 
-    // Filtro por categoría
-    if (currentCategory !== 'todas') {
+    // Filtro por categoría (soporte para categoría veggie)
+    if (currentCategory === 'veggie') {
+      filtered = filtered.filter((p) => p.hasVeggieOption);
+    } else if (currentCategory !== 'todas') {
       filtered = filtered.filter((p) => p.category === currentCategory);
     }
 
@@ -733,6 +743,55 @@
 
     msg += `\n_Pedido generado desde la web de Cope Burgers Puerto Madero_`;
 
+    if (payMethodId === 'mp_online') {
+      const orderId = `COPE-${Date.now().toString().slice(-6)}`;
+      els.btnSubmitOrder.disabled = true;
+      els.btnSubmitOrder.textContent = 'Generando cobro seguro en Mercado Pago...';
+
+      fetch('/api/create-preference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items,
+          customer: { name, phone },
+          pickupTime: pickupTimeStr,
+          notes,
+          orderId
+        })
+      })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.init_point) {
+          msg += `💳 *Estado:* Cobro online Mercado Pago Checkout Pro\n`;
+          msg += `🆔 *Referencia:* ${orderId}\n`;
+          const waUrl = `https://wa.me/${CFG.WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
+          lastGeneratedWaUrl = waUrl;
+
+          showToast('✓ Redirigiendo a Mercado Pago para abonar...');
+          Cart.clearCart();
+          closeCheckoutModal();
+          window.location.href = data.init_point;
+        } else {
+          showToast('Aviso: MP Online requiere configurar MP_ACCESS_TOKEN. Podés abonar por Alias.');
+          els.btnSubmitOrder.disabled = false;
+          els.btnSubmitOrder.textContent = 'Confirmar y Enviar Pedido por WhatsApp →';
+          finishWhatsappOrder(name, pickupTimeStr, total, msg);
+        }
+      })
+      .catch((err) => {
+        console.error('Error al conectar con Mercado Pago:', err);
+        showToast('Conectando por WhatsApp para coordinar pago...');
+        els.btnSubmitOrder.disabled = false;
+        els.btnSubmitOrder.textContent = 'Confirmar y Enviar Pedido por WhatsApp →';
+        finishWhatsappOrder(name, pickupTimeStr, total, msg);
+      });
+      return;
+    }
+
+    finishWhatsappOrder(name, pickupTimeStr, total, msg);
+  }
+
+  function finishWhatsappOrder(name, pickupTimeStr, total, msg) {
     const waUrl = `https://wa.me/${CFG.WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
     lastGeneratedWaUrl = waUrl;
 
@@ -786,6 +845,16 @@
 
     els.btnGoToCheckout.addEventListener('click', openCheckoutModal);
     els.btnCloseCheckout.addEventListener('click', closeCheckoutModal);
+
+    const btnVeggie = document.getElementById('btnFilterVeggieBanner');
+    if (btnVeggie) {
+      btnVeggie.addEventListener('click', () => {
+        currentCategory = 'veggie';
+        renderCategories();
+        renderProducts();
+        if (els.productsGrid) els.productsGrid.scrollIntoView({ behavior: 'smooth' });
+      });
+    }
     els.checkoutModalBackdrop.addEventListener('click', (e) => {
       if (e.target === els.checkoutModalBackdrop) closeCheckoutModal();
     });

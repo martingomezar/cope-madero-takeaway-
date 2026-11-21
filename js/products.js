@@ -16,6 +16,7 @@ window.COPE_CATEGORIES = [
   { id: 'simples', label: 'Burgers Simples', icon: '🍔' },
   { id: 'dobles', label: 'Burgers Dobles', icon: '🍔🍔' },
   { id: 'combos', label: 'Combos con Bebida', icon: '🍟🥤' },
+  { id: 'veggie', label: 'Not Burger 🌱', icon: '🌱' },
   { id: 'acompanamientos', label: 'Papas Fritas', icon: '🍟' },
   { id: 'bebidas', label: 'Bebidas', icon: '🥤' }
 ];
