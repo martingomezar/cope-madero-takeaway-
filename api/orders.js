@@ -125,7 +125,7 @@ export default async function handler(req, res) {
       });
 
       try {
-        const ntfyRes = await fetch(`https://ntfy.sh/${NTFY_TOPIC}/json?poll=1&since=24h`, {
+        const ntfyRes = await fetch(`https://ntfy.sh/${NTFY_TOPIC}/json?poll=1&since=all`, {
           cache: 'no-store'
         });
         if (ntfyRes.ok) {
