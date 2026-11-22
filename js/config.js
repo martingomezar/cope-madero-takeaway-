@@ -51,7 +51,7 @@ window.COPE_CONFIG = {
   ],
 
   // Alias Mercado Pago del local para mostrar al cliente
-  ALIAS_MP: 'cope.madero.mp',
+  ALIAS_MP: 'copemadero.mp',
 
   // Símbolo de moneda
   CURRENCY: '$'

@@ -1124,7 +1124,7 @@
     if (els.successTransferBox) {
       els.successTransferBox.style.display = order.payment_method === 'transferencia' ? 'block' : 'none';
       if (els.successAliasText) {
-        els.successAliasText.textContent = CFG.ALIAS_MP || 'cope.madero.mp';
+        els.successAliasText.textContent = CFG.ALIAS_MP || 'copemadero.mp';
       }
     }
 
@@ -1301,7 +1301,7 @@
 
     if (els.btnCopyAlias) {
       els.btnCopyAlias.addEventListener('click', () => {
-        const alias = (els.successAliasText && els.successAliasText.textContent) || 'cope.madero.mp';
+        const alias = (els.successAliasText && els.successAliasText.textContent) || 'copemadero.mp';
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(alias).then(() => {
             els.btnCopyAlias.textContent = '✓ Copiado';
