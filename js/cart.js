@@ -12,6 +12,10 @@ window.CopeCart = (function () {
       const raw = localStorage.getItem(STORAGE_KEY);
       items = raw ? JSON.parse(raw) : [];
       if (!Array.isArray(items)) items = [];
+      items.forEach((i) => {
+        if (!i.id && i.productId) i.id = i.productId;
+        if (!i.productId && i.id) i.productId = i.id;
+      });
     } catch (e) {
       items = [];
     }
@@ -81,6 +85,7 @@ window.CopeCart = (function () {
     } else {
       items.push({
         key,
+        id: product.id,
         productId: product.id,
         name: product.name,
         category: product.category,

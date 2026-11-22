@@ -32,46 +32,45 @@ export default async function handler(req, res) {
     const cleanAddress = dropoff_address.trim();
     const cleanZone = (neighborhood || '').trim().toLowerCase();
 
-    // 1. INTENTO DE COTIZACIÓN VÍA UBER DIRECT API OFICIAL (si los scopes estuvieran autorizados)
+    // 1. INTENTO DE COTIZACIÓN VÍA UBER DIRECT API OFICIAL (si las variables de entorno están activadas)
     let uberApiResponse = null;
-    const clientId = process.env.UBER_CLIENT_ID || 'xzzviRfT349OiGCn_0tumto4Y00xRGTR';
-    const clientSecret = process.env.UBER_CLIENT_SECRET || 'EUKDIw-7k5TN32CV52-EZwzmFLvgDZyNJcsj3juI';
+    const clientId = process.env.UBER_CLIENT_ID;
+    const clientSecret = process.env.UBER_CLIENT_SECRET;
 
-    try {
-      // Intentar obtener token de Uber
-      const authParams = new URLSearchParams();
-      authParams.append('client_id', clientId);
-      authParams.append('client_secret', clientSecret);
-      authParams.append('grant_type', 'client_credentials');
-      authParams.append('scope', 'eats.deliveries');
+    if (clientId && clientSecret) {
+      try {
+        const authParams = new URLSearchParams();
+        authParams.append('client_id', clientId);
+        authParams.append('client_secret', clientSecret);
+        authParams.append('grant_type', 'client_credentials');
+        authParams.append('scope', 'eats.deliveries');
 
-      const tokenRes = await fetch('https://auth.uber.com/oauth/v2/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: authParams.toString()
-      });
-
-      if (tokenRes.ok) {
-        const tokenData = await tokenRes.json();
-        // Si Uber devuelve token válido, intentamos cotizar
-        const quoteRes = await fetch('https://api.uber.com/v1/deliveries/quote', {
+        const tokenRes = await fetch('https://auth.uber.com/oauth/v2/token', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${tokenData.access_token}`
-          },
-          body: JSON.stringify({
-            pickup_address: STORE_ORIGIN.address,
-            dropoff_address: cleanAddress + ', CABA, Argentina'
-          })
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: authParams.toString()
         });
-        if (quoteRes.ok) {
-          uberApiResponse = await quoteRes.json();
+
+        if (tokenRes.ok) {
+          const tokenData = await tokenRes.json();
+          const quoteRes = await fetch('https://api.uber.com/v1/deliveries/quote', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${tokenData.access_token}`
+            },
+            body: JSON.stringify({
+              pickup_address: STORE_ORIGIN.address,
+              dropoff_address: cleanAddress + ', CABA, Argentina'
+            })
+          });
+          if (quoteRes.ok) {
+            uberApiResponse = await quoteRes.json();
+          }
         }
+      } catch (e) {
+        console.warn('Uber Direct API standby, usando cotizador inteligente CABA:', e.message);
       }
-    } catch (e) {
-      // Si la API oficial de Uber aún está pendiente de activación corporativa, seguimos con el cotizador inteligente
-      console.warn('Uber Direct API standby, usando cotizador Uber Flash CABA:', e.message);
     }
 
     // 2. MATRIZ DE TARIFAS REALES DE UBER MOTO / FLASH EN CABA (desde Macacha Güemes 260)
@@ -145,12 +144,17 @@ export default async function handler(req, res) {
     const finalFee = (uberApiResponse && uberApiResponse.fee) ? uberApiResponse.fee : calculatedFee;
     const finalEta = (uberApiResponse && uberApiResponse.duration) ? `${uberApiResponse.duration} min` : etaMinutes;
 
-    // Enlace directo universal para abrir Uber con la comanda y direcciones ya cargadas
-    const uberDeeplink = `https://m.uber.com/looking?pickup=${encodeURIComponent(STORE_ORIGIN.address)}&dropoff=${encodeURIComponent(cleanAddress + ', CABA')}`;
+    // Enlace directo universal para abrir Uber específicamente en modo ENVÍOS / PAQUETE (Flash)
+    // Con origen de recogida fijo en Cope Burgers Puerto Madero (Macacha Güemes 260)
+    const publicAppId = clientId || 'xzzviRFT349OiGCn_0tumto4Y00xRGTR';
+    const pickupFormatted = encodeURIComponent(STORE_ORIGIN.address);
+    const dropoffFormatted = encodeURIComponent(`${cleanAddress}, CABA, Argentina`);
+    const uberPackageDeeplink = `https://m.uber.com/ul/?client_id=${publicAppId}&action=setPickup&pickup[formatted_address]=${pickupFormatted}&pickup[latitude]=${STORE_ORIGIN.lat}&pickup[longitude]=${STORE_ORIGIN.lng}&pickup[nickname]=${encodeURIComponent(STORE_ORIGIN.name)}&dropoff[formatted_address]=${dropoffFormatted}&product_id=package`;
+    const uberWebUrl = `https://m.uber.com/looking?pickup=${pickupFormatted}&dropoff=${dropoffFormatted}&category=package`;
 
     return res.status(200).json({
       ok: true,
-      service: 'Uber Moto / Flash',
+      service: 'Uber Flash / Envíos',
       provider: 'Uber',
       pickup: STORE_ORIGIN,
       dropoff: {
@@ -160,7 +164,8 @@ export default async function handler(req, res) {
       fee: finalFee,
       currency: 'ARS',
       eta: finalEta,
-      uberDeeplink
+      uberDeeplink: uberPackageDeeplink,
+      uberWebUrl
     });
   } catch (err) {
     console.error('Error in quote-uber:', err);

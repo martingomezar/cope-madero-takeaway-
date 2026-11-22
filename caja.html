@@ -1059,6 +1059,390 @@
       border-color: #ef4444;
       color: #ef4444;
     }
+
+    /* =========================================================================
+       TABS PRINCIPALES (COMANDAS COCINA VS COBROS MP)
+       ========================================================================= */
+    .caja-main-tabs {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      background: #1e293b;
+      border: 1px solid var(--border-color);
+      color: #94a3b8;
+      padding: 10px 18px;
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .tab-btn:hover {
+      background: #27354f;
+      color: #ffffff;
+    }
+
+    .tab-btn.active {
+      background: var(--cope-blue);
+      border-color: #3b82f6;
+      color: #ffffff;
+      box-shadow: 0 4px 16px var(--cope-blue-glow);
+    }
+
+    .tab-badge {
+      background: rgba(0, 0, 0, 0.4);
+      color: #ffffff;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .tab-btn.active .tab-badge {
+      background: #ffffff;
+      color: var(--cope-blue);
+    }
+
+    .btn-refresh {
+      margin-left: auto;
+      background: #1e293b;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 9px 14px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-refresh:hover {
+      background: #334155;
+    }
+
+    /* KDS CARDS GRID */
+    .kds-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 16px;
+      margin-top: 14px;
+    }
+
+    .kds-card {
+      background: var(--bg-card);
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .kds-card.status-recibido {
+      border-color: #f59e0b;
+      background: linear-gradient(180deg, rgba(245, 158, 11, 0.08) 0%, var(--bg-card) 60px);
+    }
+
+    .kds-card.status-preparando {
+      border-color: #3b82f6;
+      background: linear-gradient(180deg, rgba(59, 130, 246, 0.08) 0%, var(--bg-card) 60px);
+    }
+
+    .kds-card.status-listo {
+      border-color: #10b981;
+      background: linear-gradient(180deg, rgba(16, 185, 129, 0.08) 0%, var(--bg-card) 60px);
+    }
+
+    .kds-card.status-entregado {
+      border-color: var(--border-color);
+      opacity: 0.65;
+    }
+
+    .kds-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px dashed var(--border-color);
+    }
+
+    .kds-order-id {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 17px;
+      font-weight: 900;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .kds-timer-badge {
+      font-size: 11.5px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: var(--radius-full);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .timer-ok {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .timer-warn {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .timer-alert {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      animation: pulseDot 1s infinite;
+    }
+
+    .kds-customer-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 13px;
+      color: #cbd5e1;
+    }
+
+    .kds-customer-name {
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    .kds-type-pill {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: var(--radius-full);
+      text-transform: uppercase;
+    }
+
+    .pill-takeaway {
+      background: rgba(168, 85, 247, 0.15);
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.35);
+    }
+
+    .pill-delivery {
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+    }
+
+    .kds-delivery-address-box {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 12.5px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .kds-items-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .kds-item-line {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding-bottom: 8px;
+    }
+
+    .kds-item-line:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .kds-item-title {
+      font-size: 14.5px;
+      font-weight: 800;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .kds-item-qty {
+      background: var(--cope-blue);
+      color: #ffffff;
+      font-size: 11.5px;
+      font-weight: 900;
+      padding: 2px 7px;
+      border-radius: 6px;
+    }
+
+    .kds-tags-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-left: 24px;
+    }
+
+    .tag-kds-veggie {
+      background: #064e3b;
+      color: #6ee7b7;
+      border: 1px solid #10b981;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .tag-kds-extra {
+      background: #78350f;
+      color: #fde68a;
+      border: 1px solid #f59e0b;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .tag-kds-drink {
+      background: #1e293b;
+      color: #93c5fd;
+      border: 1px solid #3b82f6;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .kds-item-note {
+      background: rgba(245, 158, 11, 0.12);
+      border-left: 3px solid #f59e0b;
+      color: #fde68a;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 24px;
+    }
+
+    .kds-actions-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+
+    .btn-kds-status {
+      flex: 1;
+      padding: 9px 12px;
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: 12.5px;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-family: inherit;
+    }
+
+    .btn-status-cook {
+      background: #1e3a8a;
+      color: #93c5fd;
+      border: 1px solid #3b82f6;
+    }
+    .btn-status-cook:hover {
+      background: #2563eb;
+      color: #ffffff;
+    }
+
+    .btn-status-ready {
+      background: #064e3b;
+      color: #6ee7b7;
+      border: 1px solid #10b981;
+    }
+    .btn-status-ready:hover {
+      background: #059669;
+      color: #ffffff;
+    }
+
+    .btn-status-done {
+      background: #1e293b;
+      color: #94a3b8;
+      border: 1px solid var(--border-color);
+    }
+    .btn-status-done:hover {
+      background: #334155;
+      color: #ffffff;
+    }
+
+    .btn-kds-print {
+      background: #1e293b;
+      border: 1px solid var(--border-color);
+      color: #cbd5e1;
+      padding: 9px 12px;
+      border-radius: 10px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    @media print {
+      body * {
+        visibility: hidden !important;
+      }
+      #ticketPrintArea, #ticketPrintArea * {
+        visibility: visible !important;
+      }
+      #ticketPrintArea {
+        display: block !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 72mm;
+        margin: 0;
+        padding: 4mm;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 12px;
+        color: #000000;
+        background: #ffffff;
+      }
+    }
   </style>
 </head>
 <body>
@@ -1142,8 +1526,50 @@
   <!-- CONTENIDO CAJA -->
   <main class="caja-container">
 
-    <!-- HERO CARD: ÚLTIMO INGRESO -->
-    <section id="heroCard" class="hero-last-payment">
+    <!-- TABS PRINCIPALES DE CAJA / COCINA -->
+    <nav class="caja-main-tabs">
+      <button id="tabBtnKds" type="button" class="tab-btn active">
+        <span>📋 Comandas Cocina (KDS)</span>
+        <span id="badgeKdsCount" class="tab-badge">0</span>
+      </button>
+      <button id="tabBtnPayments" type="button" class="tab-btn">
+        <span>💳 Cobros Mercado Pago</span>
+        <span id="badgePaymentsCount" class="tab-badge">0</span>
+      </button>
+      <button id="btnRefreshAll" type="button" class="btn-refresh" title="Actualizar datos ahora">
+        <span>↻ Actualizar</span>
+      </button>
+    </nav>
+
+    <!-- SECCIÓN 1: VISTA KDS COMANDAS DE COCINA -->
+    <section id="kdsViewSection">
+      <div class="caja-filter-bar" style="margin-bottom:14px;">
+        <div class="filter-group">
+          <span class="filter-group-label">📋 Filtro KDS:</span>
+          <div id="kdsFilterChips" class="filter-chips">
+            <button type="button" class="chip active" data-kds-filter="active">⚡ Activos (En cocina)</button>
+            <button type="button" class="chip" data-kds-filter="recibido">🟡 Recibidos</button>
+            <button type="button" class="chip" data-kds-filter="preparando">👨‍🍳 En Preparación</button>
+            <button type="button" class="chip" data-kds-filter="listo">🛎️ Listos</button>
+            <button type="button" class="chip" data-kds-filter="delivery" style="border-color:rgba(56,189,248,0.4); color:#38bdf8;">🛵 Solo Delivery Uber</button>
+            <button type="button" class="chip" data-kds-filter="takeaway">🛍️ Solo Take Away</button>
+            <button type="button" class="chip" data-kds-filter="all">Todos</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="kdsTicketsGrid" class="kds-grid">
+        <div class="empty-state" style="grid-column: 1 / -1;">
+          <div class="empty-state-icon">👨‍🍳</div>
+          <p>Cargando comandas en cocina...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 2: VISTA MONITOR DE COBROS MERCADO PAGO -->
+    <section id="paymentsViewSection" style="display:none;">
+      <!-- HERO CARD: ÚLTIMO INGRESO -->
+      <section id="heroCard" class="hero-last-payment">
       <div class="hero-tag">
         <span>⚡ Último Cobro Verificado</span>
         <span>·</span>
@@ -1257,9 +1683,12 @@
           <p>Conectando con la cuenta de Mercado Pago de Cope Burgers...</p>
         </div>
       </div>
-    </div>
+    </section>
 
   </main>
+
+  <!-- ÁREA DE IMPRESIÓN DE COMANDAS TÉRMICAS 80MM (OCULTO EN PANTALLA, ACTIVO EN PRINT) -->
+  <div id="ticketPrintArea" style="display:none;"></div>
 
   <!-- OVERLAY DE ANIMACIÓN ÉPICA AL ENTRAR PAGO -->
   <div id="incomingAlertOverlay" class="incoming-alert-overlay">
@@ -1281,13 +1710,18 @@
       // Estado
       let soundEnabled = true;
       let knownPaymentIds = new Set();
+      let knownOrderIds = new Set();
       let isFirstLoad = true;
       let pollTimer = null;
       let alertDismissTimeout = null;
       let savedPin = localStorage.getItem('cope_caja_pin') || '';
       let allPaymentsMap = new Map();
       let cachedPayments = [];
+      let cachedOrders = [];
       let lastRenderedFingerprint = '';
+      let isFetching = false;
+      let activeMainTab = 'kds';
+      let kdsFilter = 'active';
       let activeFilters = {
         payment: 'all',
         time: 'all',
@@ -1298,6 +1732,19 @@
 
       // Elementos DOM
       const els = {
+        // Tabs y Vistas
+        tabBtnKds: document.getElementById('tabBtnKds'),
+        tabBtnPayments: document.getElementById('tabBtnPayments'),
+        badgeKdsCount: document.getElementById('badgeKdsCount'),
+        badgePaymentsCount: document.getElementById('badgePaymentsCount'),
+        btnRefreshAll: document.getElementById('btnRefreshAll'),
+        kdsViewSection: document.getElementById('kdsViewSection'),
+        paymentsViewSection: document.getElementById('paymentsViewSection'),
+        kdsFilterChips: document.getElementById('kdsFilterChips'),
+        kdsTicketsGrid: document.getElementById('kdsTicketsGrid'),
+        ticketPrintArea: document.getElementById('ticketPrintArea'),
+
+        // Monitor de Cobros MP
         heroCard: document.getElementById('heroCard'),
         heroAmount: document.getElementById('heroAmount'),
         heroPayer: document.getElementById('heroPayer'),
@@ -1340,6 +1787,17 @@
         btnDismissAlert: document.getElementById('btnDismissAlert')
       };
 
+      // Sanitizar strings para prevenir Stored XSS
+      function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
       // Formatear Dinero
       function formatMoney(amount) {
         return '$ ' + Number(amount || 0).toLocaleString('es-AR');
@@ -1353,42 +1811,86 @@
                d1.getDate() === d2.getDate();
       }
 
-      // Sonido de Caja Registradora / Campana usando Web Audio API
+      // Singleton de AudioContext para evitar límites de instancias en Chrome/Safari
+      let audioCtxInstance = null;
+      function getAudioContext() {
+        try {
+          if (!audioCtxInstance) {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (AudioContextClass) {
+              audioCtxInstance = new AudioContextClass();
+            }
+          }
+          if (audioCtxInstance && audioCtxInstance.state === 'suspended') {
+            audioCtxInstance.resume();
+          }
+          return audioCtxInstance;
+        } catch (e) {
+          console.warn('AudioContext no soportado:', e);
+          return null;
+        }
+      }
+
+      // Sonido de Caja Registradora / Campana Web Audio API
       function playCashSound() {
         if (!soundEnabled) return;
         try {
-          const AudioContext = window.AudioContext || window.webkitAudioContext;
-          if (!AudioContext) return;
-          const ctx = new AudioContext();
+          const ctx = getAudioContext();
+          if (!ctx) return;
+          const now = ctx.currentTime;
 
           // Tono 1: Campana alta brillante
           const osc1 = ctx.createOscillator();
           const gain1 = ctx.createGain();
           osc1.type = 'triangle';
-          osc1.frequency.setValueAtTime(987.77, ctx.currentTime);
-          osc1.frequency.exponentialRampToValueAtTime(1318.51, ctx.currentTime + 0.1);
-          gain1.gain.setValueAtTime(0.3, ctx.currentTime);
-          gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+          osc1.frequency.setValueAtTime(987.77, now);
+          osc1.frequency.exponentialRampToValueAtTime(1318.51, now + 0.1);
+          gain1.gain.setValueAtTime(0.3, now);
+          gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
           osc1.connect(gain1);
           gain1.connect(ctx.destination);
-          osc1.start();
-          osc1.stop(ctx.currentTime + 0.8);
+          osc1.start(now);
+          osc1.stop(now + 0.8);
 
           // Tono 2: Timbre armónico
           const osc2 = ctx.createOscillator();
           const gain2 = ctx.createGain();
           osc2.type = 'sine';
-          osc2.frequency.setValueAtTime(1567.98, ctx.currentTime + 0.08);
-          osc2.frequency.exponentialRampToValueAtTime(2093.00, ctx.currentTime + 0.2);
-          gain2.gain.setValueAtTime(0, ctx.currentTime);
-          gain2.gain.setValueAtTime(0.35, ctx.currentTime + 0.08);
-          gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2);
+          osc2.frequency.setValueAtTime(1567.98, now + 0.08);
+          osc2.frequency.exponentialRampToValueAtTime(2093.00, now + 0.2);
+          gain2.gain.setValueAtTime(0, now);
+          gain2.gain.setValueAtTime(0.35, now + 0.08);
+          gain2.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
           osc2.connect(gain2);
           gain2.connect(ctx.destination);
-          osc2.start(ctx.currentTime + 0.08);
-          osc2.stop(ctx.currentTime + 1.2);
+          osc2.start(now + 0.08);
+          osc2.stop(now + 1.2);
         } catch (e) {
-          console.warn('AudioContext error:', e);
+          console.warn('Audio error:', e);
+        }
+      }
+
+      // Campana de Cocina para Nuevos Pedidos KDS
+      function playKitchenBell() {
+        if (!soundEnabled) return;
+        try {
+          const ctx = getAudioContext();
+          if (!ctx) return;
+          const now = ctx.currentTime;
+
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(880, now); // Nota La5
+          osc.frequency.setValueAtTime(1174.66, now + 0.12); // Nota Re6
+          gain.gain.setValueAtTime(0.4, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 1.0);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 1.0);
+        } catch (e) {
+          console.warn('Kitchen bell audio error:', e);
         }
       }
 
@@ -1398,8 +1900,8 @@
 
         // Mostrar overlay
         els.alertAmount.textContent = formatMoney(payment.amount);
-        els.alertPayer.textContent = payment.payer_name || 'Cliente';
-        els.alertMethod.textContent = (payment.payment_method || 'Mercado Pago') + (payment.description ? ' · ' + payment.description : '');
+        els.alertPayer.textContent = escapeHtml(payment.payer_name || 'Cliente');
+        els.alertMethod.textContent = escapeHtml((payment.payment_method || 'Mercado Pago') + (payment.description ? ' · ' + payment.description : ''));
         
         els.incomingAlertOverlay.classList.add('active');
         els.screenPulseBorder.classList.add('active');
@@ -1420,7 +1922,287 @@
         }, 2000);
       }
 
-      // Aplicar filtros y renderizar datos en pantalla
+      // =========================================================================
+      // RENDERIZADO DEL KITCHEN DISPLAY SYSTEM (KDS)
+      // =========================================================================
+      function renderKds() {
+        if (!els.kdsTicketsGrid) return;
+
+        // Actualizar badge de comandas activas
+        const activeKdsOrders = cachedOrders.filter(o => o.kitchen_status !== 'entregado');
+        if (els.badgeKdsCount) {
+          els.badgeKdsCount.textContent = activeKdsOrders.length;
+        }
+
+        // Filtrar según botón seleccionado
+        const filteredOrders = cachedOrders.filter(o => {
+          if (kdsFilter === 'active') return o.kitchen_status !== 'entregado';
+          if (kdsFilter === 'recibido') return o.kitchen_status === 'recibido';
+          if (kdsFilter === 'preparando') return o.kitchen_status === 'preparando';
+          if (kdsFilter === 'listo') return o.kitchen_status === 'listo';
+          if (kdsFilter === 'delivery') return o.order_type === 'delivery';
+          if (kdsFilter === 'takeaway') return o.order_type !== 'delivery';
+          return true; // 'all'
+        });
+
+        if (!filteredOrders.length) {
+          els.kdsTicketsGrid.innerHTML = `
+            <div class="empty-state" style="grid-column: 1 / -1;">
+              <div class="empty-state-icon">🍔</div>
+              <p>No hay comandas que coincidan con el filtro actual (${escapeHtml(kdsFilter)}).</p>
+            </div>
+          `;
+          return;
+        }
+
+        const now = Date.now();
+        els.kdsTicketsGrid.innerHTML = filteredOrders.map(o => {
+          const createdTime = new Date(o.created_at || now).getTime();
+          const minsElapsed = Math.max(0, Math.floor((now - createdTime) / 60000));
+          
+          let timerClass = 'timer-ok';
+          if (minsElapsed >= 30) timerClass = 'timer-alert';
+          else if (minsElapsed >= 15) timerClass = 'timer-warn';
+
+          const isDelivery = o.order_type === 'delivery';
+          const statusClass = 'status-' + (o.kitchen_status || 'recibido');
+
+          // URL para despacho Uber Flash pre-cargado
+          let uberDispatchHtml = '';
+          if (isDelivery && o.delivery && o.delivery.address) {
+            const originUber = encodeURIComponent('Macacha Güemes 260, Puerto Madero, CABA (Cope Burgers)');
+            const destUber = encodeURIComponent(o.delivery.address + (o.delivery.apartment ? ` (${o.delivery.apartment})` : '') + ', CABA');
+            const uberLink = `https://m.uber.com/looking?pickup=${originUber}&dropoff=${destUber}&product_id=package&category=package`;
+            
+            uberDispatchHtml = `
+              <div class="kds-delivery-address-box">
+                <div style="font-weight:700; color:#38bdf8; display:flex; align-items:center; justify-content:space-between;">
+                  <span>📍 Dirección de Envío:</span>
+                  <span style="font-size:11px; color:#94a3b8;">${escapeHtml(o.delivery.eta || '25-35 min')}</span>
+                </div>
+                <div style="font-size:13px; font-weight:800; color:#ffffff;">
+                  ${escapeHtml(o.delivery.address)} ${o.delivery.apartment ? `<span style="color:#cbd5e1; font-weight:600;">(${escapeHtml(o.delivery.apartment)})</span>` : ''}
+                </div>
+                <div style="margin-top:4px;">
+                  <a href="${uberLink}" target="_blank" rel="noopener noreferrer" class="btn-uber-dispatch" title="Pedir moto Uber Flash con retiro en Macacha Güemes 260">
+                    <span>🛵 Despachar Moto Uber Flash</span> ➔
+                  </a>
+                </div>
+              </div>
+            `;
+          }
+
+          // Items de comida
+          const itemsHtml = (o.items || []).map(it => `
+            <div class="kds-item-line">
+              <div class="kds-item-title">
+                <span class="kds-item-qty">${Number(it.quantity) || 1}x</span>
+                <span>${escapeHtml(it.name || it.id)}</span>
+                ${it.variantLabel ? `<span style="font-size:12px; color:#94a3b8; font-weight:600;">(${escapeHtml(it.variantLabel)})</span>` : ''}
+              </div>
+              <div class="kds-tags-row">
+                ${it.isVeggie ? `<span class="tag-kds-veggie">🌱 NotCo Veggie</span>` : ''}
+                ${it.hasExtraMeat ? `<span class="tag-kds-extra">🥩 +Extra Carne</span>` : ''}
+                ${it.drinkChoice ? `<span class="tag-kds-drink">🥤 ${escapeHtml(it.drinkChoice)}</span>` : ''}
+              </div>
+              ${it.notes ? `<div class="kds-item-note">📝 ${escapeHtml(it.notes)}</div>` : ''}
+            </div>
+          `).join('');
+
+          // Botones de acción según estado
+          let actionsHtml = '';
+          const currentStatus = o.kitchen_status || 'recibido';
+          if (currentStatus === 'recibido') {
+            actionsHtml = `
+              <button type="button" class="btn-kds-status btn-status-cook" onclick="window.copeKdsUpdate('${escapeHtml(o.id)}', 'preparando')">
+                👨‍🍳 Cocinando
+              </button>
+              <button type="button" class="btn-kds-status btn-status-ready" onclick="window.copeKdsUpdate('${escapeHtml(o.id)}', 'listo')">
+                🛎️ Listo
+              </button>
+            `;
+          } else if (currentStatus === 'preparando') {
+            actionsHtml = `
+              <button type="button" class="btn-kds-status btn-status-ready" onclick="window.copeKdsUpdate('${escapeHtml(o.id)}', 'listo')">
+                🛎️ Marcar Listo para Entregar
+              </button>
+            `;
+          } else if (currentStatus === 'listo') {
+            actionsHtml = `
+              <button type="button" class="btn-kds-status btn-status-done" onclick="window.copeKdsUpdate('${escapeHtml(o.id)}', 'entregado')">
+                ✓ Despachado / Entregado
+              </button>
+            `;
+          } else {
+            actionsHtml = `
+              <span style="font-size:12px; font-weight:800; color:#94a3b8; padding:8px 0;">✓ Pedido Entregado</span>
+            `;
+          }
+
+          // Badge de Pago
+          let payBadgeHtml = '';
+          if (o.payment_status === 'aprobado' || o.payment_status === 'approved') {
+            payBadgeHtml = `<span style="font-size:11px; font-weight:800; color:#34d399; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); padding:2px 6px; border-radius:4px;">💳 Pagado</span>`;
+          } else if (o.payment_status === 'pendiente_transferencia') {
+            payBadgeHtml = `<span style="font-size:11px; font-weight:800; color:#38bdf8; background:rgba(14,165,233,0.15); border:1px solid rgba(14,165,233,0.3); padding:2px 6px; border-radius:4px;">📱 Transf. Pendiente</span>`;
+          } else {
+            payBadgeHtml = `<span style="font-size:11px; font-weight:800; color:#fbbf24; background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.3); padding:2px 6px; border-radius:4px;">⏳ Pago Pendiente</span>`;
+          }
+
+          return `
+            <article class="kds-card ${statusClass}" data-order-id="${escapeHtml(o.id)}">
+              <div class="kds-header">
+                <div class="kds-order-id">
+                  <span>#${escapeHtml(o.id)}</span>
+                  ${payBadgeHtml}
+                </div>
+                <div class="kds-timer-badge ${timerClass}">
+                  <span>⏱️ ${minsElapsed}m</span>
+                </div>
+              </div>
+
+              <div class="kds-customer-row">
+                <div class="kds-customer-name">
+                  <span>👤 ${escapeHtml(o.customer?.name || 'Cliente')}</span>
+                  ${o.customer?.phone ? `<span style="font-size:12px; font-weight:600; color:#94a3b8; margin-left:6px;">(${escapeHtml(o.customer.phone)})</span>` : ''}
+                </div>
+                <div>
+                  ${isDelivery ? `<span class="kds-type-pill pill-delivery">🛵 DELIVERY</span>` : `<span class="kds-type-pill pill-takeaway">🛍️ TAKE AWAY</span>`}
+                </div>
+              </div>
+
+              ${uberDispatchHtml}
+
+              <div class="kds-items-list">
+                ${itemsHtml}
+              </div>
+
+              ${o.notes ? `<div class="kds-item-note" style="margin-left:0;">💬 <b>Nota pedido:</b> ${escapeHtml(o.notes)}</div>` : ''}
+
+              <div style="display:flex; align-items:center; justify-content:space-between; font-size:13px; font-weight:800; border-top:1px dashed var(--border-color); padding-top:8px;">
+                <span style="color:var(--text-muted);">Total Comanda:</span>
+                <span style="color:#ffffff; font-family:'JetBrains Mono', monospace; font-size:15px;">${formatMoney(o.total)}</span>
+              </div>
+
+              <div class="kds-actions-bar">
+                ${actionsHtml}
+                <button type="button" class="btn-kds-print" onclick="window.copePrintOrder('${escapeHtml(o.id)}')" title="Imprimir comanda térmica 80mm">
+                  🖨️
+                </button>
+              </div>
+            </article>
+          `;
+        }).join('');
+      }
+
+      // Actualizar estado de comanda desde la pantalla de cocina
+      window.copeKdsUpdate = async function(orderId, newStatus) {
+        if (!savedPin) return;
+        try {
+          const res = await fetch('/api/orders', {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-caja-pin': savedPin
+            },
+            body: JSON.stringify({
+              orderId,
+              kitchen_status: newStatus
+            })
+          });
+
+          if (res.ok) {
+            const ord = cachedOrders.find(o => o.id === orderId);
+            if (ord) {
+              ord.kitchen_status = newStatus;
+              ord.updated_at = new Date().toISOString();
+            }
+            renderKds();
+          } else {
+            alert('No se pudo actualizar el estado de la comanda.');
+          }
+        } catch (err) {
+          console.error('Error al actualizar estado:', err);
+          alert('Error de conexión al actualizar estado.');
+        }
+      };
+
+      // Imprimir Comanda Térmica 80mm
+      window.copePrintOrder = function(orderId) {
+        const o = cachedOrders.find(item => item.id === orderId);
+        if (!o || !els.ticketPrintArea) return;
+
+        const isDelivery = o.order_type === 'delivery';
+        const dateObj = new Date(o.created_at || Date.now());
+        const timeStr = dateObj.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) + ' hs';
+        
+        let html = `
+          <div style="text-align:center; border-bottom:2px dashed #000; padding-bottom:8px; margin-bottom:8px;">
+            <h2 style="margin:0; font-size:22px; font-weight:900;">COPE BURGERS</h2>
+            <p style="margin:2px 0; font-size:11px;">Puerto Madero · Macacha Güemes 260</p>
+            <h3 style="margin:8px 0 2px 0; font-size:20px; font-weight:900;">COMANDA #${escapeHtml(o.id)}</h3>
+            <p style="margin:2px 0; font-size:13px; font-weight:900;">${isDelivery ? '🛵 DELIVERY UBER' : '🛍️ TAKE AWAY'} · ${timeStr}</p>
+          </div>
+          <div style="margin-bottom:8px; font-size:12px; border-bottom:1px dashed #000; padding-bottom:6px;">
+            <div><b>Cliente:</b> ${escapeHtml(o.customer?.name || 'Cliente')}</div>
+            ${o.customer?.phone ? `<div><b>Tel:</b> ${escapeHtml(o.customer.phone)}</div>` : ''}
+            ${isDelivery && o.delivery ? `
+              <div style="margin-top:4px;"><b>Dirección:</b> ${escapeHtml(o.delivery.address)}</div>
+              ${o.delivery.apartment ? `<div><b>Piso/Depto:</b> ${escapeHtml(o.delivery.apartment)}</div>` : ''}
+            ` : ''}
+          </div>
+          <div style="border-bottom:2px dashed #000; padding-bottom:8px; margin-bottom:8px;">
+        `;
+
+        (o.items || []).forEach(it => {
+          html += `
+            <div style="display:flex; justify-content:space-between; font-weight:900; font-size:13.5px; margin-top:5px;">
+              <span>${Number(it.quantity) || 1}x ${escapeHtml(it.name || it.id)}</span>
+              <span>${formatMoney((it.unitPrice || 0) * (it.quantity || 1))}</span>
+            </div>
+            ${it.variantLabel ? `<div style="font-size:11px; margin-left:14px;">· ${escapeHtml(it.variantLabel)}</div>` : ''}
+            ${it.isVeggie ? `<div style="font-size:11px; margin-left:14px; font-weight:900;">· 🌱 VEGGIE (NotCo)</div>` : ''}
+            ${it.hasExtraMeat ? `<div style="font-size:11px; margin-left:14px; font-weight:900;">· 🥩 +EXTRA CARNE</div>` : ''}
+            ${it.drinkChoice ? `<div style="font-size:11px; margin-left:14px;">· 🥤 ${escapeHtml(it.drinkChoice)}</div>` : ''}
+            ${it.notes ? `<div style="font-size:11px; margin-left:14px; font-style:italic;">· NOTA: ${escapeHtml(it.notes)}</div>` : ''}
+          `;
+        });
+
+        html += `
+          </div>
+          <div style="font-size:12px; margin-bottom:8px;">
+            <div style="display:flex; justify-content:space-between;">
+              <span>Subtotal:</span>
+              <span>${formatMoney(o.subtotal || 0)}</span>
+            </div>
+            ${isDelivery ? `
+              <div style="display:flex; justify-content:space-between;">
+                <span>Envío Uber:</span>
+                <span>${formatMoney(o.delivery_fee || 0)}</span>
+              </div>
+            ` : ''}
+            <div style="display:flex; justify-content:space-between; font-size:16px; font-weight:900; margin-top:5px; border-top:1px solid #000; padding-top:5px;">
+              <span>TOTAL:</span>
+              <span>${formatMoney(o.total || 0)}</span>
+            </div>
+            <div style="margin-top:6px; font-size:11px;">
+              <b>Medio Pago:</b> ${escapeHtml(o.payment_method)} (${escapeHtml(o.payment_status)})
+            </div>
+            ${o.notes ? `<div style="margin-top:4px; font-size:11px; font-style:italic;"><b>Nota Pedido:</b> ${escapeHtml(o.notes)}</div>` : ''}
+          </div>
+          <div style="text-align:center; font-size:11px; margin-top:14px; border-top:1px dashed #000; padding-top:6px;">
+            ¡Cope Burgers Puerto Madero!<br/>
+            www.copeburgers.com.ar
+          </div>
+        `;
+
+        els.ticketPrintArea.innerHTML = html;
+        window.print();
+      };
+
+      // =========================================================================
+      // MONITOR DE COBROS MERCADO PAGO
+      // =========================================================================
       function applyFiltersAndRender(force = false) {
         if (!cachedPayments || !cachedPayments.length) {
           if (!force && lastRenderedFingerprint === 'empty') return;
@@ -1439,6 +2221,7 @@
           els.statCountToday.textContent = '0';
           els.historyCount.textContent = '0 pagos';
           els.filterFeedbackBadge.style.display = 'none';
+          if (els.badgePaymentsCount) els.badgePaymentsCount.textContent = '0';
           return;
         }
 
@@ -1447,9 +2230,9 @@
 
         // Actualizar Hero con el más reciente
         els.heroAmount.textContent = formatMoney(latest.amount);
-        els.heroPayer.textContent = latest.payer_name || 'Cliente';
-        els.heroMethod.textContent = '💳 ' + latest.payment_method;
-        els.heroId.textContent = 'ID: ' + latest.id;
+        els.heroPayer.textContent = escapeHtml(latest.payer_name || 'Cliente');
+        els.heroMethod.textContent = '💳 ' + escapeHtml(latest.payment_method);
+        els.heroId.textContent = 'ID: ' + escapeHtml(latest.id);
 
         const isLatestApproved = latest.status === 'approved';
         if (isLatestApproved) {
@@ -1462,7 +2245,7 @@
           els.heroAmount.classList.add('is-rejected');
           if (els.heroBadge) {
             els.heroBadge.classList.add('is-rejected');
-            els.heroBadge.textContent = '✕ ' + (latest.status === 'rejected' ? 'Rechazado' : latest.status);
+            els.heroBadge.textContent = '✕ ' + (latest.status === 'rejected' ? 'Rechazado' : escapeHtml(latest.status));
           }
         }
 
@@ -1472,7 +2255,7 @@
 
         const now = new Date();
 
-        // 1. MÉTRICAS EXCLUSIVAS DEL DÍA DE HOY (solo pagos aprobados de hoy)
+        // MÉTRICAS DEL DÍA DE HOY
         const todayApprovedAll = sorted.filter(p => {
           if (p.status !== 'approved') return false;
           return isSameCalendarDay(new Date(p.date_created), now);
@@ -1481,6 +2264,10 @@
         els.statTotalToday.textContent = formatMoney(sumToday);
         els.statCountToday.textContent = todayApprovedAll.length;
 
+        if (els.badgePaymentsCount) {
+          els.badgePaymentsCount.textContent = todayApprovedAll.length;
+        }
+
         const todayDeliveryAll = todayApprovedAll.filter(p => p.order_type === 'delivery');
         if (els.statDeliveryToday) {
           els.statDeliveryToday.textContent = todayDeliveryAll.length;
@@ -1488,7 +2275,7 @@
 
         // FILTRADO DINÁMICO
         const filtered = sorted.filter((p) => {
-          // 0. Filtro Modalidad (Delivery vs Take Away)
+          // Modalidad
           if (activeFilters.type && activeFilters.type !== 'all') {
             if (activeFilters.type === 'delivery') {
               if (p.order_type !== 'delivery') return false;
@@ -1497,7 +2284,7 @@
             }
           }
 
-          // 1. Filtro Forma de Pago
+          // Forma de Pago
           if (activeFilters.payment !== 'all') {
             if (activeFilters.payment === 'rejected') {
               if (p.status !== 'rejected' && p.status !== 'cancelled') return false;
@@ -1515,12 +2302,11 @@
             }
           }
 
-          // 2. Filtro Horario
+          // Horario
           const pDate = new Date(p.date_created);
           const isToday = isSameCalendarDay(pDate, now);
 
           if (activeFilters.time === 'all') {
-            // "Todo Hoy": Muestra únicamente cobros de hoy
             if (!isToday) return false;
           } else if (activeFilters.time === '1h') {
             if (pDate < new Date(now.getTime() - 60 * 60 * 1000)) return false;
@@ -1542,8 +2328,6 @@
             const fromMin = fH * 60 + fM;
             const toMin = tH * 60 + tM;
             if (pMinutes < fromMin || pMinutes > toMin) return false;
-          } else if (activeFilters.time === 'history') {
-            // "Días Anteriores": muestra todo el historial cargado
           }
 
           return true;
@@ -1562,12 +2346,11 @@
           els.historyCount.textContent = `${sorted.length} pagos`;
         }
 
-        // CONTROL ANTI-PARPADEO (HUELLA DIGITAL DE LA LISTA)
+        // Control anti-parpadeo
         const currentFingerprint = `${activeFilters.type}_${activeFilters.payment}_${activeFilters.time}_${activeFilters.timeFrom}_${activeFilters.timeTo}_` + 
           filtered.map(p => `${p.id}:${p.status}:${p.amount}:${p.order_type || ''}`).join('|');
 
         if (!force && currentFingerprint === lastRenderedFingerprint) {
-          // Si no cambió ningún pago ni filtro, NO tocar el DOM para evitar parpadeos
           return;
         }
         lastRenderedFingerprint = currentFingerprint;
@@ -1582,7 +2365,7 @@
           return;
         }
 
-        // Renderizar Lista con estilos y tonos
+        // Renderizar Lista con sanitización XSS
         els.historyList.innerHTML = filtered.map((p, idx) => {
           const pDate = new Date(p.date_created);
           const pHour = pDate.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) + ' hs';
@@ -1593,7 +2376,6 @@
           const isRejected = p.status === 'rejected' || p.status === 'cancelled';
           const isPending = p.status === 'in_process' || p.status === 'pending';
 
-          // Asignar tono y estilo según Forma de Pago
           let payToneClass = 'pay-tone-other';
           let icon = '🍔';
           if (pType.includes('transfer') || pMethod.includes('transferencia')) {
@@ -1626,21 +2408,21 @@
                 <div class="p-icon">${icon}</div>
                 <div class="p-info">
                   <div class="p-name">
-                    <span>${p.payer_name || 'Cliente'}</span>
+                    <span>${escapeHtml(p.payer_name || 'Cliente')}</span>
                     ${isDelivery ? `<span class="tag-delivery-uber">🛵 DELIVERY UBER</span>` : ''}
                   </div>
                   <div class="p-sub">
                     <span>${pHour}</span>
                     <span>·</span>
-                    <span class="p-method-tag">${p.payment_method}</span>
-                    ${p.order_id ? `<span>· Ref: ${p.order_id}</span>` : ''}
-                    ${isRejected && p.status_detail ? `<span style="color:#f87171; font-weight:700;">· Motivo: ${p.status_detail}</span>` : ''}
+                    <span class="p-method-tag">${escapeHtml(p.payment_method)}</span>
+                    ${p.order_id ? `<span>· Ref: ${escapeHtml(p.order_id)}</span>` : ''}
+                    ${isRejected && p.status_detail ? `<span style="color:#f87171; font-weight:700;">· Motivo: ${escapeHtml(p.status_detail)}</span>` : ''}
                   </div>
                   ${isDelivery && p.delivery_address ? `
                     <div style="margin-top:6px; font-size:12px; color:#cbd5e1; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                      <span>📍 <b>${p.delivery_address}</b> ${p.delivery_apartment ? `(${p.delivery_apartment})` : ''}</span>
+                      <span>📍 <b>${escapeHtml(p.delivery_address)}</b> ${p.delivery_apartment ? `(${escapeHtml(p.delivery_apartment)})` : ''}</span>
                       ${p.uber_link ? `
-                        <a href="${p.uber_link}" target="_blank" rel="noopener noreferrer" class="btn-uber-dispatch" title="Abrir Uber Flash con punto de retiro en Cope Madero y destino pre-cargado">
+                        <a href="${escapeHtml(p.uber_link)}" target="_blank" rel="noopener noreferrer" class="btn-uber-dispatch" title="Abrir Uber Flash con punto de retiro en Cope Madero y destino pre-cargado">
                           <span>🛵 Abrir en Uber</span> ➔
                         </a>
                       ` : ''}
@@ -1657,72 +2439,116 @@
         }).join('');
       }
 
-      // Consultar API de Mercado Pago con PIN de seguridad
-      async function fetchPayments() {
-        if (!savedPin) return;
+      // =========================================================================
+      // SINCRONIZACIÓN EN VIVO (KDS + MERCADO PAGO)
+      // =========================================================================
+      async function fetchAllData() {
+        if (!savedPin || isFetching) return;
+        isFetching = true;
 
         try {
-          const res = await fetch(`/api/get-payments?limit=50&pin=${encodeURIComponent(savedPin)}`, {
+          // 1. Consultar comandes KDS
+          const ordersPromise = fetch('/api/orders', {
             headers: { 'x-caja-pin': savedPin },
             cache: 'no-store'
+          }).then(async r => {
+            if (r.status === 401) {
+              lockTerminal('Terminal no autorizada. PIN inválido.');
+              return null;
+            }
+            if (r.ok) return r.json();
+            return null;
+          }).catch(e => {
+            console.warn('Advertencia al consultar comandas:', e);
+            return null;
           });
 
-          if (res.status === 401) {
-            lockTerminal('Terminal no autorizada. PIN inválido.');
-            return;
-          }
+          // 2. Consultar cobros Mercado Pago
+          const paymentsPromise = fetch('/api/get-payments?limit=50', {
+            headers: { 'x-caja-pin': savedPin },
+            cache: 'no-store'
+          }).then(async r => {
+            if (r.status === 401) {
+              lockTerminal('Terminal no autorizada. PIN inválido.');
+              return null;
+            }
+            if (r.ok) return r.json();
+            return null;
+          }).catch(e => {
+            console.warn('Advertencia al consultar pagos MP:', e);
+            return null;
+          });
 
-          if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            els.liveStatusText.textContent = 'Error MP';
-            console.warn('API error:', err);
-            return;
-          }
-
-          const data = await res.json();
-          const incoming = data.payments || [];
-          els.liveStatusText.textContent = 'Conectado a MP';
+          const [ordersData, paymentsData] = await Promise.all([ordersPromise, paymentsPromise]);
           const now = new Date();
           els.statLastCheck.textContent = now.toLocaleTimeString('es-AR');
 
-          // Detectar si hay pagos nuevos aprobados EN VIVO (solo de hoy y creados hace menos de 10 min)
-          if (!isFirstLoad) {
-            for (const p of incoming) {
-              if (p.status === 'approved' && !knownPaymentIds.has(p.id)) {
-                const pDate = new Date(p.date_created);
-                const isToday = isSameCalendarDay(pDate, new Date());
-                const isVeryRecent = (Date.now() - pDate.getTime()) < (10 * 60 * 1000);
-                if (isToday && isVeryRecent) {
-                  triggerNewPaymentAnimation(p);
+          // Procesar Comandas KDS
+          if (ordersData && ordersData.orders) {
+            const incomingOrders = ordersData.orders;
+            
+            // Sonar campana de cocina ante comanda nueva
+            if (!isFirstLoad) {
+              for (const ord of incomingOrders) {
+                if (!knownOrderIds.has(ord.id) && ord.kitchen_status !== 'entregado') {
+                  playKitchenBell();
                   break;
                 }
               }
             }
+
+            incomingOrders.forEach(ord => knownOrderIds.add(ord.id));
+            cachedOrders = incomingOrders;
+            renderKds();
           }
 
-          // Guardar en allPaymentsMap para que no se pierda ningún cobro (incluso rechazados)
-          incoming.forEach(p => {
-            knownPaymentIds.add(p.id);
-            allPaymentsMap.set(p.id, p);
-          });
-          isFirstLoad = false;
-          cachedPayments = Array.from(allPaymentsMap.values());
+          // Procesar Pagos MP
+          if (paymentsData && paymentsData.payments) {
+            const incomingPayments = paymentsData.payments;
+            els.liveStatusText.textContent = 'Conectado a MP';
 
-          applyFiltersAndRender(false);
+            if (!isFirstLoad) {
+              for (const p of incomingPayments) {
+                if (p.status === 'approved' && !knownPaymentIds.has(p.id)) {
+                  const pDate = new Date(p.date_created);
+                  const isToday = isSameCalendarDay(pDate, new Date());
+                  const isVeryRecent = (Date.now() - pDate.getTime()) < (10 * 60 * 1000);
+                  if (isToday && isVeryRecent) {
+                    triggerNewPaymentAnimation(p);
+                    break;
+                  }
+                }
+              }
+            }
+
+            incomingPayments.forEach(p => {
+              knownPaymentIds.add(p.id);
+              allPaymentsMap.set(p.id, p);
+            });
+            cachedPayments = Array.from(allPaymentsMap.values());
+            applyFiltersAndRender(false);
+          }
+
+          isFirstLoad = false;
         } catch (err) {
-          console.error('Fetch payments error:', err);
+          console.error('Fetch all data error:', err);
           els.liveStatusText.textContent = 'Reconectando...';
+        } finally {
+          isFetching = false;
+          clearTimeout(pollTimer);
+          pollTimer = setTimeout(fetchAllData, 18000);
         }
       }
 
       // Bloquear terminal
       function lockTerminal(msg) {
-        clearInterval(pollTimer);
+        clearTimeout(pollTimer);
         pollTimer = null;
         savedPin = '';
         localStorage.removeItem('cope_caja_pin');
         allPaymentsMap.clear();
         cachedPayments = [];
+        cachedOrders = [];
         lastRenderedFingerprint = '';
         els.terminalLockOverlay.classList.remove('hidden');
         els.pinInput.value = '';
@@ -1730,17 +2556,14 @@
         els.pinInput.focus();
       }
 
-      // Iniciar monitor de caja
+      // Iniciar monitor
       function startLiveMonitor() {
         els.terminalLockOverlay.classList.add('hidden');
         els.lockErrorMsg.textContent = '';
-        if (pollTimer) {
-          clearInterval(pollTimer);
-          pollTimer = null;
-        }
+        clearTimeout(pollTimer);
+        pollTimer = null;
         isFirstLoad = true;
-        fetchPayments();
-        pollTimer = setInterval(fetchPayments, 8000);
+        fetchAllData();
       }
 
       // Validar PIN ingresado
@@ -1760,7 +2583,7 @@
         els.lockErrorMsg.textContent = '';
 
         try {
-          const res = await fetch(`/api/get-payments?limit=1&pin=${encodeURIComponent(pin)}`, {
+          const res = await fetch('/api/get-payments?limit=1', {
             headers: { 'x-caja-pin': pin },
             cache: 'no-store'
           });
@@ -1792,7 +2615,54 @@
         }
       }
 
-      // Eventos
+      // =========================================================================
+      // EVENT LISTENERS
+      // =========================================================================
+      // Tabs principales
+      if (els.tabBtnKds) {
+        els.tabBtnKds.addEventListener('click', () => {
+          activeMainTab = 'kds';
+          els.tabBtnKds.classList.add('active');
+          els.tabBtnPayments.classList.remove('active');
+          els.kdsViewSection.style.display = 'block';
+          els.paymentsViewSection.style.display = 'none';
+          renderKds();
+        });
+      }
+
+      if (els.tabBtnPayments) {
+        els.tabBtnPayments.addEventListener('click', () => {
+          activeMainTab = 'payments';
+          els.tabBtnPayments.classList.add('active');
+          els.tabBtnKds.classList.remove('active');
+          els.paymentsViewSection.style.display = 'block';
+          els.kdsViewSection.style.display = 'none';
+          applyFiltersAndRender(true);
+        });
+      }
+
+      if (els.btnRefreshAll) {
+        els.btnRefreshAll.addEventListener('click', () => {
+          els.btnRefreshAll.innerHTML = '<span>↻ Actualizando...</span>';
+          fetchAllData().finally(() => {
+            els.btnRefreshAll.innerHTML = '<span>↻ Actualizar</span>';
+          });
+        });
+      }
+
+      // Filtros KDS
+      if (els.kdsFilterChips) {
+        els.kdsFilterChips.addEventListener('click', (e) => {
+          const chip = e.target.closest('.chip');
+          if (!chip) return;
+          els.kdsFilterChips.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+          kdsFilter = chip.dataset.kdsFilter || 'active';
+          renderKds();
+        });
+      }
+
+      // Formulario PIN
       els.pinForm.addEventListener('submit', (e) => {
         e.preventDefault();
         handlePinSubmit();
@@ -1839,7 +2709,7 @@
         if (soundEnabled) playCashSound();
       });
 
-      // Botón para probar la animación y sonido
+      // Botón para probar animación de cobro
       els.btnTestAlert.addEventListener('click', () => {
         triggerNewPaymentAnimation({
           id: 'TEST-' + Math.floor(Math.random() * 900000 + 100000),
@@ -1850,33 +2720,90 @@
         });
       });
 
-      // Botón para probar cobro con Delivery Uber y ver el botón de despacho en vivo
+      // Botón para probar Delivery y comanda KDS
       if (els.btnTestDelivery) {
         els.btnTestDelivery.addEventListener('click', () => {
-          const fakeDelivery = {
-            id: 'TEST-UBER-' + Math.floor(Math.random() * 900000 + 100000),
-            amount: 17400,
+          const fakeOrderId = 'COPE-TEST-' + Math.floor(Math.random() * 9000 + 1000);
+          const fakeDeliveryOrder = {
+            id: fakeOrderId,
+            created_at: new Date().toISOString(),
+            customer: {
+              name: 'Santiago Morales (Prueba Delivery)',
+              phone: '11-5555-8899'
+            },
+            order_type: 'delivery',
+            pickup_time: 'Envío Moto Uber Flash',
+            delivery: {
+              isDelivery: true,
+              address: 'Juana Manso 1200',
+              apartment: '4° B, Dique 2',
+              fee: 1900,
+              eta: '25-35 min'
+            },
+            items: [
+              {
+                id: 'cheeseburger',
+                name: 'Cheeseburger Clásica',
+                quantity: 2,
+                unitPrice: 7750,
+                variantLabel: 'Doble carne smashed + Cheddar',
+                isVeggie: false,
+                hasExtraMeat: true,
+                drinkChoice: 'Coca Cola Sin Azúcar',
+                notes: 'Sin cebolla por favor'
+              },
+              {
+                id: 'not-burger',
+                name: 'NotBurger Veggie Cope',
+                quantity: 1,
+                unitPrice: 8200,
+                variantLabel: 'Medallón NotCo Plant-Based',
+                isVeggie: true,
+                hasExtraMeat: false,
+                drinkChoice: 'Agua mineral',
+                notes: ''
+              }
+            ],
+            subtotal: 23700,
+            delivery_fee: 1900,
+            total: 25600,
+            payment_method: 'Mercado Pago Online',
+            payment_status: 'aprobado',
+            kitchen_status: 'recibido',
+            notes: 'Dejar en conserjería si no atiendo el timbre'
+          };
+
+          // Agregar a comandes KDS
+          cachedOrders.unshift(fakeDeliveryOrder);
+          knownOrderIds.add(fakeDeliveryOrder.id);
+          playKitchenBell();
+          renderKds();
+
+          // También agregar a pagos MP
+          const fakePayment = {
+            id: 'PAY-' + Math.floor(Math.random() * 900000 + 100000),
+            amount: 25600,
             payer_name: 'Santiago Morales (Prueba Delivery)',
             payment_type: 'account_money',
             payment_method: 'Dinero en Cuenta MP',
             status: 'approved',
             status_detail: 'accredited',
             date_created: new Date().toISOString(),
-            order_id: 'COPE-' + Math.floor(Math.random() * 9000 + 1000),
+            order_id: fakeOrderId,
             order_type: 'delivery',
             delivery_address: 'Juana Manso 1200',
             delivery_apartment: '4° B, Dique 2',
             delivery_fee: 1900,
-            uber_link: 'https://m.uber.com/looking?pickup=Macacha%20G%C3%BCemes%20260%2C%20Puerto%20Madero%2C%20CABA&dropoff=Juana%20Manso%201200%2C%20CABA'
+            uber_link: 'https://m.uber.com/looking?pickup=Macacha%20G%C3%BCemes%20260%2C%20Puerto%20Madero%2C%20CABA&dropoff=Juana%20Manso%201200%2C%20Puerto%20Madero%2C%20CABA&product_id=package&category=package'
           };
-          allPaymentsMap.set(fakeDelivery.id, fakeDelivery);
+          allPaymentsMap.set(fakePayment.id, fakePayment);
           cachedPayments = Array.from(allPaymentsMap.values());
-          triggerNewPaymentAnimation(fakeDelivery);
+          triggerNewPaymentAnimation(fakePayment);
           applyFiltersAndRender(true);
         });
       }
 
-      // Filtros por Modalidad (Delivery vs Take Away)
+      // Filtros por Modalidad
       if (els.filterTypeChips) {
         els.filterTypeChips.addEventListener('click', (e) => {
           const chip = e.target.closest('.chip');

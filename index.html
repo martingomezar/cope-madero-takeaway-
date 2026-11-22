@@ -430,29 +430,43 @@
   </div>
 
   <!-- =======================================================================
-       MODAL DE CONFIRMACIÓN / ÉXITO (POST-WHATSAPP)
+       MODAL DE CONFIRMACIÓN / ÉXITO (WEB-A-WEB TICKET)
        ======================================================================= -->
   <div id="successModalBackdrop" class="modal-backdrop hidden" role="dialog" aria-modal="true">
     <div class="modal-sheet">
       <div class="modal-scrollable-body success-card">
         <div class="success-icon-wrap">✓</div>
-        <h2 class="success-title">¡Pedido enviado con éxito!</h2>
-        <p class="success-subtitle">
-          Abrimos WhatsApp para que envíes el detalle directo al local de <strong>Cope Burgers Puerto Madero</strong>.
+        <div id="successOrderBadge" style="display:inline-block; background:#0047bb; color:#ffffff; font-weight:800; font-size:14px; padding:4px 14px; border-radius:9999px; margin-bottom:10px; font-family:'JetBrains Mono', monospace;">#COPE-0000</div>
+        <h2 id="successTitleText" class="success-title">¡Pedido confirmado en cocina!</h2>
+        <p id="successSubtitleText" class="success-subtitle">
+          Tu pedido ya ingresó a nuestra pantalla de preparación en <strong>Cope Burgers Puerto Madero</strong>.
         </p>
 
         <div class="success-details-box">
           <div>👤 <strong>Cliente:</strong> <span id="successCustomerName">—</span></div>
-          <div>⏰ <strong>Horario de retiro:</strong> <span id="successPickupTime">—</span></div>
-          <div>📍 <strong>Retiro en:</strong> Macacha Güemes 260, Puerto Madero</div>
+          <div>🛵 <strong>Modalidad:</strong> <span id="successDeliveryType">Take Away</span></div>
+          <div>⏰ <strong>Tiempo estimado:</strong> <span id="successPickupTime">—</span></div>
+          <div>📍 <strong>Ubicación:</strong> <span id="successLocationText">Macacha Güemes 260, Puerto Madero</span></div>
           <div>💰 <strong>Total:</strong> <span id="successTotalText" class="tabular" style="color:#0047bb; font-weight:800;">$0</span></div>
         </div>
 
+        <!-- Caja de Pago por Transferencia (si aplica) -->
+        <div id="successTransferBox" class="success-transfer-box" style="background:#f1f5f9; border:1px solid #cbd5e1; border-radius:12px; padding:12px 14px; margin-bottom:16px; text-align:left;">
+          <div style="font-size:12px; font-weight:700; color:#475569; text-transform:uppercase; margin-bottom:4px;">💳 Datos para Transferir:</div>
+          <div style="display:flex; align-items:center; justify-content:space-between; background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:8px 12px; margin-bottom:6px;">
+            <span style="font-family:monospace; font-weight:800; color:#0047bb; font-size:14px;" id="successAliasText">cope.madero.mp</span>
+            <button type="button" id="btnCopyAlias" style="background:#0047bb; color:#ffffff; border:none; border-radius:6px; padding:4px 10px; font-size:12px; font-weight:700; cursor:pointer;">
+              📋 Copiar
+            </button>
+          </div>
+          <div style="font-size:12px; color:#64748b;">Mercado Pago · Envianos el comprobante si lo deseás o presentalo al retirar.</div>
+        </div>
+
         <div style="display:flex; flex-direction:column; gap:10px;">
-          <button id="btnReopenWhatsApp" type="button" class="btn btn-lg btn-whatsapp btn-block">
-            <span>💬 Volver a abrir WhatsApp</span>
+          <button id="btnReopenWhatsApp" type="button" class="btn btn-whatsapp btn-block" style="display:none;">
+            <span>💬 Enviar comprobante por WhatsApp (Opcional)</span>
           </button>
-          <button id="btnNewOrder" type="button" class="btn btn-secondary btn-block" style="padding:12px;">
+          <button id="btnNewOrder" type="button" class="btn btn-primary btn-block" style="padding:12px;">
             Hacer otro pedido
           </button>
         </div>

@@ -105,9 +105,15 @@
 
     // Success Screen Modal
     successModalBackdrop: document.getElementById('successModalBackdrop'),
+    successOrderBadge: document.getElementById('successOrderBadge'),
     successCustomerName: document.getElementById('successCustomerName'),
+    successDeliveryType: document.getElementById('successDeliveryType'),
     successPickupTime: document.getElementById('successPickupTime'),
+    successLocationText: document.getElementById('successLocationText'),
     successTotalText: document.getElementById('successTotalText'),
+    successTransferBox: document.getElementById('successTransferBox'),
+    successAliasText: document.getElementById('successAliasText'),
+    btnCopyAlias: document.getElementById('btnCopyAlias'),
     btnReopenWhatsApp: document.getElementById('btnReopenWhatsApp'),
     btnNewOrder: document.getElementById('btnNewOrder'),
 
@@ -230,7 +236,19 @@
     // Detectar retorno de Mercado Pago
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('payment') === 'success') {
-      showToast('🎉 ¡Pago Acreditado con Éxito en Mercado Pago! Tu pedido ya está confirmado.');
+      Cart.clearCart();
+      try { localStorage.removeItem('cope_pending_order'); } catch (e) {}
+      const returnedOrderId = urlParams.get('orderId');
+      showToast('🎉 ¡Pago acreditado en Mercado Pago! Tu pedido ya está confirmado en cocina.');
+      if (returnedOrderId) {
+        fetch('/api/orders', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId: returnedOrderId, payment_status: 'aprobado' })
+        }).catch(() => {});
+      }
+    } else if (urlParams.get('payment') === 'failure') {
+      showToast('Aviso: El pago no fue procesado. Tu carrito sigue guardado para reintentar.');
     }
   }
 
@@ -967,10 +985,57 @@
 
     msg += `\n_Pedido generado desde la web de Cope Burgers Puerto Madero_`;
 
+    const orderId = `COPE-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    const orderPayload = {
+      orderId,
+      created_at: new Date().toISOString(),
+      customer: { name, phone },
+      order_type: isDelivery ? 'delivery' : 'takeaway',
+      pickup_time: pickupTimeStr,
+      delivery: isDelivery ? {
+        isDelivery: true,
+        address: deliveryAddress,
+        apartment: deliveryApartment,
+        fee: shippingFee,
+        eta: currentDeliveryEta || '25-35 min'
+      } : null,
+      items: items.map((i) => ({
+        id: i.id || i.productId,
+        name: i.name,
+        quantity: i.quantity,
+        unitPrice: i.unitPrice,
+        variantLabel: i.variantLabel || null,
+        isVeggie: Boolean(i.isVeggie),
+        hasExtraMeat: Boolean(i.hasExtraMeat),
+        drinkChoice: i.drinkChoice || null,
+        notes: i.notes || ''
+      })),
+      subtotal,
+      delivery_fee: shippingFee,
+      total: finalTotal,
+      payment_method: payMethodId,
+      payment_status: payMethodId === 'mp_online' ? 'pendiente_mp' : 'pendiente_transferencia',
+      kitchen_status: 'recibido',
+      notes
+    };
+
+    // 1. Guardar comanda en el servidor en tiempo real (web a web)
+    fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(orderPayload)
+    }).catch((e) => console.warn('Error al enviar comanda al servidor:', e));
+
     if (payMethodId === 'mp_online') {
-      const orderId = `COPE-${Date.now().toString().slice(-6)}`;
+      const span = els.btnSubmitOrder.querySelector('span');
+      if (span) span.textContent = 'Generando cobro seguro en Mercado Pago...';
+      else els.btnSubmitOrder.textContent = 'Generando cobro seguro en Mercado Pago...';
       els.btnSubmitOrder.disabled = true;
-      els.btnSubmitOrder.textContent = 'Generando cobro seguro en Mercado Pago...';
+
+      try {
+        localStorage.setItem('cope_pending_order', JSON.stringify({ orderId, orderPayload }));
+      } catch (e) {}
 
       fetch('/api/create-preference', {
         method: 'POST',
@@ -992,33 +1057,72 @@
       .then((res) => res.json())
       .then((data) => {
         if (data && data.init_point) {
-          msg += `💳 *Estado:* Cobro online Mercado Pago Checkout Pro\n`;
-          msg += `🆔 *Referencia:* ${orderId}\n`;
-          const waUrl = `https://wa.me/${CFG.WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
-          lastGeneratedWaUrl = waUrl;
-
           showToast('✓ Redirigiendo a Mercado Pago para abonar...');
-          Cart.clearCart();
           closeCheckoutModal();
           window.location.href = data.init_point;
         } else {
-          showToast('Aviso: MP Online requiere configurar MP_ACCESS_TOKEN. Podés abonar por Alias.');
+          showToast('Aviso: MP Online requiere configuración. Podés abonar por Transferencia.');
+          if (span) span.textContent = 'Confirmar y Enviar Pedido →';
           els.btnSubmitOrder.disabled = false;
-          els.btnSubmitOrder.textContent = 'Confirmar y Enviar Pedido →';
-          finishWhatsappOrder(name, pickupTimeStr, finalTotal, msg);
+          finishWebOrder(orderPayload, msg);
         }
       })
       .catch((err) => {
         console.error('Error al conectar con Mercado Pago:', err);
-        showToast('Conectando por WhatsApp para coordinar pago...');
+        showToast('Mostrando datos para abonar por Transferencia...');
+        const span = els.btnSubmitOrder.querySelector('span');
+        if (span) span.textContent = 'Confirmar y Enviar Pedido →';
         els.btnSubmitOrder.disabled = false;
-        els.btnSubmitOrder.textContent = 'Confirmar y Enviar Pedido →';
-        finishWhatsappOrder(name, pickupTimeStr, finalTotal, msg);
+        finishWebOrder(orderPayload, msg);
       });
       return;
     }
 
-    finishWhatsappOrder(name, pickupTimeStr, finalTotal, msg);
+    finishWebOrder(orderPayload, msg);
+  }
+
+  function finishWebOrder(order, msg) {
+    Cart.clearCart();
+    closeCheckoutModal();
+
+    if (els.successOrderBadge) {
+      els.successOrderBadge.textContent = `#${order.orderId}`;
+    }
+    if (els.successCustomerName) {
+      els.successCustomerName.textContent = order.customer.name;
+    }
+    if (els.successDeliveryType) {
+      els.successDeliveryType.textContent = order.order_type === 'delivery'
+        ? '🛵 Envío en Moto (Uber Flash)'
+        : '🛍️ Take Away (Retiro en local)';
+    }
+    if (els.successPickupTime) {
+      els.successPickupTime.textContent = order.pickup_time;
+    }
+    if (els.successLocationText) {
+      els.successLocationText.textContent = order.order_type === 'delivery'
+        ? `${order.delivery.address} ${order.delivery.apartment ? `(${order.delivery.apartment})` : ''}`
+        : 'Macacha Güemes 260, Puerto Madero';
+    }
+    if (els.successTotalText) {
+      els.successTotalText.textContent = formatMoney(order.total);
+    }
+
+    if (els.successTransferBox) {
+      els.successTransferBox.style.display = order.payment_method === 'transferencia' ? 'block' : 'none';
+      if (els.successAliasText) {
+        els.successAliasText.textContent = CFG.ALIAS_MP || 'cope.madero.mp';
+      }
+    }
+
+    if (els.btnReopenWhatsApp) {
+      lastGeneratedWaUrl = `https://wa.me/${CFG.WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
+      els.btnReopenWhatsApp.style.display = 'block';
+    }
+
+    els.successModalBackdrop.classList.remove('hidden');
+    document.body.classList.add('modal-open');
+    showToast(`✓ ¡Pedido #${order.orderId} confirmado en cocina!`);
   }
 
   function finishWhatsappOrder(name, pickupTimeStr, total, msg) {
@@ -1031,8 +1135,6 @@
 
     Cart.clearCart();
     closeCheckoutModal();
-
-    window.open(waUrl, '_blank');
 
     els.successModalBackdrop.classList.remove('hidden');
     document.body.classList.add('modal-open');
@@ -1183,6 +1285,21 @@
       showToast(`✓ Agregado: ${activeModalProduct.name} (${activeModalQty})`);
       closeProductModal();
     });
+
+    if (els.btnCopyAlias) {
+      els.btnCopyAlias.addEventListener('click', () => {
+        const alias = (els.successAliasText && els.successAliasText.textContent) || 'cope.madero.mp';
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(alias).then(() => {
+            els.btnCopyAlias.textContent = '✓ Copiado';
+            showToast('✓ Alias copiado al portapapeles');
+            setTimeout(() => { if (els.btnCopyAlias) els.btnCopyAlias.textContent = '📋 Copiar'; }, 2000);
+          }).catch(() => {});
+        } else {
+          showToast(`Alias: ${alias}`);
+        }
+      });
+    }
 
     els.btnReopenWhatsApp.addEventListener('click', () => {
       if (lastGeneratedWaUrl) {

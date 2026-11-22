@@ -2,7 +2,7 @@
 // Consulta en tiempo real las últimas transacciones acreditadas en Mercado Pago
 // Protegido con PIN de seguridad para las terminales de caja
 
-const CAJA_MASTER_PIN = '2904';
+const CAJA_MASTER_PIN = process.env.CAJA_MASTER_PIN || '2904';
 
 export default async function handler(req, res) {
   // CORS headers
