@@ -454,7 +454,7 @@
       activeModalVariantId = null;
     }
 
-    // Extra Carne Smash
+    // Extra Carne
     if (prod.canAddExtraMeat) {
       els.modalExtraMeatGroup.classList.remove('hidden');
       els.modalExtraMeatCheckbox.checked = false;
@@ -570,7 +570,7 @@
     els.cartItemsList.innerHTML = items.map((item) => {
       const details = [];
       if (item.variantLabel) details.push(item.variantLabel);
-      if (item.hasExtraMeat) details.push('🥩 +1 Extra Carne Smash');
+      if (item.hasExtraMeat) details.push('🥩 +1 Extra Medallón de Carne');
       if (item.isVeggie) details.push('<span class="cart-notburger-badge"><img src="img/notco-cross.svg" alt="✕" class="notco-cart-cross" /> Not Burger (Veggie)</span>');
       if (item.drinkChoice) details.push('🥤 ' + item.drinkChoice);
       if (item.notes) details.push('📝 ' + item.notes);
@@ -957,7 +957,7 @@
         msg += `   ↳ Tamaño: ${item.variantLabel}\n`;
       }
       if (item.hasExtraMeat) {
-        msg += `   ↳ 🥩 Extra: +1 Medallón Carne Smash (+$4.000)\n`;
+        msg += `   ↳ 🥩 Extra: +1 Medallón de Carne (+$4.000)\n`;
       }
       if (item.isVeggie) {
         msg += `   ↳ 🌱 Opción Vegetariana: Con Not Burger y pan 100% vegano\n`;

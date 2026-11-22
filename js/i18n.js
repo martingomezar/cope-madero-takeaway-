@@ -39,9 +39,9 @@ window.COPE_I18N = (function () {
       modal_size_simple: 'Simple (1 Medallón 110g)',
       modal_size_doble: 'Doble (2 Medallones 220g)',
       modal_veggie_title: 'Opción Vegetariana (NotBurger)',
-      modal_veggie_desc: 'Reemplazá el medallón smash por carne vegetal NotBurger y pan 100% vegano.',
+      modal_veggie_desc: 'Reemplazá el medallón por carne vegetal NotBurger y pan 100% vegano.',
       modal_extra_meat_title: '¿Querés agregar carne extra?',
-      modal_extra_meat_desc: '+1 Medallón de carne smash vacuna (+110g)',
+      modal_extra_meat_desc: '+1 Medallón de carne vacuna (+110g)',
       modal_drink_title: 'Elegí tu bebida incluida:',
       modal_notes_label: 'Aclaraciones para la cocina (opcional):',
       modal_notes_placeholder: 'Ej: sin cebolla, pan bien tostado, aderezos aparte...',
@@ -140,9 +140,9 @@ window.COPE_I18N = (function () {
       modal_size_simple: 'Single (1 Patty 110g)',
       modal_size_doble: 'Double (2 Patties 220g)',
       modal_veggie_title: 'Vegetarian Option (NotBurger)',
-      modal_veggie_desc: 'Swap smash beef for 100% plant-based NotBurger patty and vegan bun.',
+      modal_veggie_desc: 'Swap beef patty for 100% plant-based NotBurger patty and vegan bun.',
       modal_extra_meat_title: 'Want extra beef patty?',
-      modal_extra_meat_desc: '+1 Smash beef patty (+110g)',
+      modal_extra_meat_desc: '+1 Beef patty (+110g)',
       modal_drink_title: 'Choose your included beverage:',
       modal_notes_label: 'Kitchen notes (optional):',
       modal_notes_placeholder: 'E.g.: no onions, well-toasted bun, sauce on side...',
@@ -241,9 +241,9 @@ window.COPE_I18N = (function () {
       modal_size_simple: 'Simples (1 Hambúrguer 110g)',
       modal_size_doble: 'Duplo (2 Hambúrgueres 220g)',
       modal_veggie_title: 'Opção Vegetariana (NotBurger)',
-      modal_veggie_desc: 'Substitua a carne smash por hambúrguer vegetal NotBurger e pão 100% vegano.',
+      modal_veggie_desc: 'Substitua a carne por hambúrguer vegetal NotBurger e pão 100% vegano.',
       modal_extra_meat_title: 'Deseja adicionar carne extra?',
-      modal_extra_meat_desc: '+1 Medalhão de carne smash bovina (+110g)',
+      modal_extra_meat_desc: '+1 Medalhão de carne bovina (+110g)',
       modal_drink_title: 'Escolha a bebida inclusa:',
       modal_notes_label: 'Observações para a cozinha (opcional):',
       modal_notes_placeholder: 'Ex: sem cebola, pão bem tostado, molho à parte...',
@@ -316,96 +316,96 @@ window.COPE_I18N = (function () {
     'simple-cheese-burger': {
       en: {
         name: 'Single Cheese Burger',
-        description: 'Smash beef patty (110g), melted American cheddar, and house mayo on a butter-toasted potato bun.',
+        description: 'Beef patty (110g), melted American cheddar, and house mayo on a butter-toasted potato bun.',
         badge: '1 Patty'
       },
       pt: {
         name: 'Cheese Burger Simples',
-        description: 'Carne smash bovina (110g), queijo cheddar americano derretido e maionese da casa em pão de batata tostado na manteiga.',
+        description: 'Carne bovina (110g), queijo cheddar americano derretido e maionese da casa em pão de batata tostado na manteiga.',
         badge: '1 Hambúrguer'
       }
     },
     'simple-cheese-bacon': {
       en: {
         name: 'Single Cheese & Bacon',
-        description: 'Smash beef patty (110g), American cheddar, crispy smoked bacon, and crispy onions on a potato bun.',
+        description: 'Beef patty (110g), American cheddar, crispy smoked bacon, and crispy onions on a potato bun.',
         badge: '1 Patty · Favorite 🔥'
       },
       pt: {
         name: 'Cheese & Bacon Simples',
-        description: 'Carne smash (110g), cheddar americano, bacon crocante defumado e cebola crispy no pão de batata.',
+        description: 'Carne bovina (110g), cheddar americano, bacon crocante defumado e cebola crispy no pão de batata.',
         badge: '1 Hambúrguer · Favorita 🔥'
       }
     },
     'simple-clasica': {
       en: {
         name: 'Single Classic',
-        description: 'Smash beef (110g), cheddar, fresh tomato slices, crisp lettuce, and signature Cope Sauce.',
+        description: 'Beef patty (110g), cheddar, fresh tomato slices, crisp lettuce, and signature Cope Sauce.',
         badge: '1 Patty · Fresh'
       },
       pt: {
         name: 'Clássica Simples',
-        description: 'Carne smash (110g), cheddar, fatias de tomate fresco, alface crocante e o autêntico Molho Cope.',
+        description: 'Carne bovina (110g), cheddar, fatias de tomate fresco, alface crocante e o autêntico Molho Cope.',
         badge: '1 Hambúrguer · Fresca'
       }
     },
     'simple-gran-cope': {
       en: {
         name: 'Single Grand Cope',
-        description: 'Smash beef (110g), American cheddar, minced onion, lettuce, sweet pickles, and Thousand Island sauce.',
+        description: 'Beef patty (110g), American cheddar, minced onion, lettuce, sweet pickles, and Thousand Island sauce.',
         badge: '1 Patty · Epic 👑'
       },
       pt: {
         name: 'Gran Cope Simples',
-        description: 'Carne smash (110g), cheddar americano, cebola picada, alface, picles agridoce e molho Thousand Island.',
+        description: 'Carne bovina (110g), cheddar americano, cebola picada, alface, picles agridoce e molho Thousand Island.',
         badge: '1 Hambúrguer · Épica 👑'
       }
     },
     'doble-cheese-burger': {
       en: {
         name: 'Double Cheese Burger',
-        description: 'Double smash beef patties (220g), double melted American cheddar, and house mayo on a potato bun.',
+        description: 'Double beef patties (220g), double melted American cheddar, and house mayo on a potato bun.',
         badge: '2 Patties (220g)'
       },
       pt: {
         name: 'Cheese Burger Dupla',
-        description: 'Dupla carne smash bovina (220g), duplo cheddar americano derretido e maionese da casa no pão de batata.',
+        description: 'Dupla carne bovina (220g), duplo cheddar americano derretido e maionese da casa no pão de batata.',
         badge: '2 Hambúrgueres (220g)'
       }
     },
     'doble-cheese-bacon': {
       en: {
         name: 'Double Cheese & Bacon',
-        description: 'Double smash beef (220g), double cheddar, plenty of crispy smoked bacon, and crispy onions.',
+        description: 'Double beef patties (220g), double cheddar, plenty of crispy smoked bacon, and crispy onions.',
         badge: 'Best Seller 🥓'
       },
       pt: {
         name: 'Cheese & Bacon Dupla',
-        description: 'Dupla carne smash (220g), duplo cheddar, muito bacon crocante defumado e cebola crispy.',
+        description: 'Dupla carne bovina (220g), duplo cheddar, muito bacon crocante defumado e cebola crispy.',
         badge: 'Mais Vendida 🥓'
       }
     },
     'doble-clasica': {
       en: {
         name: 'Double Classic',
-        description: 'Double smash beef (220g), double cheddar, fresh tomato slices, crisp lettuce, and signature Cope Sauce.',
+        description: 'Double beef patties (220g), double cheddar, fresh tomato slices, crisp lettuce, and signature Cope Sauce.',
         badge: '2 Patties (220g)'
       },
       pt: {
         name: 'Clássica Dupla',
-        description: 'Dupla carne smash (220g), duplo cheddar, fatias de tomate fresco, alface crocante e Molho Cope.',
+        description: 'Dupla carne bovina (220g), duplo cheddar, fatias de tomate fresco, alface crocante e Molho Cope.',
         badge: '2 Hambúrgueres (220g)'
       }
     },
     'doble-gran-cope': {
       en: {
         name: 'Double Grand Cope',
-        description: 'Double smash beef (220g), double cheddar, minced onion, lettuce, pickles, and Thousand Island sauce.',
+        description: 'Double beef patties (220g), double cheddar, minced onion, lettuce, pickles, and Thousand Island sauce.',
         badge: 'Chef Choice ⭐'
       },
       pt: {
         name: 'Gran Cope Dupla',
-        description: 'Dupla carne smash (220g), duplo cheddar, cebola picada, alface, picles e molho Thousand Island.',
+        description: 'Dupla carne bovina (220g), duplo cheddar, cebola picada, alface, picles e molho Thousand Island.',
         badge: 'Especial do Chef ⭐'
       }
     },
