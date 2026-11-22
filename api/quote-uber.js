@@ -150,7 +150,7 @@ export default async function handler(req, res) {
     const pickupFormatted = encodeURIComponent(STORE_ORIGIN.address);
     const dropoffFormatted = encodeURIComponent(`${cleanAddress}, CABA, Argentina`);
     const uberPackageDeeplink = `https://m.uber.com/ul/?client_id=${publicAppId}&action=setPickup&pickup[formatted_address]=${pickupFormatted}&pickup[latitude]=${STORE_ORIGIN.lat}&pickup[longitude]=${STORE_ORIGIN.lng}&pickup[nickname]=${encodeURIComponent(STORE_ORIGIN.name)}&dropoff[formatted_address]=${dropoffFormatted}&product_id=package`;
-    const uberWebUrl = `https://m.uber.com/looking/?action=setPickup&client_id=uber&pickup=${pickupFormatted}&pickup[formatted_address]=${pickupFormatted}&pickup[nickname]=${encodeURIComponent(STORE_ORIGIN.name)}&pickup[latitude]=${STORE_ORIGIN.lat}&pickup[longitude]=${STORE_ORIGIN.lng}&dropoff=${dropoffFormatted}&dropoff[formatted_address]=${dropoffFormatted}&product_id=package&category=package`;
+    const uberWebUrl = `https://m.uber.com/go/connect/home?action=setPickup&category=package&pickup[formatted_address]=${pickupFormatted}&pickup[latitude]=${STORE_ORIGIN.lat}&pickup[longitude]=${STORE_ORIGIN.lng}&pickup[nickname]=${encodeURIComponent(STORE_ORIGIN.name)}&pickup[addressLine1]=${encodeURIComponent('Macacha Güemes 260')}&pickupLat=${STORE_ORIGIN.lat}&pickupLng=${STORE_ORIGIN.lng}&pickupAddressName=${encodeURIComponent(STORE_ORIGIN.name)}&dropoff[formatted_address]=${dropoffFormatted}&dropoff[nickname]=Cliente&destinationAddressName=${dropoffFormatted}&drop[0][formatted_address]=${dropoffFormatted}&drop[0][nickname]=Cliente`;
 
     return res.status(200).json({
       ok: true,

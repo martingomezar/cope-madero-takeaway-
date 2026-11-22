@@ -91,8 +91,8 @@ export default async function handler(req, res) {
       }
 
       const uberLink = isDelivery && deliveryAddress
-        ? `https://m.uber.com/looking?pickup=${encodeURIComponent('Macacha Güemes 260, Puerto Madero')}&dropoff=${encodeURIComponent(deliveryAddress + ', CABA')}`
-        : (isDelivery ? `https://m.uber.com/looking?pickup=${encodeURIComponent('Macacha Güemes 260, Puerto Madero')}` : null);
+        ? `https://m.uber.com/go/connect/home?action=setPickup&category=package&pickup[formatted_address]=${encodeURIComponent('Macacha Güemes 260, Puerto Madero, CABA')}&pickup[latitude]=-34.6049&pickup[longitude]=-58.3647&pickup[nickname]=${encodeURIComponent('Cope Burgers Puerto Madero')}&dropoff[formatted_address]=${encodeURIComponent(deliveryAddress + ', Puerto Madero, CABA')}`
+        : (isDelivery ? `https://m.uber.com/go/connect/home?action=setPickup&category=package&pickup[formatted_address]=${encodeURIComponent('Macacha Güemes 260, Puerto Madero, CABA')}&pickup[latitude]=-34.6049&pickup[longitude]=-58.3647&pickup[nickname]=${encodeURIComponent('Cope Burgers Puerto Madero')}` : null);
 
       return {
         id: String(p.id),

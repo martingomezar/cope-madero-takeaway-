@@ -2283,26 +2283,34 @@
         if (fullDest) {
           if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(fullDest).then(() => {
-              showCajaToast('📋 <b>Dirección de entrega copiada:</b><br/>' + escapeHtml(fullDest) + '<br/>🛵 <i>Abriendo Uber Flash Envíos (Remitente: Cope Madero)...</i>');
+              showCajaToast('📋 <b>Dirección de entrega copiada:</b><br/>' + escapeHtml(fullDest) + '<br/><span style="color:#38bdf8; font-size:12px;">(Pega con Ctrl+V si la app te lo pide)</span><br/>🛵 <i>Abriendo Uber Envíos (Remitente: Cope Puerto Madero)...</i>');
             }).catch(() => {
               copyTextFallback(fullDest);
-              showCajaToast('📋 <b>Dirección copiada:</b><br/>' + escapeHtml(fullDest) + '<br/>🛵 <i>Abriendo Uber Flash Envíos...</i>');
+              showCajaToast('📋 <b>Dirección copiada:</b><br/>' + escapeHtml(fullDest) + '<br/>🛵 <i>Abriendo Uber Envíos...</i>');
             });
           } else {
             copyTextFallback(fullDest);
-            showCajaToast('📋 <b>Dirección copiada:</b><br/>' + escapeHtml(fullDest) + '<br/>🛵 <i>Abriendo Uber Flash Envíos...</i>');
+            showCajaToast('📋 <b>Dirección copiada:</b><br/>' + escapeHtml(fullDest) + '<br/>🛵 <i>Abriendo Uber Envíos...</i>');
           }
         } else {
-          showCajaToast('🛵 <i>Abriendo Uber Flash Envíos (Remitente: Cope Madero)...</i>');
+          showCajaToast('🛵 <i>Abriendo Uber Envíos (Remitente: Cope Puerto Madero)...</i>');
         }
 
-        // 2. Construir URL de Uber Flash en modo Envíos con remitente fijo en Cope Madero
-        const pickupAddr = encodeURIComponent('Macacha Güemes 260, Puerto Madero, CABA (Cope Burgers)');
-        let uberUrl = `https://m.uber.com/looking/?action=setPickup&client_id=uber&pickup=Macacha%20G%C3%BCemes%20260%2C%20Puerto%20Madero%2C%20CABA&pickup[formatted_address]=${pickupAddr}&pickup[nickname]=Cope%20Burgers%20Puerto%20Madero&pickup[latitude]=-34.6044&pickup[longitude]=-58.3662&product_id=package&category=package`;
+        // 2. Construir URL directa a la pestaña ENVÍOS (/go/connect/home) con remitente fijo en Cope Madero
+        const originAddr = 'Macacha Güemes 260, Puerto Madero, CABA';
+        const originName = 'Cope Burgers Puerto Madero';
+        const lat = '-34.6049';
+        const lng = '-58.3647';
+
+        const pickupFormatted = encodeURIComponent(originAddr);
+        const originNameEncoded = encodeURIComponent(originName);
+
+        let uberUrl = `https://m.uber.com/go/connect/home?action=setPickup&category=package&pickup[formatted_address]=${pickupFormatted}&pickup[latitude]=${lat}&pickup[longitude]=${lng}&pickup[nickname]=${originNameEncoded}&pickup[addressLine1]=${encodeURIComponent('Macacha Güemes 260')}&pickupLat=${lat}&pickupLng=${lng}&pickupAddressName=${originNameEncoded}`;
         
         if (fullDest) {
           const dropoffEncoded = encodeURIComponent(fullDest);
-          uberUrl += `&dropoff=${dropoffEncoded}&dropoff[formatted_address]=${dropoffEncoded}&dropoff[nickname]=${encodeURIComponent(customerName || 'Cliente')}`;
+          const dropoffName = encodeURIComponent(customerName || 'Cliente');
+          uberUrl += `&dropoff[formatted_address]=${dropoffEncoded}&dropoff[nickname]=${dropoffName}&destinationAddressName=${dropoffEncoded}&drop[0][formatted_address]=${dropoffEncoded}&drop[0][nickname]=${dropoffName}`;
         }
 
         // 3. Abrir en nueva ventana / pestaña
@@ -2921,7 +2929,7 @@
             delivery_address: 'Juana Manso 1200',
             delivery_apartment: '4° B, Dique 2',
             delivery_fee: 1900,
-            uber_link: 'https://m.uber.com/looking?pickup=Macacha%20G%C3%BCemes%20260%2C%20Puerto%20Madero%2C%20CABA&dropoff=Juana%20Manso%201200%2C%20Puerto%20Madero%2C%20CABA&product_id=package&category=package'
+            uber_link: 'https://m.uber.com/go/connect/home?action=setPickup&category=package&pickup[formatted_address]=Macacha%20G%C3%BCemes%20260%2C%20Puerto%20Madero%2C%20CABA&pickup[latitude]=-34.6049&pickup[longitude]=-58.3647&dropoff[formatted_address]=Juana%20Manso%201200%2C%20Puerto%20Madero%2C%20CABA'
           };
           allPaymentsMap.set(fakePayment.id, fakePayment);
           cachedPayments = Array.from(allPaymentsMap.values());
