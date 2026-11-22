@@ -40,6 +40,7 @@
     bottomCartBar: document.getElementById('bottomCartBar'),
     bottomCartCount: document.getElementById('bottomCartCount'),
     bottomCartTotal: document.getElementById('bottomCartTotal'),
+    bottomCartLabel: document.getElementById('bottomCartLabel'),
     btnOpenCart: document.getElementById('btnOpenCart'),
 
     // Cart Drawer / Modal
@@ -73,6 +74,7 @@
     modalQtyPlus: document.getElementById('modalQtyPlus'),
     modalQtyVal: document.getElementById('modalQtyVal'),
     btnModalAddCart: document.getElementById('btnModalAddCart'),
+    btnModalAddCartLabel: document.getElementById('btnModalAddCartLabel'),
     modalAddCartPrice: document.getElementById('modalAddCartPrice'),
 
     // Checkout Modal
@@ -209,6 +211,21 @@
     if (els.btnSubmitOrder) {
       const span = els.btnSubmitOrder.querySelector('span');
       if (span) span.textContent = t('btn_submit_order');
+    }
+
+    if (els.bottomCartLabel) {
+      els.bottomCartLabel.textContent = t('coming_soon_order');
+    }
+    if (els.btnModalAddCartLabel) {
+      els.btnModalAddCartLabel.textContent = t('coming_soon_order');
+    }
+
+    const waBtn = document.getElementById('floatingWhatsappBtn');
+    const waText = document.getElementById('floatingWaText');
+    if (waText) waText.textContent = t('wa_order_btn');
+    if (waBtn) {
+      const msg = encodeURIComponent(t('wa_order_msg'));
+      waBtn.href = `https://wa.me/5491173558077?text=${msg}`;
     }
 
     renderCategories();
@@ -377,7 +394,7 @@
             <p class="card-desc">${prod.description}</p>
             <div class="card-footer">
               <div class="card-price">${priceHtml}</div>
-              <button type="button" class="btn btn-sm btn-primary btn-add" data-quick-id="${prod.id}">
+              <button type="button" class="btn btn-sm btn-primary btn-add" ${!CFG.ENABLE_ORDERING ? 'disabled style="opacity:0.55; cursor:not-allowed;"' : ''} data-quick-id="${prod.id}">
                 ${btnLabel}
               </button>
             </div>
@@ -393,6 +410,11 @@
       if (!prod) return;
 
       card.addEventListener('click', (e) => {
+        if (!CFG.ENABLE_ORDERING && e.target.closest('.btn-add')) {
+          e.stopPropagation();
+          showToast(window.COPE_I18N ? window.COPE_I18N.t('coming_soon_order') : 'Próximamente podrás pedir aquí');
+          return;
+        }
         if (e.target.closest('.btn-add') && !prod.hasVariants && !prod.hasDrinkSelection && !prod.canAddExtraMeat && !prod.hasVeggieOption) {
           e.stopPropagation();
           Cart.addItem(prod, { quantity: 1 });
@@ -494,6 +516,20 @@
     updateModalAddPrice();
     updateModalQtyDisplay();
 
+    if (!CFG.ENABLE_ORDERING) {
+      if (els.btnModalAddCart) {
+        els.btnModalAddCart.disabled = true;
+        els.btnModalAddCart.style.opacity = '0.6';
+        els.btnModalAddCart.style.cursor = 'not-allowed';
+      }
+      if (els.btnModalAddCartLabel) {
+        els.btnModalAddCartLabel.textContent = window.COPE_I18N ? window.COPE_I18N.t('coming_soon_order') : 'Próximamente podrás pedir aquí';
+      }
+      if (els.modalAddCartPrice) {
+        els.modalAddCartPrice.style.display = 'none';
+      }
+    }
+
     els.productModalBackdrop.classList.remove('hidden');
     document.body.classList.add('modal-open');
   }
@@ -544,7 +580,14 @@
     const total = Cart.getTotal();
 
     // Actualizar barra inferior flotante
-    if (count > 0) {
+    if (!CFG.ENABLE_ORDERING) {
+      els.bottomCartBar.classList.remove('hidden');
+      if (els.bottomCartLabel) {
+        els.bottomCartLabel.textContent = window.COPE_I18N ? window.COPE_I18N.t('coming_soon_order') : 'Próximamente podrás pedir aquí';
+      }
+      if (els.bottomCartCount) els.bottomCartCount.style.display = 'none';
+      if (els.bottomCartTotal) els.bottomCartTotal.style.display = 'none';
+    } else if (count > 0) {
       els.bottomCartCount.textContent = count === 1 ? '1 ítem' : count + ' ítems';
       els.bottomCartTotal.textContent = formatMoney(total);
       els.bottomCartBar.classList.remove('hidden');
@@ -624,6 +667,10 @@
   }
 
   function openCartDrawer() {
+    if (!CFG.ENABLE_ORDERING) {
+      showToast(window.COPE_I18N ? window.COPE_I18N.t('coming_soon_order') : 'Próximamente podrás pedir aquí');
+      return;
+    }
     if (Cart.getCount() === 0) {
       showToast('Tu carrito está vacío. ¡Elegí tu hamburguesa favorita!');
       return;
@@ -1286,6 +1333,10 @@
     });
 
     els.btnModalAddCart.addEventListener('click', () => {
+      if (!CFG.ENABLE_ORDERING) {
+        showToast(window.COPE_I18N ? window.COPE_I18N.t('coming_soon_order') : 'Próximamente podrás pedir aquí');
+        return;
+      }
       if (!activeModalProduct) return;
       Cart.addItem(activeModalProduct, {
         variantId: activeModalVariantId,

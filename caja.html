@@ -155,6 +155,13 @@
       background: #334155;
     }
 
+    .btn-toggle-sound.is-off {
+      opacity: 0.6;
+      border-color: #475569;
+      color: #94a3b8;
+      background: #0f172a;
+    }
+
     .btn-test-alert {
       background: linear-gradient(135deg, #0047bb, #2563eb);
       color: #ffffff;
@@ -1527,9 +1534,14 @@
         <span id="liveStatusText">Conectado a MP</span>
       </div>
 
-      <button id="btnToggleSound" type="button" class="btn-toggle-sound" title="Activar/Desactivar sonido">
-        <span id="soundIcon">🔊</span>
-        <span id="soundLabel">Sonido ON</span>
+      <button id="btnToggleSoundPayments" type="button" class="btn-toggle-sound" title="Sonido de cobros Mercado Pago (ON/OFF)">
+        <span id="soundPaymentsIcon">💰</span>
+        <span id="soundPaymentsLabel">Cobros ON</span>
+      </button>
+
+      <button id="btnToggleSoundOrders" type="button" class="btn-toggle-sound" title="Sonido de nuevas comandas cocina (ON/OFF)">
+        <span id="soundOrdersIcon">🛎️</span>
+        <span id="soundOrdersLabel">Pedidos ON</span>
       </button>
 
       <button type="button" onclick="window.copeDispatchUber()" class="btn-quick-uber" style="display:inline-flex; align-items:center; gap:6px; background:#000000; color:#38bdf8; border:1px solid #0284c7; padding:7px 12px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer;" title="Abrir Uber Flash Envíos con origen Macacha Güemes 260">
@@ -1738,7 +1750,14 @@
   <script>
     (function() {
       // Estado
-      let soundEnabled = true;
+      let soundPaymentsEnabled = true;
+      let soundOrdersEnabled = true;
+      try {
+        const pSaved = localStorage.getItem('caja_sound_payments');
+        if (pSaved !== null) soundPaymentsEnabled = pSaved === 'true';
+        const oSaved = localStorage.getItem('caja_sound_orders');
+        if (oSaved !== null) soundOrdersEnabled = oSaved === 'true';
+      } catch (e) {}
       let knownPaymentIds = new Set();
       let knownOrderIds = new Set();
       let isFirstLoad = true;
@@ -1789,9 +1808,12 @@
         historyCount: document.getElementById('historyCount'),
         historyList: document.getElementById('historyList'),
         liveStatusText: document.getElementById('liveStatusText'),
-        btnToggleSound: document.getElementById('btnToggleSound'),
-        soundIcon: document.getElementById('soundIcon'),
-        soundLabel: document.getElementById('soundLabel'),
+        btnToggleSoundPayments: document.getElementById('btnToggleSoundPayments'),
+        soundPaymentsIcon: document.getElementById('soundPaymentsIcon'),
+        soundPaymentsLabel: document.getElementById('soundPaymentsLabel'),
+        btnToggleSoundOrders: document.getElementById('btnToggleSoundOrders'),
+        soundOrdersIcon: document.getElementById('soundOrdersIcon'),
+        soundOrdersLabel: document.getElementById('soundOrdersLabel'),
         btnTestAlert: document.getElementById('btnTestAlert'),
         btnTestDelivery: document.getElementById('btnTestDelivery'),
         btnLockTerminal: document.getElementById('btnLockTerminal'),
@@ -1861,9 +1883,23 @@
         }
       }
 
-      // Sonido de Caja Registradora / Campana Web Audio API
+      // Actualizar estado visual de los botones de sonido independientes
+      function updateSoundButtonsUi() {
+        if (els.btnToggleSoundPayments) {
+          els.btnToggleSoundPayments.classList.toggle('is-off', !soundPaymentsEnabled);
+          if (els.soundPaymentsIcon) els.soundPaymentsIcon.textContent = soundPaymentsEnabled ? '💰' : '🔇';
+          if (els.soundPaymentsLabel) els.soundPaymentsLabel.textContent = soundPaymentsEnabled ? 'Cobros ON' : 'Cobros OFF';
+        }
+        if (els.btnToggleSoundOrders) {
+          els.btnToggleSoundOrders.classList.toggle('is-off', !soundOrdersEnabled);
+          if (els.soundOrdersIcon) els.soundOrdersIcon.textContent = soundOrdersEnabled ? '🛎️' : '🔇';
+          if (els.soundOrdersLabel) els.soundOrdersLabel.textContent = soundOrdersEnabled ? 'Pedidos ON' : 'Pedidos OFF';
+        }
+      }
+
+      // Sonido de Caja Registradora / Ingreso de Dinero (Mercado Pago)
       function playCashSound() {
-        if (!soundEnabled) return;
+        if (!soundPaymentsEnabled) return;
         try {
           const ctx = getAudioContext();
           if (!ctx) return;
@@ -1882,7 +1918,7 @@
           osc1.start(now);
           osc1.stop(now + 0.8);
 
-          // Tono 2: Timbre armónico
+          // Tono 2: Timbre armónico de monedas
           const osc2 = ctx.createOscillator();
           const gain2 = ctx.createGain();
           osc2.type = 'sine';
@@ -1900,25 +1936,38 @@
         }
       }
 
-      // Campana de Cocina para Nuevos Pedidos KDS
+      // Campana de Cocina / Timbre de Entrada de Pedido (KDS)
       function playKitchenBell() {
-        if (!soundEnabled) return;
+        if (!soundOrdersEnabled) return;
         try {
           const ctx = getAudioContext();
           if (!ctx) return;
           const now = ctx.currentTime;
 
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(880, now); // Nota La5
-          osc.frequency.setValueAtTime(1174.66, now + 0.12); // Nota Re6
-          gain.gain.setValueAtTime(0.4, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 1.0);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(now);
-          osc.stop(now + 1.0);
+          // Ding inicial (659.25Hz)
+          const osc1 = ctx.createOscillator();
+          const gain1 = ctx.createGain();
+          osc1.type = 'sine';
+          osc1.frequency.setValueAtTime(659.25, now);
+          gain1.gain.setValueAtTime(0.4, now);
+          gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+          osc1.connect(gain1);
+          gain1.connect(ctx.destination);
+          osc1.start(now);
+          osc1.stop(now + 0.7);
+
+          // Dong resolutivo resonante (880Hz)
+          const osc2 = ctx.createOscillator();
+          const gain2 = ctx.createGain();
+          osc2.type = 'sine';
+          osc2.frequency.setValueAtTime(880, now + 0.16);
+          gain2.gain.setValueAtTime(0, now);
+          gain2.gain.setValueAtTime(0.45, now + 0.16);
+          gain2.gain.exponentialRampToValueAtTime(0.001, now + 1.3);
+          osc2.connect(gain2);
+          gain2.connect(ctx.destination);
+          osc2.start(now + 0.16);
+          osc2.stop(now + 1.3);
         } catch (e) {
           console.warn('Kitchen bell audio error:', e);
         }
@@ -2837,12 +2886,25 @@
         if (e.target === els.incomingAlertOverlay) dismissAlert();
       });
 
-      els.btnToggleSound.addEventListener('click', () => {
-        soundEnabled = !soundEnabled;
-        els.soundIcon.textContent = soundEnabled ? '🔊' : '🔇';
-        els.soundLabel.textContent = soundEnabled ? 'Sonido ON' : 'Silencio';
-        if (soundEnabled) playCashSound();
-      });
+      if (els.btnToggleSoundPayments) {
+        els.btnToggleSoundPayments.addEventListener('click', () => {
+          soundPaymentsEnabled = !soundPaymentsEnabled;
+          try { localStorage.setItem('caja_sound_payments', soundPaymentsEnabled); } catch (e) {}
+          updateSoundButtonsUi();
+          if (soundPaymentsEnabled) playCashSound();
+          showCajaToast(soundPaymentsEnabled ? '💰 Sonido de cobros (Mercado Pago) <b>ACTIVADO</b>' : '🔇 Sonido de cobros <b>SILENCIADO</b>');
+        });
+      }
+
+      if (els.btnToggleSoundOrders) {
+        els.btnToggleSoundOrders.addEventListener('click', () => {
+          soundOrdersEnabled = !soundOrdersEnabled;
+          try { localStorage.setItem('caja_sound_orders', soundOrdersEnabled); } catch (e) {}
+          updateSoundButtonsUi();
+          if (soundOrdersEnabled) playKitchenBell();
+          showCajaToast(soundOrdersEnabled ? '🛎️ Sonido de comandas (Cocina KDS) <b>ACTIVADO</b>' : '🔇 Sonido de comandas <b>SILENCIADO</b>');
+        });
+      }
 
       // Botón para probar animación de cobro
       els.btnTestAlert.addEventListener('click', () => {
@@ -2988,6 +3050,9 @@
           applyFiltersAndRender(true);
         });
       }
+
+      // Inicialización visual de controles de sonido
+      updateSoundButtonsUi();
 
       // Inicialización: Verificar si ya está autorizada esta máquina
       if (savedPin) {
