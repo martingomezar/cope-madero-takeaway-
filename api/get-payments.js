@@ -35,7 +35,14 @@ export default async function handler(req, res) {
 
   try {
     const limit = Math.min(Number(req.query.limit) || 60, 100);
-    const mpUrl = `https://api.mercadopago.com/v1/payments/search?sort=date_created&criteria=desc&limit=${limit}`;
+    const offset = Number(req.query.offset) || 0;
+    let mpUrl = `https://api.mercadopago.com/v1/payments/search?sort=date_created&criteria=desc&limit=${limit}&offset=${offset}`;
+    if (req.query.begin_date) {
+      mpUrl += `&range=date_created&begin_date=${encodeURIComponent(req.query.begin_date)}`;
+      if (req.query.end_date) {
+        mpUrl += `&end_date=${encodeURIComponent(req.query.end_date)}`;
+      }
+    }
 
     const mpRes = await fetch(mpUrl, {
       headers: {
@@ -117,9 +124,9 @@ export default async function handler(req, res) {
           };
           const dropJson = encodeURIComponent(JSON.stringify(dropObj));
           const fullDest = encodeURIComponent(deliveryAddress + (deliveryApartment ? ' (' + deliveryApartment + ')' : '') + ', Puerto Madero, CABA');
-          uberLink = `https://m.uber.com/go/connect/home?action=setPickup&category=package&pickup=${pickupJson}&pickupAddressName=${encodeURIComponent('Cope Burgers Puerto Madero')}&pickupLat=-34.6049&pickupLng=-58.3647&pickup[formatted_address]=${pickupFormatted}&drop[0]=${dropJson}&dropoff=${dropJson}&destinationAddressName=${fullDest}&destinationLat=-34.6080&destinationLng=-58.3630&dropoff[formatted_address]=${fullDest}`;
+          uberLink = `https://m.uber.com/go/connect/home?pickup=${pickupJson}&pickupAddressName=${encodeURIComponent('Cope Burgers Puerto Madero')}&pickupLat=-34.6049&pickupLng=-58.3647&drop%5B0%5D=${dropJson}&destinationAddressName=${fullDest}&destinationLat=-34.6080&destinationLng=-58.3630`;
         } else {
-          uberLink = `https://m.uber.com/go/connect/home?action=setPickup&category=package&pickup=${pickupJson}&pickupAddressName=${encodeURIComponent('Cope Burgers Puerto Madero')}&pickupLat=-34.6049&pickupLng=-58.3647&pickup[formatted_address]=${pickupFormatted}`;
+          uberLink = `https://m.uber.com/go/connect/home?pickup=${pickupJson}&pickupAddressName=${encodeURIComponent('Cope Burgers Puerto Madero')}&pickupLat=-34.6049&pickupLng=-58.3647`;
         }
       }
 
@@ -129,6 +136,10 @@ export default async function handler(req, res) {
         status_detail: p.status_detail,
         amount: p.transaction_amount,
         net_received_amount: p.transaction_details ? p.transaction_details.net_received_amount : p.transaction_amount,
+        total_paid_amount: p.transaction_details ? p.transaction_details.total_paid_amount : p.transaction_amount,
+        fee_details: p.fee_details || [],
+        charges_details: p.charges_details || [],
+        taxes_amount: p.taxes_amount || 0,
         date_created: p.date_created,
         date_approved: p.date_approved,
         payer_name: payerName,
@@ -146,6 +157,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       timestamp: new Date().toISOString(),
+      paging: data.paging || null,
       payments: results
     });
   } catch (err) {
