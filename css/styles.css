@@ -1728,3 +1728,63 @@ body.modal-open {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
 }
+
+/* =========================================================================
+   SELECTOR DE IDIOMAS CON BANDERAS (ES 🇦🇷 / EN 🇺🇸 / PT 🇧🇷)
+   ========================================================================= */
+.header-flags-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.14);
+  padding: 4px 6px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.flag-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  padding: 5px 8px;
+  border-radius: 14px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  opacity: 0.75;
+}
+
+.flag-chip:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.flag-chip.active {
+  opacity: 1;
+  background: #ffffff;
+  color: #0047bb;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+.flag-emoji {
+  font-size: 14px;
+  line-height: 1;
+}
+
+@media (max-width: 540px) {
+  .header-top {
+    flex-wrap: wrap;
+  }
+  .header-flags-bar {
+    width: 100%;
+    justify-content: center;
+    margin-top: 6px;
+  }
+}

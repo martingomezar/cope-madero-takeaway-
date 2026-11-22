@@ -1121,6 +1121,14 @@
         <span id="soundLabel">Sonido ON</span>
       </button>
 
+      <a href="https://m.uber.com/looking?pickup=Macacha%20G%C3%BCemes%20260%2C%20Puerto%20Madero%2C%20CABA" target="_blank" rel="noopener noreferrer" class="btn-quick-uber" style="display:inline-flex; align-items:center; gap:6px; background:#000000; color:#38bdf8; border:1px solid #0284c7; padding:7px 12px; border-radius:10px; font-weight:800; font-size:12px; text-decoration:none;" title="Pedir moto Uber Flash con origen Macacha Güemes 260">
+        <span>🛵 Pedir Moto Uber</span>
+      </a>
+
+      <button id="btnTestDelivery" type="button" class="btn-test-alert" style="border-color:#0284c7; color:#38bdf8;" title="Simular un pedido con Delivery Uber">
+        🛵 Probar Delivery
+      </button>
+
       <button id="btnTestAlert" type="button" class="btn-test-alert" title="Simular cobro entrante">
         ⚡ Probar Animación
       </button>
@@ -1175,14 +1183,28 @@
         <span class="stat-label">Cobros Registrados</span>
         <span id="statCountToday" class="stat-val">0</span>
       </div>
+      <div class="stat-card" style="border-color: rgba(56, 189, 248, 0.4); background: rgba(56, 189, 248, 0.05);">
+        <span class="stat-label" style="color: #38bdf8;">🛵 Envíos Delivery</span>
+        <span id="statDeliveryToday" class="stat-val" style="color: #38bdf8;">0</span>
+      </div>
       <div class="stat-card">
         <span class="stat-label">Última Consulta</span>
         <span id="statLastCheck" class="stat-val" style="font-size:18px;">--:--:--</span>
       </div>
     </div>
 
-    <!-- PANEL DE FILTROS: FORMA DE PAGO Y HORARIO -->
+    <!-- PANEL DE FILTROS: FORMA DE PAGO, MODALIDAD Y HORARIO -->
     <div class="caja-filter-bar">
+      <!-- Filtro Modalidad -->
+      <div class="filter-group">
+        <span class="filter-group-label">🛵 Modalidad:</span>
+        <div id="filterTypeChips" class="filter-chips">
+          <button type="button" class="chip active" data-type="all">Todos</button>
+          <button type="button" class="chip" data-type="delivery" style="border-color:rgba(56,189,248,0.4); color:#38bdf8;">🛵 Solo Delivery Uber</button>
+          <button type="button" class="chip" data-type="takeaway">🛍️ Solo Take Away</button>
+        </div>
+      </div>
+
       <!-- Filtro Forma de Pago -->
       <div class="filter-group">
         <span class="filter-group-label">💳 Medio de Pago:</span>
@@ -1269,6 +1291,7 @@
       let activeFilters = {
         payment: 'all',
         time: 'all',
+        type: 'all',
         timeFrom: '12:00',
         timeTo: '23:59'
       };
@@ -1284,6 +1307,7 @@
         heroTimeAgo: document.getElementById('heroTimeAgo'),
         statTotalToday: document.getElementById('statTotalToday'),
         statCountToday: document.getElementById('statCountToday'),
+        statDeliveryToday: document.getElementById('statDeliveryToday'),
         statLastCheck: document.getElementById('statLastCheck'),
         historyCount: document.getElementById('historyCount'),
         historyList: document.getElementById('historyList'),
@@ -1292,6 +1316,7 @@
         soundIcon: document.getElementById('soundIcon'),
         soundLabel: document.getElementById('soundLabel'),
         btnTestAlert: document.getElementById('btnTestAlert'),
+        btnTestDelivery: document.getElementById('btnTestDelivery'),
         btnLockTerminal: document.getElementById('btnLockTerminal'),
         terminalLockOverlay: document.getElementById('terminalLockOverlay'),
         pinForm: document.getElementById('pinForm'),
@@ -1299,6 +1324,7 @@
         btnTogglePinVisibility: document.getElementById('btnTogglePinVisibility'),
         lockErrorMsg: document.getElementById('lockErrorMsg'),
         btnUnlockTerminal: document.getElementById('btnUnlockTerminal'),
+        filterTypeChips: document.getElementById('filterTypeChips'),
         filterPayChips: document.getElementById('filterPayChips'),
         filterTimeChips: document.getElementById('filterTimeChips'),
         customTimeBox: document.getElementById('customTimeBox'),
@@ -1455,8 +1481,22 @@
         els.statTotalToday.textContent = formatMoney(sumToday);
         els.statCountToday.textContent = todayApprovedAll.length;
 
+        const todayDeliveryAll = todayApprovedAll.filter(p => p.order_type === 'delivery');
+        if (els.statDeliveryToday) {
+          els.statDeliveryToday.textContent = todayDeliveryAll.length;
+        }
+
         // FILTRADO DINÁMICO
         const filtered = sorted.filter((p) => {
+          // 0. Filtro Modalidad (Delivery vs Take Away)
+          if (activeFilters.type && activeFilters.type !== 'all') {
+            if (activeFilters.type === 'delivery') {
+              if (p.order_type !== 'delivery') return false;
+            } else if (activeFilters.type === 'takeaway') {
+              if (p.order_type === 'delivery') return false;
+            }
+          }
+
           // 1. Filtro Forma de Pago
           if (activeFilters.payment !== 'all') {
             if (activeFilters.payment === 'rejected') {
@@ -1510,7 +1550,7 @@
         });
 
         // Indicador de filtro activo
-        const isFiltered = activeFilters.payment !== 'all' || activeFilters.time !== 'all';
+        const isFiltered = activeFilters.payment !== 'all' || activeFilters.time !== 'all' || (activeFilters.type && activeFilters.type !== 'all');
         if (isFiltered) {
           const filteredApproved = filtered.filter(p => p.status === 'approved');
           const sumFiltered = filteredApproved.reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
@@ -1523,7 +1563,7 @@
         }
 
         // CONTROL ANTI-PARPADEO (HUELLA DIGITAL DE LA LISTA)
-        const currentFingerprint = `${activeFilters.payment}_${activeFilters.time}_${activeFilters.timeFrom}_${activeFilters.timeTo}_` + 
+        const currentFingerprint = `${activeFilters.type}_${activeFilters.payment}_${activeFilters.time}_${activeFilters.timeFrom}_${activeFilters.timeTo}_` + 
           filtered.map(p => `${p.id}:${p.status}:${p.amount}:${p.order_type || ''}`).join('|');
 
         if (!force && currentFingerprint === lastRenderedFingerprint) {
@@ -1809,6 +1849,44 @@
           description: 'Combo Clásica + Papas + Bebida'
         });
       });
+
+      // Botón para probar cobro con Delivery Uber y ver el botón de despacho en vivo
+      if (els.btnTestDelivery) {
+        els.btnTestDelivery.addEventListener('click', () => {
+          const fakeDelivery = {
+            id: 'TEST-UBER-' + Math.floor(Math.random() * 900000 + 100000),
+            amount: 17400,
+            payer_name: 'Santiago Morales (Prueba Delivery)',
+            payment_type: 'account_money',
+            payment_method: 'Dinero en Cuenta MP',
+            status: 'approved',
+            status_detail: 'accredited',
+            date_created: new Date().toISOString(),
+            order_id: 'COPE-' + Math.floor(Math.random() * 9000 + 1000),
+            order_type: 'delivery',
+            delivery_address: 'Juana Manso 1200',
+            delivery_apartment: '4° B, Dique 2',
+            delivery_fee: 1900,
+            uber_link: 'https://m.uber.com/looking?pickup=Macacha%20G%C3%BCemes%20260%2C%20Puerto%20Madero%2C%20CABA&dropoff=Juana%20Manso%201200%2C%20CABA'
+          };
+          allPaymentsMap.set(fakeDelivery.id, fakeDelivery);
+          cachedPayments = Array.from(allPaymentsMap.values());
+          triggerNewPaymentAnimation(fakeDelivery);
+          applyFiltersAndRender(true);
+        });
+      }
+
+      // Filtros por Modalidad (Delivery vs Take Away)
+      if (els.filterTypeChips) {
+        els.filterTypeChips.addEventListener('click', (e) => {
+          const chip = e.target.closest('.chip');
+          if (!chip) return;
+          els.filterTypeChips.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+          activeFilters.type = chip.dataset.type || 'all';
+          applyFiltersAndRender(true);
+        });
+      }
 
       // Filtros por Forma de Pago
       if (els.filterPayChips) {

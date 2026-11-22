@@ -151,13 +151,72 @@
   }
 
   // =========================================================================
+  // SISTEMA MULTILENGUAJE (ES / EN / PT)
+  // =========================================================================
+  function applyLanguage(lang) {
+    if (!window.COPE_I18N) return;
+    window.COPE_I18N.setLang(lang);
+    const t = window.COPE_I18N.t;
+
+    // Actualizar botones de banderas en la barra superior
+    document.querySelectorAll('.flag-chip').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.lang === lang);
+    });
+
+    // Textos del Header y Meta
+    const badgeEl = document.getElementById('i18nHeaderBadge');
+    if (badgeEl) badgeEl.textContent = t('badge_takeaway');
+
+    const sloganEl = document.getElementById('i18nHeaderSlogan');
+    if (sloganEl) sloganEl.textContent = t('slogan');
+
+    if (els.searchInput) els.searchInput.placeholder = t('search_placeholder');
+    if (els.storeHoursText) els.storeHoursText.textContent = t('schedule_label');
+
+    const emptyTitle = document.querySelector('#emptySearchState h3');
+    if (emptyTitle) emptyTitle.textContent = t('no_results_title');
+    const emptyDesc = document.querySelector('#emptySearchState p');
+    if (emptyDesc) emptyDesc.textContent = t('no_results_desc');
+
+    // Cart Drawer
+    const cartTitle = document.querySelector('.drawer-title');
+    if (cartTitle) cartTitle.textContent = t('cart_title');
+    if (els.btnClearCart) els.btnClearCart.textContent = t('cart_btn_clear');
+    if (els.btnGoToCheckout) els.btnGoToCheckout.textContent = t('cart_btn_checkout');
+
+    // Checkout Modal
+    const checkoutTitle = document.getElementById('checkoutModalTitle');
+    if (checkoutTitle) checkoutTitle.textContent = t('checkout_title');
+
+    const optTakeawaySpan = document.querySelector('#orderTypeTakeaway ~ span');
+    if (optTakeawaySpan) optTakeawaySpan.textContent = t('opt_takeaway');
+    const optDeliverySpan = document.querySelector('#orderTypeDelivery ~ span');
+    if (optDeliverySpan) optDeliverySpan.textContent = t('opt_delivery');
+
+    if (els.deliveryAddress) els.deliveryAddress.placeholder = t('delivery_addr_placeholder');
+    if (els.deliveryApartment) els.deliveryApartment.placeholder = t('delivery_apt_placeholder');
+
+    if (els.checkoutName) els.checkoutName.placeholder = t('field_name_placeholder');
+    if (els.checkoutPhone) els.checkoutPhone.placeholder = t('field_phone_placeholder');
+    if (els.checkoutNotes) els.checkoutNotes.placeholder = t('checkout_notes_placeholder');
+
+    if (els.btnSubmitOrder) {
+      const span = els.btnSubmitOrder.querySelector('span');
+      if (span) span.textContent = t('btn_submit_order');
+    }
+
+    renderCategories();
+    renderProducts();
+    populatePaymentMethods();
+  }
+
+  // =========================================================================
   // INIT
   // =========================================================================
   function init() {
     renderStoreMeta();
-    renderCategories();
-    renderProducts();
-    populatePaymentMethods();
+    const currentLang = window.COPE_I18N ? window.COPE_I18N.init() : 'es';
+    applyLanguage(currentLang);
     bindEvents();
 
     // Suscribir render de carrito
@@ -211,10 +270,12 @@
             ? PRODUCTS.filter((p) => p.hasVeggieOption).length
             : PRODUCTS.filter((p) => p.category === cat.id).length);
 
+      const locCat = window.COPE_I18N ? window.COPE_I18N.getLocalizedCategory(cat) : cat;
+
       return `
         <button type="button" class="category-pill ${isActive ? 'active' : ''}" data-category="${cat.id}">
           <span class="category-icon">${cat.icon}</span>
-          <span class="category-label">${cat.label}</span>
+          <span class="category-label">${locCat.label}</span>
           <span class="category-count">${count}</span>
         </button>
       `;
@@ -245,9 +306,12 @@
     const q = searchQuery.trim().toLowerCase();
     if (q) {
       filtered = filtered.filter((p) => {
+        const lp = window.COPE_I18N ? window.COPE_I18N.getLocalizedProduct(p) : p;
         return (
           p.name.toLowerCase().includes(q) ||
+          lp.name.toLowerCase().includes(q) ||
           (p.description && p.description.toLowerCase().includes(q)) ||
+          (lp.description && lp.description.toLowerCase().includes(q)) ||
           (p.badge && p.badge.toLowerCase().includes(q))
         );
       });
@@ -261,7 +325,9 @@
 
     els.emptySearchState.classList.add('hidden');
 
-    els.productsGrid.innerHTML = filtered.map((prod) => {
+    els.productsGrid.innerHTML = filtered.map((origProd) => {
+      const prod = window.COPE_I18N ? window.COPE_I18N.getLocalizedProduct(origProd) : origProd;
+
       // Precio a mostrar en tarjeta
       let priceHtml = '';
       if (prod.hasVariants && Array.isArray(prod.variants)) {
@@ -275,10 +341,13 @@
         ? `<span class="card-badge">${prod.badge}</span>`
         : '';
 
-      const btnLabel = prod.hasVariants || prod.hasDrinkSelection || prod.canAddExtraMeat || prod.hasVeggieOption ? 'Personalizar' : '+ Agregar';
+      const isCustomizable = origProd.hasVariants || origProd.hasDrinkSelection || origProd.canAddExtraMeat || origProd.hasVeggieOption;
+      const btnLabel = isCustomizable
+        ? (window.COPE_I18N ? window.COPE_I18N.t('btn_customize') : 'Personalizar')
+        : (window.COPE_I18N ? `+ ${window.COPE_I18N.t('btn_add')}` : '+ Agregar');
 
       return `
-        <article class="product-card" data-product-id="${prod.id}">
+        <article class="product-card" data-product-id="${origProd.id}">
           <div class="card-image-wrap">
             <img src="${prod.image}" alt="${prod.name}" class="card-img" loading="lazy" />
             ${badgeHtml}
@@ -320,8 +389,9 @@
   // =========================================================================
   // PRODUCT CUSTOMIZATION MODAL
   // =========================================================================
-  function openProductModal(prod) {
-    activeModalProduct = prod;
+  function openProductModal(origProd) {
+    activeModalProduct = origProd;
+    const prod = window.COPE_I18N ? window.COPE_I18N.getLocalizedProduct(origProd) : origProd;
     activeModalQty = 1;
     activeModalIsVeggie = false;
     activeModalHasExtraMeat = false;
@@ -493,11 +563,15 @@
 
       const lineTotal = item.unitPrice * item.quantity;
 
+      const origProd = PRODUCTS.find((p) => p.id === item.id);
+      const lp = origProd && window.COPE_I18N ? window.COPE_I18N.getLocalizedProduct(origProd) : null;
+      const displayName = lp ? lp.name : item.name;
+
       return `
         <div class="cart-item-row" data-cart-key="${item.key}">
-          <img src="${item.image}" alt="${item.name}" class="cart-item-thumb" />
+          <img src="${item.image}" alt="${displayName}" class="cart-item-thumb" />
           <div class="cart-item-info">
-            <div class="cart-item-name">${item.name}</div>
+            <div class="cart-item-name">${displayName}</div>
             ${detailsHtml}
             <div class="cart-item-price-unit">${formatMoney(item.unitPrice)} c/u</div>
           </div>
@@ -601,7 +675,12 @@
 
   function populatePaymentMethods() {
     if (!els.paymentMethodsList) return;
-    const methods = CFG.PAYMENT_METHODS || [];
+    // Efectivo ELIMINADO completamente
+    let methods = (CFG.PAYMENT_METHODS || []).filter(m => m.id !== 'efectivo');
+    if (isDeliverySelected) {
+      // En envíos delivery solo se permite pago online por Mercado Pago o Transferencia Alias
+      methods = methods.filter(m => m.id !== 'tarjeta');
+    }
 
     els.paymentMethodsList.innerHTML = methods.map((m, idx) => {
       const isChecked = idx === 0;
@@ -655,6 +734,7 @@
     if (els.pickupTimeGroup) {
       els.pickupTimeGroup.classList.toggle('hidden', isDeliverySelected);
     }
+    populatePaymentMethods();
     if (isDeliverySelected) {
       fetchUberQuote();
     } else {
@@ -725,6 +805,10 @@
 
     const items = Cart.getItems();
     els.checkoutItemsPreview.innerHTML = items.map((i) => {
+      const origProd = PRODUCTS.find((p) => p.id === i.id);
+      const lp = origProd && window.COPE_I18N ? window.COPE_I18N.getLocalizedProduct(origProd) : null;
+      const displayName = lp ? lp.name : i.name;
+
       const extras = [];
       if (i.variantLabel) extras.push(i.variantLabel.split(' ')[0]);
       if (i.isVeggie) extras.push('🌱 Not Burger');
@@ -734,7 +818,7 @@
 
       return `
         <div class="checkout-item-line">
-          <span>${i.quantity}x ${i.name}${extraText}</span>
+          <span>${i.quantity}x ${displayName}${extraText}</span>
           <span class="tabular">${formatMoney(i.unitPrice * i.quantity)}</span>
         </div>
       `;
@@ -963,6 +1047,14 @@
   // EVENT BINDINGS
   // =========================================================================
   function bindEvents() {
+    // Selector de idiomas con Banderas (ES / EN / PT)
+    document.querySelectorAll('.flag-chip').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const lang = btn.dataset.lang;
+        applyLanguage(lang);
+      });
+    });
+
     els.searchInput.addEventListener('input', (e) => {
       searchQuery = e.target.value;
       els.clearSearchBtn.classList.toggle('hidden', !searchQuery);
