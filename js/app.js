@@ -728,6 +728,7 @@
 
   let isDeliverySelected = false;
   let currentDeliveryFee = 0;
+  let currentDeliveryEta = '25-35 min';
   let quoteDebounceTimer = null;
 
   function updateDeliveryTotals() {
@@ -757,6 +758,7 @@
       fetchUberQuote();
     } else {
       currentDeliveryFee = 0;
+      currentDeliveryEta = '25-35 min';
       updateDeliveryTotals();
     }
   }
@@ -786,6 +788,7 @@
     }
 
     currentDeliveryFee = defaultZoneFee;
+    currentDeliveryEta = defaultZoneEta;
     if (els.uberQuotePrice) els.uberQuotePrice.textContent = formatMoney(currentDeliveryFee);
     if (els.uberQuoteEta) els.uberQuoteEta.textContent = `⏱️ Tiempo estimado: ~${defaultZoneEta}`;
     updateDeliveryTotals();
@@ -797,8 +800,9 @@
           const data = await res.json();
           if (data && data.fee) {
             currentDeliveryFee = Number(data.fee);
+            if (data.eta) currentDeliveryEta = data.eta;
             if (els.uberQuotePrice) els.uberQuotePrice.textContent = formatMoney(currentDeliveryFee);
-            if (els.uberQuoteEta) els.uberQuoteEta.textContent = `⏱️ Tiempo estimado: ~${data.eta}`;
+            if (els.uberQuoteEta) els.uberQuoteEta.textContent = `⏱️ Tiempo estimado: ~${currentDeliveryEta}`;
             updateDeliveryTotals();
           }
         }
@@ -854,231 +858,236 @@
   }
 
   // =========================================================================
-  // SUBMIT ORDER TO WHATSAPP
+  // SUBMIT ORDER (WEB-A-WEB)
   // =========================================================================
   function handleSubmitOrder(e) {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
 
-    const name = els.checkoutName.value.trim();
-    const phone = els.checkoutPhone.value.trim();
-    if (!name) {
-      showToast('Por favor ingresá tu nombre para preparar el pedido.');
-      els.checkoutName.focus();
-      return;
-    }
-    if (!phone || phone.length < 8) {
-      showToast('Por favor ingresá un número de teléfono válido.');
-      els.checkoutPhone.focus();
-      return;
-    }
-
-    const isDelivery = Boolean(els.orderTypeDelivery && els.orderTypeDelivery.checked);
-    let deliveryAddress = '';
-    let deliveryApartment = '';
-
-    if (isDelivery) {
-      deliveryAddress = els.deliveryAddress ? els.deliveryAddress.value.trim() : '';
-      deliveryApartment = els.deliveryApartment ? els.deliveryApartment.value.trim() : '';
-      if (!deliveryAddress || deliveryAddress.length < 4) {
-        showToast('Por favor ingresá la calle y número para el envío en moto.');
-        if (els.deliveryAddress) els.deliveryAddress.focus();
+    try {
+      const name = els.checkoutName.value.trim();
+      const phone = els.checkoutPhone.value.trim();
+      if (!name) {
+        showToast('Por favor ingresá tu nombre para preparar el pedido.');
+        els.checkoutName.focus();
         return;
       }
-    }
-
-    saveUserData({
-      name,
-      phone,
-      address: deliveryAddress,
-      apartment: deliveryApartment
-    });
-
-    let pickupTimeStr = '';
-    const now = new Date();
-    const openH = (CFG.SCHEDULE && CFG.SCHEDULE.openHour) || 12;
-    const closeH = (CFG.SCHEDULE && CFG.SCHEDULE.closeHour) || 23;
-    const isClosedNow = now.getHours() < openH || now.getHours() >= closeH;
-
-    if (isDelivery) {
-      pickupTimeStr = `Envío en Moto Uber Flash (~25-35 min)`;
-    } else if (els.pickupTimeAsap && els.pickupTimeAsap.checked) {
-      if (isClosedNow) {
-        pickupTimeStr = `Próxima apertura (${openH}:00 hs) · Local cerrado ahora`;
-      } else {
-        const prep = new Date(now.getTime() + (CFG.PREP_MINUTES || 20) * 60000);
-        const approxHour = `${String(prep.getHours()).padStart(2, '0')}:${String(prep.getMinutes()).padStart(2, '0')} hs`;
-        pickupTimeStr = `Lo antes posible (~${approxHour})`;
+      if (!phone || phone.length < 8) {
+        showToast('Por favor ingresá un número de teléfono válido.');
+        els.checkoutPhone.focus();
+        return;
       }
-    } else {
-      pickupTimeStr = (els.scheduledTimeSelect && els.scheduledTimeSelect.value) || 'A coordinar';
-    }
 
-    const selectedPayRadio = document.querySelector('input[name="checkout_payment"]:checked');
-    const payMethodId = selectedPayRadio ? selectedPayRadio.value : 'transferencia';
-    const payMethodObj = (CFG.PAYMENT_METHODS || []).find((m) => m.id === payMethodId);
-    const payLabel = payMethodObj ? payMethodObj.label : 'Mercado Pago / Transferencia';
+      const isDelivery = Boolean(els.orderTypeDelivery && els.orderTypeDelivery.checked);
+      let deliveryAddress = '';
+      let deliveryApartment = '';
 
-    const notes = els.checkoutNotes ? els.checkoutNotes.value.trim() : '';
-    const items = Cart.getItems();
-    const subtotal = Cart.getTotal();
-    const shippingFee = isDelivery ? currentDeliveryFee : 0;
-    const finalTotal = subtotal + shippingFee;
-
-    let msg = isDelivery
-      ? `🛵 *NUEVO PEDIDO DELIVERY UBER — COPE PUERTO MADERO* 🛵\n`
-      : `🍔 *NUEVO PEDIDO TAKE AWAY — COPE PUERTO MADERO* 🍔\n`;
-    msg += `------------------------------------------\n`;
-    msg += `👤 *Cliente:* ${name}\n`;
-    msg += `📱 *Teléfono:* ${phone}\n`;
-
-    if (isDelivery) {
-      msg += `📍 *Dirección de Entrega:* ${deliveryAddress}\n`;
-      if (deliveryApartment) {
-        msg += `🏢 *Piso / Depto:* ${deliveryApartment}\n`;
+      if (isDelivery) {
+        deliveryAddress = els.deliveryAddress ? els.deliveryAddress.value.trim() : '';
+        deliveryApartment = els.deliveryApartment ? els.deliveryApartment.value.trim() : '';
+        if (!deliveryAddress || deliveryAddress.length < 4) {
+          showToast('Por favor ingresá la calle y número para el envío en moto.');
+          if (els.deliveryAddress) els.deliveryAddress.focus();
+          return;
+        }
       }
-      msg += `🛵 *Modalidad:* Envío en Moto (Uber Flash)\n`;
-      msg += `⏱️ *Tiempo estimado:* 25-35 min\n`;
-    } else {
-      msg += `⏰ *Horario de Retiro:* ${pickupTimeStr}\n`;
-      msg += `📍 *Retira en:* ${CFG.ADDRESS}, ${CFG.BRANCH_NAME}\n`;
-    }
 
-    msg += `💳 *Forma de Pago:* ${payLabel}\n`;
-    if (payMethodId === 'transferencia') {
-      msg += `   ↳ _Alias MP: ${CFG.ALIAS_MP}_\n`;
-    }
-    msg += `------------------------------------------\n\n`;
-    msg += `📋 *DETALLE DEL PEDIDO:*\n`;
-
-    items.forEach((item, idx) => {
-      const lineTotal = formatMoney(item.unitPrice * item.quantity);
-      msg += `${idx + 1}. *${item.quantity}x ${item.name}*\n`;
-      if (item.variantLabel) {
-        msg += `   ↳ Tamaño: ${item.variantLabel}\n`;
-      }
-      if (item.hasExtraMeat) {
-        msg += `   ↳ 🥩 Extra: +1 Medallón de Carne (+$4.000)\n`;
-      }
-      if (item.isVeggie) {
-        msg += `   ↳ 🌱 Opción Vegetariana: Con Not Burger y pan 100% vegano\n`;
-      }
-      if (item.drinkChoice) {
-        msg += `   ↳ 🥤 Bebida: ${item.drinkChoice}\n`;
-      }
-      if (item.notes) {
-        msg += `   ↳ 📝 Aclaración: ${item.notes}\n`;
-      }
-      msg += `   ↳ Subtotal: ${lineTotal}\n\n`;
-    });
-
-    if (isDelivery && shippingFee > 0) {
-      msg += `🛵 *Costo Envío Moto Uber:* ${formatMoney(shippingFee)}\n`;
-    }
-
-    msg += `------------------------------------------\n`;
-    msg += `💰 *TOTAL A PAGAR: ${formatMoney(finalTotal)}*\n`;
-    msg += `------------------------------------------\n`;
-
-    if (notes) {
-      msg += `💬 *Notas adicionales:* ${notes}\n`;
-    }
-
-    msg += `\n_Pedido generado desde la web de Cope Burgers Puerto Madero_`;
-
-    const orderId = `COPE-${Math.floor(1000 + Math.random() * 9000)}`;
-
-    const orderPayload = {
-      orderId,
-      created_at: new Date().toISOString(),
-      customer: { name, phone },
-      order_type: isDelivery ? 'delivery' : 'takeaway',
-      pickup_time: pickupTimeStr,
-      delivery: isDelivery ? {
-        isDelivery: true,
+      saveUserData({
+        name,
+        phone,
         address: deliveryAddress,
-        apartment: deliveryApartment,
-        fee: shippingFee,
-        eta: currentDeliveryEta || '25-35 min'
-      } : null,
-      items: items.map((i) => ({
-        id: i.id || i.productId,
-        name: i.name,
-        quantity: i.quantity,
-        unitPrice: i.unitPrice,
-        variantLabel: i.variantLabel || null,
-        isVeggie: Boolean(i.isVeggie),
-        hasExtraMeat: Boolean(i.hasExtraMeat),
-        drinkChoice: i.drinkChoice || null,
-        notes: i.notes || ''
-      })),
-      subtotal,
-      delivery_fee: shippingFee,
-      total: finalTotal,
-      payment_method: payMethodId,
-      payment_status: payMethodId === 'mp_online' ? 'pendiente_mp' : 'pendiente_transferencia',
-      kitchen_status: 'recibido',
-      notes
-    };
+        apartment: deliveryApartment
+      });
 
-    // 1. Guardar comanda en el servidor en tiempo real (web a web)
-    fetch('/api/orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(orderPayload)
-    }).catch((e) => console.warn('Error al enviar comanda al servidor:', e));
+      let pickupTimeStr = '';
+      const now = new Date();
+      const openH = (CFG.SCHEDULE && CFG.SCHEDULE.openHour) || 12;
+      const closeH = (CFG.SCHEDULE && CFG.SCHEDULE.closeHour) || 23;
+      const isClosedNow = now.getHours() < openH || now.getHours() >= closeH;
 
-    if (payMethodId === 'mp_online') {
-      const span = els.btnSubmitOrder.querySelector('span');
-      if (span) span.textContent = 'Generando cobro seguro en Mercado Pago...';
-      else els.btnSubmitOrder.textContent = 'Generando cobro seguro en Mercado Pago...';
-      els.btnSubmitOrder.disabled = true;
+      if (isDelivery) {
+        pickupTimeStr = `Envío en Moto Uber Flash (~25-35 min)`;
+      } else if (els.pickupTimeAsap && els.pickupTimeAsap.checked) {
+        if (isClosedNow) {
+          pickupTimeStr = `Próxima apertura (${openH}:00 hs) · Local cerrado ahora`;
+        } else {
+          const prep = new Date(now.getTime() + (CFG.PREP_MINUTES || 20) * 60000);
+          const approxHour = `${String(prep.getHours()).padStart(2, '0')}:${String(prep.getMinutes()).padStart(2, '0')} hs`;
+          pickupTimeStr = `Lo antes posible (~${approxHour})`;
+        }
+      } else {
+        pickupTimeStr = (els.scheduledTimeSelect && els.scheduledTimeSelect.value) || 'A coordinar';
+      }
 
-      try {
-        localStorage.setItem('cope_pending_order', JSON.stringify({ orderId, orderPayload }));
-      } catch (e) {}
+      const selectedPayRadio = document.querySelector('input[name="checkout_payment"]:checked');
+      const payMethodId = selectedPayRadio ? selectedPayRadio.value : 'transferencia';
+      const payMethodObj = (CFG.PAYMENT_METHODS || []).find((m) => m.id === payMethodId);
+      const payLabel = payMethodObj ? payMethodObj.label : 'Mercado Pago / Transferencia';
 
-      fetch('/api/create-preference', {
+      const notes = els.checkoutNotes ? els.checkoutNotes.value.trim() : '';
+      const items = Cart.getItems();
+      const subtotal = Cart.getTotal();
+      const shippingFee = isDelivery ? currentDeliveryFee : 0;
+      const finalTotal = subtotal + shippingFee;
+
+      let msg = isDelivery
+        ? `🛵 *NUEVO PEDIDO DELIVERY UBER — COPE PUERTO MADERO* 🛵\n`
+        : `🍔 *NUEVO PEDIDO TAKE AWAY — COPE PUERTO MADERO* 🍔\n`;
+      msg += `------------------------------------------\n`;
+      msg += `👤 *Cliente:* ${name}\n`;
+      msg += `📱 *Teléfono:* ${phone}\n`;
+
+      if (isDelivery) {
+        msg += `📍 *Dirección de Entrega:* ${deliveryAddress}\n`;
+        if (deliveryApartment) {
+          msg += `🏢 *Piso / Depto:* ${deliveryApartment}\n`;
+        }
+        msg += `🛵 *Modalidad:* Envío en Moto (Uber Flash)\n`;
+        msg += `⏱️ *Tiempo estimado:* 25-35 min\n`;
+      } else {
+        msg += `⏰ *Horario de Retiro:* ${pickupTimeStr}\n`;
+        msg += `📍 *Retira en:* ${CFG.ADDRESS}, ${CFG.BRANCH_NAME}\n`;
+      }
+
+      msg += `💳 *Forma de Pago:* ${payLabel}\n`;
+      if (payMethodId === 'transferencia') {
+        msg += `   ↳ _Alias MP: ${CFG.ALIAS_MP}_\n`;
+      }
+      msg += `------------------------------------------\n\n`;
+      msg += `📋 *DETALLE DEL PEDIDO:*\n`;
+
+      items.forEach((item, idx) => {
+        const lineTotal = formatMoney(item.unitPrice * item.quantity);
+        msg += `${idx + 1}. *${item.quantity}x ${item.name}*\n`;
+        if (item.variantLabel) {
+          msg += `   ↳ Tamaño: ${item.variantLabel}\n`;
+        }
+        if (item.hasExtraMeat) {
+          msg += `   ↳ 🥩 Extra: +1 Medallón de Carne (+$4.000)\n`;
+        }
+        if (item.isVeggie) {
+          msg += `   ↳ 🌱 Opción Vegetariana: Con Not Burger y pan 100% vegano\n`;
+        }
+        if (item.drinkChoice) {
+          msg += `   ↳ 🥤 Bebida: ${item.drinkChoice}\n`;
+        }
+        if (item.notes) {
+          msg += `   ↳ 📝 Aclaración: ${item.notes}\n`;
+        }
+        msg += `   ↳ Subtotal: ${lineTotal}\n\n`;
+      });
+
+      if (isDelivery && shippingFee > 0) {
+        msg += `🛵 *Costo Envío Moto Uber:* ${formatMoney(shippingFee)}\n`;
+      }
+
+      msg += `------------------------------------------\n`;
+      msg += `💰 *TOTAL A PAGAR: ${formatMoney(finalTotal)}*\n`;
+      msg += `------------------------------------------\n`;
+
+      if (notes) {
+        msg += `💬 *Notas adicionales:* ${notes}\n`;
+      }
+
+      msg += `\n_Pedido generado desde la web de Cope Burgers Puerto Madero_`;
+
+      const orderId = `COPE-${Math.floor(1000 + Math.random() * 9000)}`;
+
+      const orderPayload = {
+        orderId,
+        created_at: new Date().toISOString(),
+        customer: { name, phone },
+        order_type: isDelivery ? 'delivery' : 'takeaway',
+        pickup_time: pickupTimeStr,
+        delivery: isDelivery ? {
+          isDelivery: true,
+          address: deliveryAddress,
+          apartment: deliveryApartment,
+          fee: shippingFee,
+          eta: currentDeliveryEta || '25-35 min'
+        } : null,
+        items: items.map((i) => ({
+          id: i.id || i.productId,
+          name: i.name,
+          quantity: i.quantity,
+          unitPrice: i.unitPrice,
+          variantLabel: i.variantLabel || null,
+          isVeggie: Boolean(i.isVeggie),
+          hasExtraMeat: Boolean(i.hasExtraMeat),
+          drinkChoice: i.drinkChoice || null,
+          notes: i.notes || ''
+        })),
+        subtotal,
+        delivery_fee: shippingFee,
+        total: finalTotal,
+        payment_method: payMethodId,
+        payment_status: payMethodId === 'mp_online' ? 'pendiente_mp' : 'pendiente_transferencia',
+        kitchen_status: 'recibido',
+        notes
+      };
+
+      // 1. Guardar comanda en el servidor en tiempo real (web a web)
+      fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          items,
-          customer: { name, phone },
-          pickupTime: pickupTimeStr,
-          notes,
-          orderId,
-          delivery: isDelivery ? {
-            isDelivery: true,
-            address: deliveryAddress,
-            apartment: deliveryApartment,
-            fee: shippingFee
-          } : null
+        body: JSON.stringify(orderPayload)
+      }).catch((e) => console.warn('Error al enviar comanda al servidor:', e));
+
+      if (payMethodId === 'mp_online') {
+        const span = els.btnSubmitOrder.querySelector('span');
+        if (span) span.textContent = 'Generando cobro seguro en Mercado Pago...';
+        else els.btnSubmitOrder.textContent = 'Generando cobro seguro en Mercado Pago...';
+        els.btnSubmitOrder.disabled = true;
+
+        try {
+          localStorage.setItem('cope_pending_order', JSON.stringify({ orderId, orderPayload }));
+        } catch (e) {}
+
+        fetch('/api/create-preference', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            items,
+            customer: { name, phone },
+            pickupTime: pickupTimeStr,
+            notes,
+            orderId,
+            delivery: isDelivery ? {
+              isDelivery: true,
+              address: deliveryAddress,
+              apartment: deliveryApartment,
+              fee: shippingFee
+            } : null
+          })
         })
-      })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data && data.init_point) {
-          showToast('✓ Redirigiendo a Mercado Pago para abonar...');
-          closeCheckoutModal();
-          window.location.href = data.init_point;
-        } else {
-          showToast('Aviso: MP Online requiere configuración. Podés abonar por Transferencia.');
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.init_point) {
+            showToast('✓ Redirigiendo a Mercado Pago para abonar...');
+            closeCheckoutModal();
+            window.location.href = data.init_point;
+          } else {
+            showToast('Aviso: MP Online requiere configuración. Podés abonar por Transferencia.');
+            if (span) span.textContent = 'Confirmar y Enviar Pedido →';
+            els.btnSubmitOrder.disabled = false;
+            finishWebOrder(orderPayload, msg);
+          }
+        })
+        .catch((err) => {
+          console.error('Error al conectar con Mercado Pago:', err);
+          showToast('Mostrando datos para abonar por Transferencia...');
+          const span = els.btnSubmitOrder.querySelector('span');
           if (span) span.textContent = 'Confirmar y Enviar Pedido →';
           els.btnSubmitOrder.disabled = false;
           finishWebOrder(orderPayload, msg);
-        }
-      })
-      .catch((err) => {
-        console.error('Error al conectar con Mercado Pago:', err);
-        showToast('Mostrando datos para abonar por Transferencia...');
-        const span = els.btnSubmitOrder.querySelector('span');
-        if (span) span.textContent = 'Confirmar y Enviar Pedido →';
-        els.btnSubmitOrder.disabled = false;
-        finishWebOrder(orderPayload, msg);
-      });
-      return;
-    }
+        });
+        return;
+      }
 
-    finishWebOrder(orderPayload, msg);
+      finishWebOrder(orderPayload, msg);
+    } catch (submitErr) {
+      console.error('Error al confirmar pedido:', submitErr);
+      showToast('Ocurrió un error al procesar el pedido. Por favor intentá nuevamente.');
+    }
   }
 
   function finishWebOrder(order, msg) {
@@ -1100,9 +1109,13 @@
       els.successPickupTime.textContent = order.pickup_time;
     }
     if (els.successLocationText) {
-      els.successLocationText.textContent = order.order_type === 'delivery'
-        ? `${order.delivery.address} ${order.delivery.apartment ? `(${order.delivery.apartment})` : ''}`
-        : 'Macacha Güemes 260, Puerto Madero';
+      if (order.order_type === 'delivery' && order.delivery) {
+        const addr = order.delivery.address || '';
+        const apt = order.delivery.apartment ? ` (${order.delivery.apartment})` : '';
+        els.successLocationText.textContent = `${addr}${apt}`.trim() || 'Dirección ingresada';
+      } else {
+        els.successLocationText.textContent = 'Macacha Güemes 260, Puerto Madero';
+      }
     }
     if (els.successTotalText) {
       els.successTotalText.textContent = formatMoney(order.total);
