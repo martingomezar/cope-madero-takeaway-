@@ -25,7 +25,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { items, customer, pickupTime, notes, orderId } = req.body;
+    const { items, customer, pickupTime, notes, orderId, delivery } = req.body;
 
     if (!items || !items.length) {
       return res.status(400).json({ error: 'No items provided' });
@@ -39,6 +39,19 @@ export default async function handler(req, res) {
       currency_id: 'ARS'
     }));
 
+    // Si es un pedido con envío por moto Uber
+    const isDelivery = Boolean(delivery && delivery.isDelivery);
+    if (isDelivery && Number(delivery.fee) > 0) {
+      const dropAddr = delivery.address ? delivery.address.slice(0, 35) : 'CABA';
+      mpItems.push({
+        id: 'uber-delivery',
+        title: `🛵 Envío Moto Uber (${dropAddr})`,
+        quantity: 1,
+        unit_price: Number(delivery.fee),
+        currency_id: 'ARS'
+      });
+    }
+
     const host = req.headers.host ? `https://${req.headers.host}` : 'https://cope-madero-takeaway.vercel.app';
 
     const preferenceData = {
@@ -51,6 +64,14 @@ export default async function handler(req, res) {
       },
       external_reference: orderId || `COPE-${Date.now()}`,
       statement_descriptor: 'COPE BURGERS',
+      metadata: {
+        order_type: isDelivery ? 'delivery' : 'takeaway',
+        delivery_address: isDelivery ? (delivery.address || '') : '',
+        delivery_apartment: isDelivery ? (delivery.apartment || '') : '',
+        delivery_fee: isDelivery ? (Number(delivery.fee) || 0) : 0,
+        customer_name: customer ? customer.name : '',
+        customer_phone: customer ? customer.phone : ''
+      },
       back_urls: {
         success: `${host}/?payment=success&orderId=${orderId || ''}`,
         failure: `${host}/?payment=failure&orderId=${orderId || ''}`,

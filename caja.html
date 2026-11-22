@@ -450,6 +450,44 @@
       border-left: 5px solid #10b981;
     }
 
+    /* BADGE Y BOTÓN UBER DELIVERY EN CAJA */
+    .tag-delivery-uber {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      background: #0284c7;
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+
+    .btn-uber-dispatch {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #000000;
+      color: #ffffff;
+      border: 1px solid #475569;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 800;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn-uber-dispatch:hover {
+      background: #0f172a;
+      border-color: #38bdf8;
+      color: #38bdf8;
+      transform: translateY(-1px);
+    }
+
     /* =========================================================================
        PAGOS RECHAZADOS EN ROJO
        ========================================================================= */
@@ -1486,7 +1524,7 @@
 
         // CONTROL ANTI-PARPADEO (HUELLA DIGITAL DE LA LISTA)
         const currentFingerprint = `${activeFilters.payment}_${activeFilters.time}_${activeFilters.timeFrom}_${activeFilters.timeTo}_` + 
-          filtered.map(p => `${p.id}:${p.status}:${p.amount}`).join('|');
+          filtered.map(p => `${p.id}:${p.status}:${p.amount}:${p.order_type || ''}`).join('|');
 
         if (!force && currentFingerprint === lastRenderedFingerprint) {
           // Si no cambió ningún pago ni filtro, NO tocar el DOM para evitar parpadeos
@@ -1540,12 +1578,17 @@
             statusLabel = '⏳ Pendiente';
           }
 
+          const isDelivery = p.order_type === 'delivery';
+
           return `
             <div class="payment-row ${payToneClass} ${statusClass} ${isLatest ? 'row-new' : ''}">
               <div class="p-left">
                 <div class="p-icon">${icon}</div>
                 <div class="p-info">
-                  <div class="p-name">${p.payer_name || 'Cliente'}</div>
+                  <div class="p-name">
+                    <span>${p.payer_name || 'Cliente'}</span>
+                    ${isDelivery ? `<span class="tag-delivery-uber">🛵 DELIVERY UBER</span>` : ''}
+                  </div>
                   <div class="p-sub">
                     <span>${pHour}</span>
                     <span>·</span>
@@ -1553,6 +1596,16 @@
                     ${p.order_id ? `<span>· Ref: ${p.order_id}</span>` : ''}
                     ${isRejected && p.status_detail ? `<span style="color:#f87171; font-weight:700;">· Motivo: ${p.status_detail}</span>` : ''}
                   </div>
+                  ${isDelivery && p.delivery_address ? `
+                    <div style="margin-top:6px; font-size:12px; color:#cbd5e1; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                      <span>📍 <b>${p.delivery_address}</b> ${p.delivery_apartment ? `(${p.delivery_apartment})` : ''}</span>
+                      ${p.uber_link ? `
+                        <a href="${p.uber_link}" target="_blank" rel="noopener noreferrer" class="btn-uber-dispatch" title="Abrir Uber Flash con punto de retiro en Cope Madero y destino pre-cargado">
+                          <span>🛵 Abrir en Uber</span> ➔
+                        </a>
+                      ` : ''}
+                    </div>
+                  ` : ''}
                 </div>
               </div>
               <div class="p-right">

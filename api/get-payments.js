@@ -1,24 +1,36 @@
-// api/get-payments.js — Vercel Serverless Function para pantalla de cajeros
+// api/get-payments.js — Vercel Serverless Function
+// Consulta en tiempo real las últimas transacciones acreditadas en Mercado Pago
+// Protegido con PIN de seguridad para las terminales de caja
+
+const CAJA_MASTER_PIN = '2904';
+
 export default async function handler(req, res) {
+  // CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, X-Caja-PIN'
+  );
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  const validPin = process.env.CAJA_PIN || '2904';
-  const providedPin = req.headers['x-caja-pin'] || req.query.pin;
-
-  if (!providedPin || String(providedPin).trim() !== String(validPin).trim()) {
-    return res.status(401).json({ error: 'Terminal no autorizada. PIN incorrecto.' });
+  // Validación de PIN
+  const clientPin = req.query.pin || req.headers['x-caja-pin'];
+  if (!clientPin || String(clientPin).trim() !== CAJA_MASTER_PIN) {
+    return res.status(401).json({
+      error: 'Terminal no autorizada. PIN de seguridad incorrecto o ausente.'
+    });
   }
 
   const token = process.env.MP_ACCESS_TOKEN;
   if (!token) {
-    return res.status(500).json({ error: 'MP_ACCESS_TOKEN no configurado en Vercel' });
+    return res.status(500).json({
+      error: 'MERCADO_PAGO_ACCESS_TOKEN no configurado en Vercel.'
+    });
   }
 
   try {
@@ -55,6 +67,33 @@ export default async function handler(req, res) {
       else if (p.payment_type_id === 'debit_card') methodLabel = 'Tarjeta Débito';
       else if (p.payment_type_id === 'credit_card') methodLabel = 'Tarjeta Crédito';
 
+      // Detección de pedidos Delivery con Uber Moto
+      let isDelivery = false;
+      let deliveryAddress = '';
+      let deliveryApartment = '';
+      let deliveryFee = 0;
+
+      if (p.metadata && (p.metadata.order_type === 'delivery' || p.metadata.delivery_address)) {
+        isDelivery = true;
+        deliveryAddress = p.metadata.delivery_address || '';
+        deliveryApartment = p.metadata.delivery_apartment || '';
+        deliveryFee = Number(p.metadata.delivery_fee) || 0;
+      } else if (p.description && p.description.toLowerCase().includes('delivery')) {
+        isDelivery = true;
+      } else if (p.additional_info && Array.isArray(p.additional_info.items)) {
+        const delItem = p.additional_info.items.find(
+          (it) => it.id === 'uber-delivery' || (it.title && it.title.includes('Moto Uber'))
+        );
+        if (delItem) {
+          isDelivery = true;
+          deliveryFee = Number(delItem.unit_price) || 0;
+        }
+      }
+
+      const uberLink = isDelivery && deliveryAddress
+        ? `https://m.uber.com/looking?pickup=${encodeURIComponent('Macacha Güemes 260, Puerto Madero')}&dropoff=${encodeURIComponent(deliveryAddress + ', CABA')}`
+        : (isDelivery ? `https://m.uber.com/looking?pickup=${encodeURIComponent('Macacha Güemes 260, Puerto Madero')}` : null);
+
       return {
         id: String(p.id),
         status: p.status,
@@ -67,7 +106,12 @@ export default async function handler(req, res) {
         payment_type: p.payment_type_id || 'other',
         payment_method: methodLabel,
         description: p.description || p.external_reference || 'Venta Cope Burgers',
-        order_id: p.external_reference || null
+        order_id: p.external_reference || null,
+        order_type: isDelivery ? 'delivery' : 'takeaway',
+        delivery_address: deliveryAddress,
+        delivery_apartment: deliveryApartment,
+        delivery_fee: deliveryFee,
+        uber_link: uberLink
       };
     });
 

@@ -81,6 +81,16 @@
     checkoutForm: document.getElementById('checkoutForm'),
     checkoutName: document.getElementById('checkoutName'),
     checkoutPhone: document.getElementById('checkoutPhone'),
+    orderTypeTakeaway: document.getElementById('orderTypeTakeaway'),
+    orderTypeDelivery: document.getElementById('orderTypeDelivery'),
+    deliveryFieldsWrapper: document.getElementById('deliveryFieldsWrapper'),
+    deliveryAddress: document.getElementById('deliveryAddress'),
+    deliveryApartment: document.getElementById('deliveryApartment'),
+    deliveryNeighborhood: document.getElementById('deliveryNeighborhood'),
+    uberQuoteBox: document.getElementById('uberQuoteBox'),
+    uberQuotePrice: document.getElementById('uberQuotePrice'),
+    uberQuoteEta: document.getElementById('uberQuoteEta'),
+    pickupTimeGroup: document.getElementById('pickupTimeGroup'),
     pickupTimeAsap: document.getElementById('pickupTimeAsap'),
     pickupTimeScheduled: document.getElementById('pickupTimeScheduled'),
     scheduledTimeWrapper: document.getElementById('scheduledTimeWrapper'),
@@ -88,6 +98,8 @@
     paymentMethodsList: document.getElementById('paymentMethodsList'),
     checkoutNotes: document.getElementById('checkoutNotes'),
     checkoutItemsPreview: document.getElementById('checkoutItemsPreview'),
+    checkoutShippingRow: document.getElementById('checkoutShippingRow'),
+    checkoutShippingText: document.getElementById('checkoutShippingText'),
     checkoutTotalText: document.getElementById('checkoutTotalText'),
     btnSubmitOrder: document.getElementById('btnSubmitOrder'),
 
@@ -617,11 +629,99 @@
     });
   }
 
+  let isDeliverySelected = false;
+  let currentDeliveryFee = 0;
+  let quoteDebounceTimer = null;
+
+  function updateDeliveryTotals() {
+    const subtotal = Cart.getTotal();
+    const finalTotal = isDeliverySelected ? (subtotal + currentDeliveryFee) : subtotal;
+    if (els.checkoutTotalText) {
+      els.checkoutTotalText.textContent = formatMoney(finalTotal);
+    }
+    if (els.checkoutShippingRow) {
+      els.checkoutShippingRow.classList.toggle('hidden', !isDeliverySelected);
+    }
+    if (els.checkoutShippingText) {
+      els.checkoutShippingText.textContent = formatMoney(currentDeliveryFee);
+    }
+  }
+
+  function updateDeliveryMode() {
+    isDeliverySelected = Boolean(els.orderTypeDelivery && els.orderTypeDelivery.checked);
+    if (els.deliveryFieldsWrapper) {
+      els.deliveryFieldsWrapper.classList.toggle('hidden', !isDeliverySelected);
+    }
+    if (els.pickupTimeGroup) {
+      els.pickupTimeGroup.classList.toggle('hidden', isDeliverySelected);
+    }
+    if (isDeliverySelected) {
+      fetchUberQuote();
+    } else {
+      currentDeliveryFee = 0;
+      updateDeliveryTotals();
+    }
+  }
+
+  async function fetchUberQuote() {
+    if (!isDeliverySelected) return;
+    const address = els.deliveryAddress ? els.deliveryAddress.value.trim() : '';
+    const neighborhood = els.deliveryNeighborhood ? els.deliveryNeighborhood.value : '';
+
+    let defaultZoneFee = 1900;
+    let defaultZoneEta = '15 - 25 min';
+    if (neighborhood === 'puerto_madero') {
+      defaultZoneFee = 1900;
+      defaultZoneEta = '15 - 25 min';
+    } else if (neighborhood === 'san_telmo' || neighborhood === 'monserrat') {
+      defaultZoneFee = 2400;
+      defaultZoneEta = '20 - 30 min';
+    } else if (neighborhood === 'retiro' || neighborhood === 'constitucion') {
+      defaultZoneFee = 2900;
+      defaultZoneEta = '25 - 35 min';
+    } else if (neighborhood === 'palermo') {
+      defaultZoneFee = 3800;
+      defaultZoneEta = '35 - 45 min';
+    } else {
+      defaultZoneFee = 2600;
+      defaultZoneEta = '25 - 35 min';
+    }
+
+    currentDeliveryFee = defaultZoneFee;
+    if (els.uberQuotePrice) els.uberQuotePrice.textContent = formatMoney(currentDeliveryFee);
+    if (els.uberQuoteEta) els.uberQuoteEta.textContent = `⏱️ Tiempo estimado: ~${defaultZoneEta}`;
+    updateDeliveryTotals();
+
+    if (address.length >= 4) {
+      try {
+        const res = await fetch(`/api/quote-uber?dropoff_address=${encodeURIComponent(address)}&neighborhood=${encodeURIComponent(neighborhood)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.fee) {
+            currentDeliveryFee = Number(data.fee);
+            if (els.uberQuotePrice) els.uberQuotePrice.textContent = formatMoney(currentDeliveryFee);
+            if (els.uberQuoteEta) els.uberQuoteEta.textContent = `⏱️ Tiempo estimado: ~${data.eta}`;
+            updateDeliveryTotals();
+          }
+        }
+      } catch (e) {
+        console.warn('Quote api notice:', e.message);
+      }
+    }
+  }
+
   function openCheckoutModal() {
     if (Cart.getCount() === 0) return;
     closeCartDrawer();
 
     populatePickupTimeSlots();
+
+    // Recuperar datos guardados
+    const saved = getSavedUserData();
+    if (saved.name && els.checkoutName) els.checkoutName.value = saved.name;
+    if (saved.phone && els.checkoutPhone) els.checkoutPhone.value = saved.phone;
+    if (saved.address && els.deliveryAddress) els.deliveryAddress.value = saved.address;
+    if (saved.apartment && els.deliveryApartment) els.deliveryApartment.value = saved.apartment;
 
     const items = Cart.getItems();
     els.checkoutItemsPreview.innerHTML = items.map((i) => {
@@ -640,7 +740,7 @@
       `;
     }).join('');
 
-    els.checkoutTotalText.textContent = formatMoney(Cart.getTotal());
+    updateDeliveryMode();
 
     els.checkoutModalBackdrop.classList.remove('hidden');
     document.body.classList.add('modal-open');
@@ -670,7 +770,26 @@
       return;
     }
 
-    saveUserData({ name, phone });
+    const isDelivery = Boolean(els.orderTypeDelivery && els.orderTypeDelivery.checked);
+    let deliveryAddress = '';
+    let deliveryApartment = '';
+
+    if (isDelivery) {
+      deliveryAddress = els.deliveryAddress ? els.deliveryAddress.value.trim() : '';
+      deliveryApartment = els.deliveryApartment ? els.deliveryApartment.value.trim() : '';
+      if (!deliveryAddress || deliveryAddress.length < 4) {
+        showToast('Por favor ingresá la calle y número para el envío en moto.');
+        if (els.deliveryAddress) els.deliveryAddress.focus();
+        return;
+      }
+    }
+
+    saveUserData({
+      name,
+      phone,
+      address: deliveryAddress,
+      apartment: deliveryApartment
+    });
 
     let pickupTimeStr = '';
     const now = new Date();
@@ -678,7 +797,9 @@
     const closeH = (CFG.SCHEDULE && CFG.SCHEDULE.closeHour) || 23;
     const isClosedNow = now.getHours() < openH || now.getHours() >= closeH;
 
-    if (els.pickupTimeAsap.checked) {
+    if (isDelivery) {
+      pickupTimeStr = `Envío en Moto Uber Flash (~25-35 min)`;
+    } else if (els.pickupTimeAsap && els.pickupTimeAsap.checked) {
       if (isClosedNow) {
         pickupTimeStr = `Próxima apertura (${openH}:00 hs) · Local cerrado ahora`;
       } else {
@@ -687,7 +808,7 @@
         pickupTimeStr = `Lo antes posible (~${approxHour})`;
       }
     } else {
-      pickupTimeStr = els.scheduledTimeSelect.value || 'A coordinar';
+      pickupTimeStr = (els.scheduledTimeSelect && els.scheduledTimeSelect.value) || 'A coordinar';
     }
 
     const selectedPayRadio = document.querySelector('input[name="checkout_payment"]:checked');
@@ -695,16 +816,31 @@
     const payMethodObj = (CFG.PAYMENT_METHODS || []).find((m) => m.id === payMethodId);
     const payLabel = payMethodObj ? payMethodObj.label : 'Mercado Pago / Transferencia';
 
-    const notes = els.checkoutNotes.value.trim();
+    const notes = els.checkoutNotes ? els.checkoutNotes.value.trim() : '';
     const items = Cart.getItems();
-    const total = Cart.getTotal();
+    const subtotal = Cart.getTotal();
+    const shippingFee = isDelivery ? currentDeliveryFee : 0;
+    const finalTotal = subtotal + shippingFee;
 
-    let msg = `🍔 *NUEVO PEDIDO TAKE AWAY — COPE PUERTO MADERO* 🍔\n`;
+    let msg = isDelivery
+      ? `🛵 *NUEVO PEDIDO DELIVERY UBER — COPE PUERTO MADERO* 🛵\n`
+      : `🍔 *NUEVO PEDIDO TAKE AWAY — COPE PUERTO MADERO* 🍔\n`;
     msg += `------------------------------------------\n`;
     msg += `👤 *Cliente:* ${name}\n`;
     msg += `📱 *Teléfono:* ${phone}\n`;
-    msg += `⏰ *Horario de Retiro:* ${pickupTimeStr}\n`;
-    msg += `📍 *Retira en:* ${CFG.ADDRESS}, ${CFG.BRANCH_NAME}\n`;
+
+    if (isDelivery) {
+      msg += `📍 *Dirección de Entrega:* ${deliveryAddress}\n`;
+      if (deliveryApartment) {
+        msg += `🏢 *Piso / Depto:* ${deliveryApartment}\n`;
+      }
+      msg += `🛵 *Modalidad:* Envío en Moto (Uber Flash)\n`;
+      msg += `⏱️ *Tiempo estimado:* 25-35 min\n`;
+    } else {
+      msg += `⏰ *Horario de Retiro:* ${pickupTimeStr}\n`;
+      msg += `📍 *Retira en:* ${CFG.ADDRESS}, ${CFG.BRANCH_NAME}\n`;
+    }
+
     msg += `💳 *Forma de Pago:* ${payLabel}\n`;
     if (payMethodId === 'transferencia') {
       msg += `   ↳ _Alias MP: ${CFG.ALIAS_MP}_\n`;
@@ -733,8 +869,12 @@
       msg += `   ↳ Subtotal: ${lineTotal}\n\n`;
     });
 
+    if (isDelivery && shippingFee > 0) {
+      msg += `🛵 *Costo Envío Moto Uber:* ${formatMoney(shippingFee)}\n`;
+    }
+
     msg += `------------------------------------------\n`;
-    msg += `💰 *TOTAL A PAGAR: ${formatMoney(total)}*\n`;
+    msg += `💰 *TOTAL A PAGAR: ${formatMoney(finalTotal)}*\n`;
     msg += `------------------------------------------\n`;
 
     if (notes) {
@@ -756,7 +896,13 @@
           customer: { name, phone },
           pickupTime: pickupTimeStr,
           notes,
-          orderId
+          orderId,
+          delivery: isDelivery ? {
+            isDelivery: true,
+            address: deliveryAddress,
+            apartment: deliveryApartment,
+            fee: shippingFee
+          } : null
         })
       })
       .then((res) => res.json())
@@ -774,21 +920,21 @@
         } else {
           showToast('Aviso: MP Online requiere configurar MP_ACCESS_TOKEN. Podés abonar por Alias.');
           els.btnSubmitOrder.disabled = false;
-          els.btnSubmitOrder.textContent = 'Confirmar y Enviar Pedido por WhatsApp →';
-          finishWhatsappOrder(name, pickupTimeStr, total, msg);
+          els.btnSubmitOrder.textContent = 'Confirmar y Enviar Pedido →';
+          finishWhatsappOrder(name, pickupTimeStr, finalTotal, msg);
         }
       })
       .catch((err) => {
         console.error('Error al conectar con Mercado Pago:', err);
         showToast('Conectando por WhatsApp para coordinar pago...');
         els.btnSubmitOrder.disabled = false;
-        els.btnSubmitOrder.textContent = 'Confirmar y Enviar Pedido por WhatsApp →';
-        finishWhatsappOrder(name, pickupTimeStr, total, msg);
+        els.btnSubmitOrder.textContent = 'Confirmar y Enviar Pedido →';
+        finishWhatsappOrder(name, pickupTimeStr, finalTotal, msg);
       });
       return;
     }
 
-    finishWhatsappOrder(name, pickupTimeStr, total, msg);
+    finishWhatsappOrder(name, pickupTimeStr, finalTotal, msg);
   }
 
   function finishWhatsappOrder(name, pickupTimeStr, total, msg) {
@@ -858,6 +1004,22 @@
     els.checkoutModalBackdrop.addEventListener('click', (e) => {
       if (e.target === els.checkoutModalBackdrop) closeCheckoutModal();
     });
+
+    if (els.orderTypeTakeaway) {
+      els.orderTypeTakeaway.addEventListener('change', updateDeliveryMode);
+    }
+    if (els.orderTypeDelivery) {
+      els.orderTypeDelivery.addEventListener('change', updateDeliveryMode);
+    }
+    if (els.deliveryAddress) {
+      els.deliveryAddress.addEventListener('input', () => {
+        clearTimeout(quoteDebounceTimer);
+        quoteDebounceTimer = setTimeout(fetchUberQuote, 400);
+      });
+    }
+    if (els.deliveryNeighborhood) {
+      els.deliveryNeighborhood.addEventListener('change', fetchUberQuote);
+    }
 
     els.pickupTimeAsap.addEventListener('change', () => {
       els.scheduledTimeWrapper.classList.add('hidden');
