@@ -952,7 +952,7 @@
       const isClosedNow = now.getHours() < openH || now.getHours() >= closeH;
 
       if (isDelivery) {
-        pickupTimeStr = `Envío en Moto Uber Flash (~25-35 min)`;
+        pickupTimeStr = `Envío en Moto (~25-35 min)`;
       } else if (els.pickupTimeAsap && els.pickupTimeAsap.checked) {
         if (isClosedNow) {
           pickupTimeStr = `Próxima apertura (${openH}:00 hs) · Local cerrado ahora`;
@@ -977,7 +977,7 @@
       const finalTotal = subtotal + shippingFee;
 
       let msg = isDelivery
-        ? `🛵 *NUEVO PEDIDO DELIVERY UBER — COPE PUERTO MADERO* 🛵\n`
+        ? `🛵 *NUEVO PEDIDO DELIVERY — COPE PUERTO MADERO* 🛵\n`
         : `🍔 *NUEVO PEDIDO TAKE AWAY — COPE PUERTO MADERO* 🍔\n`;
       msg += `------------------------------------------\n`;
       msg += `👤 *Cliente:* ${name}\n`;
@@ -988,7 +988,7 @@
         if (deliveryApartment) {
           msg += `🏢 *Piso / Depto:* ${deliveryApartment}\n`;
         }
-        msg += `🛵 *Modalidad:* Envío en Moto (Uber Flash)\n`;
+        msg += `🛵 *Modalidad:* Pedir Moto / Delivery\n`;
         msg += `⏱️ *Tiempo estimado:* 25-35 min\n`;
       } else {
         msg += `⏰ *Horario de Retiro:* ${pickupTimeStr}\n`;
@@ -1024,7 +1024,7 @@
       });
 
       if (isDelivery && shippingFee > 0) {
-        msg += `🛵 *Costo Envío Moto Uber:* ${formatMoney(shippingFee)}\n`;
+        msg += `🛵 *Costo Envío en Moto:* ${formatMoney(shippingFee)}\n`;
       }
 
       msg += `------------------------------------------\n`;
@@ -1149,7 +1149,7 @@
     }
     if (els.successDeliveryType) {
       els.successDeliveryType.textContent = order.order_type === 'delivery'
-        ? '🛵 Envío en Moto (Uber Flash)'
+        ? '🛵 Pedir Moto / Delivery'
         : '🛍️ Take Away (Retiro en local)';
     }
     if (els.successPickupTime) {

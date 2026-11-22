@@ -45,7 +45,7 @@ export default async function handler(req, res) {
       const dropAddr = delivery.address ? delivery.address.slice(0, 35) : 'CABA';
       mpItems.push({
         id: 'uber-delivery',
-        title: `🛵 Envío Moto Uber (${dropAddr})`,
+        title: `🛵 Envío en Moto / Delivery (${dropAddr})`,
         quantity: 1,
         unit_price: Number(delivery.fee),
         currency_id: 'ARS'

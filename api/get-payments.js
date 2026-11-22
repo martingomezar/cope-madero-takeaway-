@@ -82,7 +82,7 @@ export default async function handler(req, res) {
         isDelivery = true;
       } else if (p.additional_info && Array.isArray(p.additional_info.items)) {
         const delItem = p.additional_info.items.find(
-          (it) => it.id === 'uber-delivery' || (it.title && it.title.includes('Moto Uber'))
+          (it) => it.id === 'uber-delivery' || (it.title && (it.title.includes('Moto') || it.title.includes('Delivery')))
         );
         if (delItem) {
           isDelivery = true;

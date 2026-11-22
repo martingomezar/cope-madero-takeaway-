@@ -41,7 +41,7 @@ export default async function handler(req, res) {
           phone: (orderData.customer && orderData.customer.phone) || ''
         },
         order_type: orderData.order_type || (orderData.delivery && orderData.delivery.isDelivery ? 'delivery' : 'takeaway'),
-        pickup_time: orderData.pickup_time || (orderData.order_type === 'delivery' ? 'Envío Moto Uber Flash' : 'Take Away'),
+        pickup_time: orderData.pickup_time || (orderData.order_type === 'delivery' ? 'Envío en Moto / Delivery' : 'Take Away'),
         delivery: orderData.delivery ? {
           isDelivery: Boolean(orderData.delivery.isDelivery),
           address: orderData.delivery.address || '',
