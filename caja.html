@@ -2381,13 +2381,13 @@
             source: 'SEARCH'
           };
           const dropJsonEncoded = encodeURIComponent(JSON.stringify(dropObj));
-          const dropNameEncoded = encodeURIComponent(customerName || 'Cliente');
           const destTextEncoded = encodeURIComponent(fullDest);
 
-          dropParams = `&drop[0]=${dropJsonEncoded}&dropoff=${dropJsonEncoded}&destinationAddressName=${destTextEncoded}&dropoff[formatted_address]=${destTextEncoded}&dropoff[nickname]=${dropNameEncoded}&drop[0][formatted_address]=${destTextEncoded}&drop[0][nickname]=${dropNameEncoded}&destinationLat=-34.6080&destinationLng=-58.3630`;
+          dropParams = `&drop%5B0%5D=${dropJsonEncoded}&destinationAddressName=${destTextEncoded}&destinationLat=-34.6080&destinationLng=-58.3630`;
         }
 
-        let uberUrl = `https://m.uber.com/go/connect/home?action=setPickup&category=package&pickup=${pickupJsonEncoded}&pickupAddressName=${originNameEncoded}&pickupLat=${originLat}&pickupLng=${originLng}&pickup[formatted_address]=${originFormatted}&pickup[latitude]=${originLat}&pickup[longitude]=${originLng}&pickup[nickname]=${originNameEncoded}&pickup[addressLine1]=${encodeURIComponent('Macacha Güemes 260')}${dropParams}`;
+        // URL limpia a la pestaña Envíos (/go/connect/home) sin action=setPickup (que redirigía a Viajes) ni colisiones de parámetros
+        let uberUrl = `https://m.uber.com/go/connect/home?pickup=${pickupJsonEncoded}&pickupAddressName=${originNameEncoded}&pickupLat=${originLat}&pickupLng=${originLng}${dropParams}`;
 
         // 3. Abrir en nueva ventana / pestaña
         window.open(uberUrl, '_blank', 'noopener,noreferrer');
@@ -3018,7 +3018,7 @@
             delivery_address: 'Juana Manso 1200',
             delivery_apartment: '4° B, Dique 2',
             delivery_fee: 1900,
-            uber_link: 'https://m.uber.com/go/connect/home?action=setPickup&category=package&pickup=' + encodeURIComponent(JSON.stringify({addressLine1:'Macacha Güemes 260',addressLine2:'Puerto Madero, CABA',id:'cope-burgers-puerto-madero',name:'Cope Burgers Puerto Madero',latitude:-34.6049,longitude:-58.3647,provider:'uber_places',source:'SEARCH'})) + '&drop[0]=' + encodeURIComponent(JSON.stringify({addressLine1:'Juana Manso 1200',addressLine2:'4° B, Dique 2, Puerto Madero, CABA',name:'Santiago Morales',latitude:-34.6080,longitude:-58.3630,provider:'uber_places',source:'SEARCH'})) + '&destinationAddressName=' + encodeURIComponent('Juana Manso 1200 (4° B), Puerto Madero, CABA')
+            uber_link: 'https://m.uber.com/go/connect/home?pickup=' + encodeURIComponent(JSON.stringify({addressLine1:'Macacha Güemes 260',addressLine2:'Puerto Madero, CABA',id:'cope-burgers-puerto-madero',name:'Cope Burgers Puerto Madero',latitude:-34.6049,longitude:-58.3647,provider:'uber_places',source:'SEARCH'})) + '&pickupAddressName=' + encodeURIComponent('Cope Burgers Puerto Madero') + '&pickupLat=-34.6049&pickupLng=-58.3647&drop%5B0%5D=' + encodeURIComponent(JSON.stringify({addressLine1:'Juana Manso 1200',addressLine2:'4° B, Dique 2, Puerto Madero, CABA',name:'Santiago Morales',latitude:-34.6080,longitude:-58.3630,provider:'uber_places',source:'SEARCH'})) + '&destinationAddressName=' + encodeURIComponent('Juana Manso 1200 (4° B), Puerto Madero, CABA') + '&destinationLat=-34.6080&destinationLng=-58.3630'
           };
           allPaymentsMap.set(fakePayment.id, fakePayment);
           cachedPayments = Array.from(allPaymentsMap.values());

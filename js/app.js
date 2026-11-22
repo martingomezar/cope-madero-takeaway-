@@ -325,6 +325,39 @@
     });
   }
 
+  function getProductQuickTags(prod) {
+    const tags = [];
+    const desc = (prod.description || '').toLowerCase();
+    const name = (prod.name || '').toLowerCase();
+
+    if (prod.category === 'simples') {
+      tags.push({ label: '🥩 110g Carne', type: 'meat' });
+    } else if (prod.category === 'dobles') {
+      tags.push({ label: '🥩🥩 220g Doble Carne', type: 'meat' });
+    } else if (prod.category === 'combos') {
+      tags.push({ label: '🍟 Con Papas', type: 'combo' });
+      tags.push({ label: '🥤 Con Bebida', type: 'combo' });
+    }
+
+    if (desc.includes('cheddar') || name.includes('cheese')) {
+      tags.push({ label: '🧀 Cheddar', type: 'cheese' });
+    }
+    if (desc.includes('bacon')) {
+      tags.push({ label: '🥓 Bacon Crispy', type: 'bacon' });
+    }
+    if (prod.hasVeggieOption) {
+      tags.push({ label: '🌱 NotCo', type: 'veggie' });
+    }
+    if (prod.category === 'bebidas') {
+      tags.push({ label: '🧊 Bien Fría', type: 'drink' });
+    }
+    if (prod.category === 'acompanamientos') {
+      tags.push({ label: '🍟 Crujientes', type: 'fries' });
+    }
+
+    return tags.slice(0, 3);
+  }
+
   function renderProducts() {
     if (!els.productsGrid) return;
 
@@ -376,6 +409,11 @@
         ? `<span class="card-badge">${prod.badge}</span>`
         : '';
 
+      const quickTags = getProductQuickTags(origProd);
+      const quickTagsHtml = quickTags.length
+        ? `<div class="card-tags">${quickTags.map((t) => `<span class="card-tag tag-${t.type}">${t.label}</span>`).join('')}</div>`
+        : '';
+
       const isCustomizable = origProd.hasVariants || origProd.hasDrinkSelection || origProd.canAddExtraMeat || origProd.hasVeggieOption;
       const btnLabel = isCustomizable
         ? (window.COPE_I18N ? window.COPE_I18N.t('btn_customize') : 'Personalizar')
@@ -391,6 +429,7 @@
             <div class="card-title-row">
               <h3 class="card-title">${prod.name}</h3>
             </div>
+            ${quickTagsHtml}
             <p class="card-desc">${prod.description}</p>
             <div class="card-footer">
               <div class="card-price">${priceHtml}</div>
