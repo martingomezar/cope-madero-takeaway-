@@ -149,8 +149,30 @@ export default async function handler(req, res) {
     const publicAppId = clientId || 'xzzviRFT349OiGCn_0tumto4Y00xRGTR';
     const pickupFormatted = encodeURIComponent(STORE_ORIGIN.address);
     const dropoffFormatted = encodeURIComponent(`${cleanAddress}, CABA, Argentina`);
+    const pickupObj = {
+      addressLine1: 'Macacha Güemes 260',
+      addressLine2: 'Puerto Madero, CABA',
+      id: 'cope-burgers-puerto-madero',
+      name: STORE_ORIGIN.name,
+      latitude: STORE_ORIGIN.lat,
+      longitude: STORE_ORIGIN.lng,
+      provider: 'uber_places',
+      source: 'SEARCH'
+    };
+    const dropObj = {
+      addressLine1: cleanAddress,
+      addressLine2: 'Puerto Madero, CABA',
+      name: 'Cliente',
+      latitude: -34.6080,
+      longitude: -58.3630,
+      provider: 'uber_places',
+      source: 'SEARCH'
+    };
+    const pickupJson = encodeURIComponent(JSON.stringify(pickupObj));
+    const dropJson = encodeURIComponent(JSON.stringify(dropObj));
+
     const uberPackageDeeplink = `https://m.uber.com/ul/?client_id=${publicAppId}&action=setPickup&pickup[formatted_address]=${pickupFormatted}&pickup[latitude]=${STORE_ORIGIN.lat}&pickup[longitude]=${STORE_ORIGIN.lng}&pickup[nickname]=${encodeURIComponent(STORE_ORIGIN.name)}&dropoff[formatted_address]=${dropoffFormatted}&product_id=package`;
-    const uberWebUrl = `https://m.uber.com/go/connect/home?action=setPickup&category=package&pickup[formatted_address]=${pickupFormatted}&pickup[latitude]=${STORE_ORIGIN.lat}&pickup[longitude]=${STORE_ORIGIN.lng}&pickup[nickname]=${encodeURIComponent(STORE_ORIGIN.name)}&pickup[addressLine1]=${encodeURIComponent('Macacha Güemes 260')}&pickupLat=${STORE_ORIGIN.lat}&pickupLng=${STORE_ORIGIN.lng}&pickupAddressName=${encodeURIComponent(STORE_ORIGIN.name)}&dropoff[formatted_address]=${dropoffFormatted}&dropoff[nickname]=Cliente&destinationAddressName=${dropoffFormatted}&drop[0][formatted_address]=${dropoffFormatted}&drop[0][nickname]=Cliente`;
+    const uberWebUrl = `https://m.uber.com/go/connect/home?action=setPickup&category=package&pickup=${pickupJson}&pickupAddressName=${encodeURIComponent(STORE_ORIGIN.name)}&pickupLat=${STORE_ORIGIN.lat}&pickupLng=${STORE_ORIGIN.lng}&pickup[formatted_address]=${pickupFormatted}&pickup[latitude]=${STORE_ORIGIN.lat}&pickup[longitude]=${STORE_ORIGIN.lng}&pickup[nickname]=${encodeURIComponent(STORE_ORIGIN.name)}&pickup[addressLine1]=${encodeURIComponent('Macacha Güemes 260')}&drop[0]=${dropJson}&dropoff=${dropJson}&destinationAddressName=${dropoffFormatted}&dropoff[formatted_address]=${dropoffFormatted}&dropoff[nickname]=Cliente&destinationLat=-34.6080&destinationLng=-58.3630`;
 
     return res.status(200).json({
       ok: true,

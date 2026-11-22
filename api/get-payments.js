@@ -90,9 +90,38 @@ export default async function handler(req, res) {
         }
       }
 
-      const uberLink = isDelivery && deliveryAddress
-        ? `https://m.uber.com/go/connect/home?action=setPickup&category=package&pickup[formatted_address]=${encodeURIComponent('Macacha Güemes 260, Puerto Madero, CABA')}&pickup[latitude]=-34.6049&pickup[longitude]=-58.3647&pickup[nickname]=${encodeURIComponent('Cope Burgers Puerto Madero')}&dropoff[formatted_address]=${encodeURIComponent(deliveryAddress + ', Puerto Madero, CABA')}`
-        : (isDelivery ? `https://m.uber.com/go/connect/home?action=setPickup&category=package&pickup[formatted_address]=${encodeURIComponent('Macacha Güemes 260, Puerto Madero, CABA')}&pickup[latitude]=-34.6049&pickup[longitude]=-58.3647&pickup[nickname]=${encodeURIComponent('Cope Burgers Puerto Madero')}` : null);
+      const pickupObj = {
+        addressLine1: 'Macacha Güemes 260',
+        addressLine2: 'Puerto Madero, CABA',
+        id: 'cope-burgers-puerto-madero',
+        name: 'Cope Burgers Puerto Madero',
+        latitude: -34.6049,
+        longitude: -58.3647,
+        provider: 'uber_places',
+        source: 'SEARCH'
+      };
+      const pickupJson = encodeURIComponent(JSON.stringify(pickupObj));
+      const pickupFormatted = encodeURIComponent('Macacha Güemes 260, Puerto Madero, CABA');
+
+      let uberLink = null;
+      if (isDelivery) {
+        if (deliveryAddress) {
+          const dropObj = {
+            addressLine1: deliveryAddress,
+            addressLine2: (deliveryApartment ? deliveryApartment + ', ' : '') + 'Puerto Madero, CABA',
+            name: payerName || 'Cliente',
+            latitude: -34.6080,
+            longitude: -58.3630,
+            provider: 'uber_places',
+            source: 'SEARCH'
+          };
+          const dropJson = encodeURIComponent(JSON.stringify(dropObj));
+          const fullDest = encodeURIComponent(deliveryAddress + (deliveryApartment ? ' (' + deliveryApartment + ')' : '') + ', Puerto Madero, CABA');
+          uberLink = `https://m.uber.com/go/connect/home?action=setPickup&category=package&pickup=${pickupJson}&pickupAddressName=${encodeURIComponent('Cope Burgers Puerto Madero')}&pickupLat=-34.6049&pickupLng=-58.3647&pickup[formatted_address]=${pickupFormatted}&drop[0]=${dropJson}&dropoff=${dropJson}&destinationAddressName=${fullDest}&destinationLat=-34.6080&destinationLng=-58.3630&dropoff[formatted_address]=${fullDest}`;
+        } else {
+          uberLink = `https://m.uber.com/go/connect/home?action=setPickup&category=package&pickup=${pickupJson}&pickupAddressName=${encodeURIComponent('Cope Burgers Puerto Madero')}&pickupLat=-34.6049&pickupLng=-58.3647&pickup[formatted_address]=${pickupFormatted}`;
+        }
+      }
 
       return {
         id: String(p.id),

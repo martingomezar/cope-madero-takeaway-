@@ -2320,9 +2320,12 @@
       // Despachar moto Uber Flash: Copia dirección de entrega y abre Uber en Envíos con remitente Cope Madero
       window.copeDispatchUber = function(destAddress, apt, customerName) {
         let fullDest = '';
+        let cleanStreet = '';
+        let cleanApt = (apt || '').trim();
         if (destAddress) {
-          fullDest = destAddress.trim();
-          if (apt && apt.trim()) fullDest += ' (' + apt.trim() + ')';
+          cleanStreet = destAddress.trim();
+          fullDest = cleanStreet;
+          if (cleanApt) fullDest += ' (' + cleanApt + ')';
           if (!fullDest.toLowerCase().includes('caba') && !fullDest.toLowerCase().includes('buenos aires')) {
             fullDest += ', Puerto Madero, CABA';
           }
@@ -2348,19 +2351,43 @@
         // 2. Construir URL directa a la pestaña ENVÍOS (/go/connect/home) con remitente fijo en Cope Madero
         const originAddr = 'Macacha Güemes 260, Puerto Madero, CABA';
         const originName = 'Cope Burgers Puerto Madero';
-        const lat = '-34.6049';
-        const lng = '-58.3647';
+        const originLat = -34.6049;
+        const originLng = -58.3647;
 
-        const pickupFormatted = encodeURIComponent(originAddr);
+        // Estructura JSON requerida por el motor React de Uber (/go/connect/home)
+        const pickupObj = {
+          addressLine1: 'Macacha Güemes 260',
+          addressLine2: 'Puerto Madero, CABA',
+          id: 'cope-burgers-puerto-madero',
+          name: originName,
+          latitude: originLat,
+          longitude: originLng,
+          provider: 'uber_places',
+          source: 'SEARCH'
+        };
+        const pickupJsonEncoded = encodeURIComponent(JSON.stringify(pickupObj));
+        const originFormatted = encodeURIComponent(originAddr);
         const originNameEncoded = encodeURIComponent(originName);
 
-        let uberUrl = `https://m.uber.com/go/connect/home?action=setPickup&category=package&pickup[formatted_address]=${pickupFormatted}&pickup[latitude]=${lat}&pickup[longitude]=${lng}&pickup[nickname]=${originNameEncoded}&pickup[addressLine1]=${encodeURIComponent('Macacha Güemes 260')}&pickupLat=${lat}&pickupLng=${lng}&pickupAddressName=${originNameEncoded}`;
-        
+        let dropParams = '';
         if (fullDest) {
-          const dropoffEncoded = encodeURIComponent(fullDest);
-          const dropoffName = encodeURIComponent(customerName || 'Cliente');
-          uberUrl += `&dropoff[formatted_address]=${dropoffEncoded}&dropoff[nickname]=${dropoffName}&destinationAddressName=${dropoffEncoded}&drop[0][formatted_address]=${dropoffEncoded}&drop[0][nickname]=${dropoffName}`;
+          const dropObj = {
+            addressLine1: cleanStreet || fullDest,
+            addressLine2: cleanApt ? `${cleanApt}, Puerto Madero, CABA` : 'Puerto Madero, CABA',
+            name: customerName || 'Cliente',
+            latitude: -34.6080,
+            longitude: -58.3630,
+            provider: 'uber_places',
+            source: 'SEARCH'
+          };
+          const dropJsonEncoded = encodeURIComponent(JSON.stringify(dropObj));
+          const dropNameEncoded = encodeURIComponent(customerName || 'Cliente');
+          const destTextEncoded = encodeURIComponent(fullDest);
+
+          dropParams = `&drop[0]=${dropJsonEncoded}&dropoff=${dropJsonEncoded}&destinationAddressName=${destTextEncoded}&dropoff[formatted_address]=${destTextEncoded}&dropoff[nickname]=${dropNameEncoded}&drop[0][formatted_address]=${destTextEncoded}&drop[0][nickname]=${dropNameEncoded}&destinationLat=-34.6080&destinationLng=-58.3630`;
         }
+
+        let uberUrl = `https://m.uber.com/go/connect/home?action=setPickup&category=package&pickup=${pickupJsonEncoded}&pickupAddressName=${originNameEncoded}&pickupLat=${originLat}&pickupLng=${originLng}&pickup[formatted_address]=${originFormatted}&pickup[latitude]=${originLat}&pickup[longitude]=${originLng}&pickup[nickname]=${originNameEncoded}&pickup[addressLine1]=${encodeURIComponent('Macacha Güemes 260')}${dropParams}`;
 
         // 3. Abrir en nueva ventana / pestaña
         window.open(uberUrl, '_blank', 'noopener,noreferrer');
@@ -2991,7 +3018,7 @@
             delivery_address: 'Juana Manso 1200',
             delivery_apartment: '4° B, Dique 2',
             delivery_fee: 1900,
-            uber_link: 'https://m.uber.com/go/connect/home?action=setPickup&category=package&pickup[formatted_address]=Macacha%20G%C3%BCemes%20260%2C%20Puerto%20Madero%2C%20CABA&pickup[latitude]=-34.6049&pickup[longitude]=-58.3647&dropoff[formatted_address]=Juana%20Manso%201200%2C%20Puerto%20Madero%2C%20CABA'
+            uber_link: 'https://m.uber.com/go/connect/home?action=setPickup&category=package&pickup=' + encodeURIComponent(JSON.stringify({addressLine1:'Macacha Güemes 260',addressLine2:'Puerto Madero, CABA',id:'cope-burgers-puerto-madero',name:'Cope Burgers Puerto Madero',latitude:-34.6049,longitude:-58.3647,provider:'uber_places',source:'SEARCH'})) + '&drop[0]=' + encodeURIComponent(JSON.stringify({addressLine1:'Juana Manso 1200',addressLine2:'4° B, Dique 2, Puerto Madero, CABA',name:'Santiago Morales',latitude:-34.6080,longitude:-58.3630,provider:'uber_places',source:'SEARCH'})) + '&destinationAddressName=' + encodeURIComponent('Juana Manso 1200 (4° B), Puerto Madero, CABA')
           };
           allPaymentsMap.set(fakePayment.id, fakePayment);
           cachedPayments = Array.from(allPaymentsMap.values());
