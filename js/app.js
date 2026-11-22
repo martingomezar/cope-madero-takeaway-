@@ -221,11 +221,11 @@
     }
 
     const waBtn = document.getElementById('floatingWhatsappBtn');
-    const waText = document.getElementById('floatingWaText');
-    if (waText) waText.textContent = t('wa_order_btn');
     if (waBtn) {
       const msg = encodeURIComponent(t('wa_order_msg'));
       waBtn.href = `https://wa.me/5491173558077?text=${msg}`;
+      waBtn.title = t('wa_order_btn') || 'WhatsApp';
+      waBtn.setAttribute('aria-label', t('wa_order_btn') || 'WhatsApp');
     }
 
     renderCategories();

@@ -938,38 +938,31 @@ button:disabled,
   z-index: 60;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
   background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
   color: #ffffff !important;
-  padding: 11px 18px 11px 14px;
-  border-radius: 9999px;
   box-shadow: 0 6px 22px rgba(37, 211, 102, 0.45);
   text-decoration: none;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: 0.2px;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
 }
 
 .floating-wa-btn:hover {
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 10px 28px rgba(37, 211, 102, 0.6);
+  transform: translateY(-3px) scale(1.08);
+  box-shadow: 0 10px 28px rgba(37, 211, 102, 0.65);
   color: #ffffff !important;
 }
 
 .floating-wa-btn:active {
-  transform: scale(0.96);
+  transform: scale(0.94);
 }
 
 .floating-wa-icon {
   flex-shrink: 0;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
-}
-
-.floating-wa-label {
-  white-space: nowrap;
 }
 
 .floating-wa-pulse {
@@ -978,7 +971,7 @@ button:disabled,
   left: 0;
   right: 0;
   bottom: 0;
-  border-radius: 9999px;
+  border-radius: 50%;
   border: 2px solid #25d366;
   opacity: 0.8;
   animation: waPulse 2s ease-out infinite;
@@ -987,15 +980,19 @@ button:disabled,
 
 @keyframes waPulse {
   0% { transform: scale(1); opacity: 0.8; }
-  100% { transform: scale(1.15, 1.25); opacity: 0; }
+  100% { transform: scale(1.35); opacity: 0; }
 }
 
 @media (max-width: 640px) {
   .floating-wa-btn {
-    bottom: 80px;
-    right: 14px;
-    padding: 10px 15px 10px 12px;
-    font-size: 13px;
+    bottom: 78px;
+    right: 16px;
+    width: 50px;
+    height: 50px;
+  }
+  .floating-wa-btn .floating-wa-icon {
+    width: 25px;
+    height: 25px;
   }
 }
 
