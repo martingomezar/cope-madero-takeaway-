@@ -16,7 +16,7 @@ window.COPE_I18N = (function () {
       schedule_label: 'Lunes a Domingos de 12:00 a 23:00 hs',
       
       // Búsqueda y Navegación
-      search_placeholder: 'Buscar hamburguesa, papas, bebida...',
+      search_placeholder: 'Buscar en el menú...',
       no_results_title: 'No encontramos resultados',
       no_results_desc: 'Probá buscando con otro nombre o seleccioná una categoría arriba.',
 
@@ -122,7 +122,7 @@ window.COPE_I18N = (function () {
       schedule_label: 'Monday to Sunday from 12:00 PM to 11:00 PM',
 
       // Search & Nav
-      search_placeholder: 'Search burgers, fries, drinks...',
+      search_placeholder: 'Search the menu...',
       no_results_title: 'No results found',
       no_results_desc: 'Try searching with a different keyword or choose a category above.',
 
@@ -228,7 +228,7 @@ window.COPE_I18N = (function () {
       schedule_label: 'Segunda a Domingo das 12:00 às 23:00 hs',
 
       // Search & Nav
-      search_placeholder: 'Buscar hambúrguer, batatas, bebidas...',
+      search_placeholder: 'Buscar no cardápio...',
       no_results_title: 'Nenhum resultado encontrado',
       no_results_desc: 'Tente buscar por outro termo ou escolha uma categoria acima.',
 

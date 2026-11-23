@@ -295,8 +295,8 @@
     if (els.storeStatusBadge) {
       els.storeStatusBadge.className = 'status-badge ' + (isOpen ? 'open' : 'closed');
       els.storeStatusText.textContent = isOpen
-        ? 'Abierto ahora · Retiro en ' + CFG.PREP_MINUTES + ' min'
-        : 'Cerrado ahora · Abre a las ' + openH + ':00 hs';
+        ? 'Abierto · Retiro en ' + CFG.PREP_MINUTES + ' min'
+        : 'Cerrado · Abre ' + openH + ':00 hs';
     }
   }
 

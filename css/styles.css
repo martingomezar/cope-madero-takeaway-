@@ -149,46 +149,19 @@ body.modal-open {
   line-height: 1;
 }
 
-/* Botón Icono Instagram (Limpio y Directo) */
-.ig-icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #f58529, #dd2a7b, #8134af);
-  color: #ffffff;
-  text-decoration: none;
-  box-shadow: 0 2px 6px rgba(221, 42, 123, 0.22);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  flex-shrink: 0;
-}
-
-.ig-icon-btn:hover {
-  transform: scale(1.12);
-  box-shadow: 0 4px 12px rgba(221, 42, 123, 0.38);
-  color: #ffffff;
-}
-
-.ig-icon-btn svg {
-  display: block;
-  stroke: #ffffff;
-}
-
 /* Centro Hero con Imagotipo Digital */
 .brand-hero-center {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 6px 0 16px;
-  padding: 4px 0;
+  margin: 6px 0 12px;
+  padding: 2px 0;
 }
 
 .brand-bag-logo-img {
-  height: 80px;
+  height: 76px;
   width: auto;
-  max-width: 200px;
+  max-width: 190px;
   object-fit: contain;
   display: block;
   transition: transform 0.2s ease;
@@ -198,50 +171,59 @@ body.modal-open {
   transform: scale(1.02);
 }
 
-/* Barra inferior de micro-pills */
+/* Cápsula Unificada de Datos del Local (Swiss Minimalist) */
 .header-meta-row {
-  display: flex;
-  flex-wrap: wrap;
+  display: inline-flex;
+  flex-wrap: nowrap;
   justify-content: center;
   align-items: center;
-  gap: 8px;
-  font-size: 12px;
-}
-
-.meta-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  color: #475569;
-  text-decoration: none;
-  font-weight: 600;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  padding: 4px 10px;
   border-radius: var(--radius-full);
-  transition: all 0.2s ease;
+  padding: 3px 5px 3px 12px;
+  box-shadow: 0 1px 4px rgba(0, 45, 98, 0.04);
+  max-width: 100%;
 }
 
-.interactive-meta {
-  color: var(--cope-blue);
-  background: #f8fafc;
-  border-color: #e2e8f0;
+.header-meta-row .status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #166534;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  white-space: nowrap;
 }
 
-.interactive-meta:hover {
-  background: #eff6ff;
-  border-color: #bfdbfe;
-  color: var(--cope-blue);
-  text-decoration: none;
+.header-meta-row .status-badge.closed {
+  color: #991b1b;
 }
 
-.rating-pill {
-  background: #fffbeb;
-  border-color: #fde68a;
+.meta-separator {
+  display: inline-block;
+  width: 1px;
+  height: 13px;
+  background: #cbd5e1;
+  margin: 0 9px;
+  flex-shrink: 0;
+}
+
+.header-meta-row .rating-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  font-weight: 800;
   color: #92400e;
-  padding: 4px 9px;
-  border-radius: var(--radius-full);
-  font-weight: 700;
+  background: transparent;
+  border: none;
+  padding: 0;
+  border-radius: 0;
+  white-space: nowrap;
 }
 
 .rating-val {
@@ -249,26 +231,31 @@ body.modal-open {
   font-weight: 900;
 }
 
-.status-badge {
+.meta-badge-ig {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 11.5px;
-  font-weight: 800;
-  padding: 4px 11px;
-  border-radius: var(--radius-full);
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f58529, #dd2a7b, #8134af);
+  color: #ffffff;
+  text-decoration: none;
+  box-shadow: 0 2px 5px rgba(221, 42, 123, 0.22);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  margin-left: 2px;
+  flex-shrink: 0;
 }
 
-.status-badge.open {
-  background: #ecfdf5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
+.meta-badge-ig:hover {
+  transform: scale(1.12);
+  box-shadow: 0 3px 8px rgba(221, 42, 123, 0.38);
+  color: #ffffff;
 }
 
-.status-badge.closed {
-  background: #fef2f2;
-  color: #991b1b;
-  border: 1px solid #fecaca;
+.meta-badge-ig svg {
+  display: block;
+  stroke: #ffffff;
 }
 
 .status-dot {
@@ -2044,39 +2031,50 @@ button:disabled,
 }
 
 @media (max-width: 640px) {
-  .header-top {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 12px;
+  .header-container {
+    padding: 12px 16px 16px;
   }
   .brand-bag-logo-img {
-    height: 64px;
+    height: 60px;
   }
-  .brand-info {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-  }
-  .brand-badges-row {
-    justify-content: center;
-  }
-  .header-flags-bar {
-    width: auto;
-    justify-content: center;
-    margin-top: 0;
+  .brand-hero-center {
+    margin: 4px 0 10px;
   }
   .header-top-bar {
     gap: 8px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
   .header-location-link {
-    font-size: 11.5px;
-    padding: 3.5px 8px;
+    font-size: 11px;
+    padding: 3px 8px;
+    max-width: 62%;
+  }
+  .flag-emoji {
+    display: none; /* Ocultar banderas en móvil para que ES, EN y PT queden limpios y nunca desborden */
+  }
+  .flag-chip {
+    padding: 3.5px 7px;
+    font-size: 10.5px;
   }
   .header-meta-row {
-    justify-content: center;
-    gap: 6px;
+    padding: 2.5px 4px 2.5px 10px;
+  }
+  .header-meta-row .status-badge {
+    font-size: 10.5px;
+  }
+  .header-meta-row .rating-pill {
+    font-size: 10.5px;
+  }
+  .meta-separator {
+    margin: 0 6px;
+    height: 11px;
+  }
+  .meta-badge-ig {
+    width: 24px;
+    height: 24px;
+  }
+  .meta-badge-ig svg {
+    width: 13px;
+    height: 13px;
   }
 }
