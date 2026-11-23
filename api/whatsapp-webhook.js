@@ -224,23 +224,56 @@ Respondé ÚNICAMENTE un objeto JSON con este formato:
 }
 `;
 
-  const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-  const response = await fetch(geminiUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{
-        parts: [
-          { text: promptText },
-          { inline_data: { mime_type: mimeType, data: cleanBase64 } }
-        ]
-      }],
-      generationConfig: { temperature: 0.1, response_mime_type: 'application/json' }
-    })
-  });
+  const candidateEndpoints = [
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+    'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent',
+    'https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
+  ];
 
-  const resJson = await response.json();
-  const textOutput = resJson.candidates && resJson.candidates[0] && resJson.candidates[0].content && resJson.candidates[0].content.parts[0].text;
+  let textOutput = null;
+  let lastErr = null;
+
+  for (const endpoint of candidateEndpoints) {
+    try {
+      const url = `${endpoint}?key=${apiKey}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { text: promptText },
+              { inline_data: { mime_type: mimeType, data: cleanBase64 } }
+            ]
+          }],
+          generationConfig: { temperature: 0.1, response_mime_type: 'application/json' }
+        })
+      });
+
+      if (response.status === 404) {
+        continue;
+      }
+
+      if (!response.ok) {
+        lastErr = await response.text();
+        continue;
+      }
+
+      const resJson = await response.json();
+      textOutput = resJson.candidates && resJson.candidates[0] && resJson.candidates[0].content && resJson.candidates[0].content.parts && resJson.candidates[0].content.parts[0].text;
+      if (textOutput) break;
+    } catch (e) {
+      lastErr = e.message;
+    }
+  }
+
+  if (!textOutput) {
+    throw new Error(lastErr || 'No se pudo obtener respuesta de la IA en ningún modelo disponible.');
+  }
+
   return JSON.parse(textOutput);
 }
 

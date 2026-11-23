@@ -1,5 +1,5 @@
 // api/ocr-factura.js — Vercel Serverless Function
-// Reconocimiento óptico de comprobantes fiscales argentinos (AFIP / Tickets / Remitos) con IA Vision
+// Reconocimiento óptico de comprobantes fiscales argentinos (AFIP / Tickets / Remitos / PDFs) con IA Vision
 
 export default async function handler(req, res) {
   // CORS
@@ -35,7 +35,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // Limpiar prefijo data:image/...;base64, si viene incluido
+    // Limpiar prefijo data:...;base64, si viene incluido
     const cleanBase64 = imageBase64.replace(/^data:[a-zA-Z0-9/]+;base64,/, '');
 
     const promptText = `
@@ -71,9 +71,6 @@ Respondé ÚNICAMENTE un objeto JSON válido, sin bloques markdown ni texto extr
 }
 `;
 
-    // Llamada a Gemini 1.5 Flash (o 2.0 Flash)
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-
     const geminiPayload = {
       contents: [
         {
@@ -94,41 +91,19 @@ Respondé ÚNICAMENTE un objeto JSON válido, sin bloques markdown ni texto extr
       }
     };
 
-    const response = await fetch(geminiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(geminiPayload)
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error('Error desde Gemini API:', errText);
-      return res.status(response.status).json({
-        ok: false,
-        error: 'GEMINI_API_ERROR',
-        details: errText
-      });
-    }
-
-    const data = await response.json();
-    const candidate = data.candidates && data.candidates[0];
-    const textOutput = candidate && candidate.content && candidate.content.parts && candidate.content.parts[0] && candidate.content.parts[0].text;
-
-    if (!textOutput) {
-      return res.status(500).json({ ok: false, error: 'No se obtuvo respuesta de la IA' });
-    }
+    // Llamada con rotación inteligente de modelos (evita errores 404 si Google deprecó o movió endpoints)
+    const textOutput = await callGeminiWithFallback(apiKey, geminiPayload);
 
     // Parsear JSON devuelto por la IA
     let parsedData = {};
     try {
       parsedData = JSON.parse(textOutput);
     } catch (parseErr) {
-      // Intento de extracción si vino con markdown ```json
       const match = textOutput.match(/\{[\s\S]*\}/);
       if (match) {
         parsedData = JSON.parse(match[0]);
       } else {
-        throw new Error('La IA no devolvió un JSON válido');
+        throw new Error('La IA no devolvió un JSON válido: ' + textOutput.slice(0, 200));
       }
     }
 
@@ -139,6 +114,61 @@ Respondé ÚNICAMENTE un objeto JSON válido, sin bloques markdown ni texto extr
 
   } catch (err) {
     console.error('Error en ocr-factura:', err);
-    return res.status(500).json({ ok: false, error: err.message });
+    return res.status(500).json({ ok: false, error: 'GEMINI_ERROR', details: err.message });
   }
+}
+
+// Llamada con fallback automático entre modelos y versiones (v1beta y v1)
+async function callGeminiWithFallback(apiKey, payload) {
+  const candidateEndpoints = [
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+    'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent',
+    'https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
+  ];
+
+  let lastErrorDetails = null;
+
+  for (const endpoint of candidateEndpoints) {
+    try {
+      const url = `${endpoint}?key=${apiKey}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.status === 404) {
+        console.warn(`[Gemini Fallback] Modelo en 404: ${endpoint}, probando siguiente alternativa...`);
+        continue;
+      }
+
+      if (!response.ok) {
+        const errText = await response.text();
+        console.warn(`[Gemini Error ${response.status}] en ${endpoint}:`, errText);
+        lastErrorDetails = errText;
+        if (response.status === 400 || response.status === 401 || response.status === 403) {
+          throw new Error(errText);
+        }
+        continue;
+      }
+
+      const data = await response.json();
+      const candidate = data.candidates && data.candidates[0];
+      const textOutput = candidate && candidate.content && candidate.content.parts && candidate.content.parts[0] && candidate.content.parts[0].text;
+
+      if (textOutput) {
+        return textOutput;
+      }
+    } catch (err) {
+      lastErrorDetails = err.message;
+      if (err.message && (err.message.includes('API_KEY_INVALID') || err.message.includes('PERMISSION_DENIED'))) {
+        throw err;
+      }
+    }
+  }
+
+  throw new Error(lastErrorDetails || 'No se pudo conectar con ningún modelo de Gemini disponible.');
 }
