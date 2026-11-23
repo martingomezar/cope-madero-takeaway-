@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0047bb" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Contabilidad & Finanzas — Cope Burgers Puerto Madero</title>
+
+  <!-- Favicon e Íconos -->
+  <link rel="icon" type="image/jpeg" href="./img/logo.jpg" />
+  <link rel="apple-touch-icon" href="./img/logo.jpg" />
+
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <!-- Estilos de Contabilidad -->
+  <link rel="stylesheet" href="./css/contabilidad.css" />
+</head>
+<body class="contabilidad-page">
+
+  <!-- =======================================================================
+       HEADER PACKAGING OFICIAL CON LOGO DIGITAL COPE
+       ======================================================================= -->
+  <header class="site-header">
+    <div class="cope-packaging-stripes" aria-hidden="true"></div>
+    <div class="header-container">
+      <div class="brand-section">
+        <img src="./img/cope-brand-digital.png" alt="Cope Burgers" class="brand-logo-img" />
+        <div class="brand-text-block">
+          <span class="brand-title">COPE BURGERS®</span>
+          <span class="brand-badge-tag">PUERTO MADERO · CONTABILIDAD</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <a href="./index.html" class="btn-header" title="Volver al menú online">
+          🍔 <span class="header-action-text">Menú Take Away</span>
+        </a>
+        <button id="btnBackup" type="button" class="btn-header" title="Descargar copia de seguridad en JSON">
+          💾 <span class="header-action-text">Backup</span>
+        </button>
+        <button id="btnRestore" type="button" class="btn-header" title="Restaurar copia de seguridad desde JSON">
+          📂 <span class="header-action-text">Restaurar</span>
+        </button>
+        <input type="file" id="fileRestoreInput" accept=".json" class="hidden" />
+        <button id="btnLogout" type="button" class="btn-header danger" title="Cerrar sesión de contabilidad">
+          🔒 <span class="header-action-text">Salir</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- =======================================================================
+       BARRA DE NAVEGACIÓN POR PESTAÑAS (TABS)
+       ======================================================================= -->
+  <nav class="nav-tabs-wrapper" aria-label="Secciones de contabilidad">
+    <div class="nav-tabs-container">
+      <button type="button" class="tab-btn active" data-tab="cajas">
+        💵 Conciliación de Cajas
+        <span id="badgeCajasCount" class="tab-badge">0</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="facturas">
+        🧾 Facturas y Gastos
+        <span id="badgeFacturasCount" class="tab-badge">0</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="dashboard">
+        📊 Dashboard P&L
+      </button>
+    </div>
+  </nav>
+
+  <!-- =======================================================================
+       CONTENIDO PRINCIPAL
+       ======================================================================= -->
+  <main class="main-content">
+
+    <!-- =====================================================================
+         PANEL 1: CONCILIACIÓN DE CAJAS (FUDO VS ARQUEO)
+         ===================================================================== -->
+    <section id="panel-cajas" class="tab-panel" role="tabpanel">
+      
+      <!-- Formulario de Conciliación -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">💵 Registro y Conciliación de Caja Diaria</h2>
+            <p class="card-subtitle">Compará los reportes de ventas de Fudo POS contra el efectivo contado y comprobantes de la gaveta.</p>
+          </div>
+        </div>
+
+        <form id="formCaja" autocomplete="off">
+          <div class="grid-2col">
+            
+            <!-- Columna FUDO POS -->
+            <div style="background:#f8fafc; padding:16px; border-radius:var(--radius-md); border:1px solid var(--border-color);">
+              <h3 style="font-size:13.5px; font-weight:800; color:var(--cope-blue); margin-bottom:12px; display:flex; align-items:center; gap:6px;">
+                🖥️ 1. Ventas Registradas en Fudo POS
+              </h3>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="cajaFecha">Fecha del Cierre</label>
+                  <input type="date" id="cajaFecha" class="form-control" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="cajaTurno">Turno Operativo</label>
+                  <select id="cajaTurno" class="form-control" required>
+                    <option value="Mediodía">Mediodía (12:00 a 17:00 hs)</option>
+                    <option value="Noche" selected>Noche (19:00 a 24:00 hs)</option>
+                    <option value="Día Completo">Día Completo</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="fudoTotal">Venta Total Facturada en Fudo ($)</label>
+                <div class="input-money-wrapper">
+                  <span class="input-money-prefix">$</span>
+                  <input type="number" id="fudoTotal" class="form-control input-money tabular" placeholder="0" min="0" step="any" required />
+                </div>
+                <p class="form-hint">Monto bruto total que figura en el cierre X/Z de Fudo.</p>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="fudoEfectivo">Fudo Efectivo ($) *</label>
+                <div class="input-money-wrapper">
+                  <span class="input-money-prefix">$</span>
+                  <input type="number" id="fudoEfectivo" class="form-control input-money tabular" placeholder="0" min="0" step="any" required />
+                </div>
+                <p class="form-hint">Efectivo total que el sistema Fudo registró que debía entrar.</p>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="fudoMp">Mercado Pago / QR ($)</label>
+                  <div class="input-money-wrapper">
+                    <span class="input-money-prefix">$</span>
+                    <input type="number" id="fudoMp" class="form-control input-money tabular" placeholder="0" min="0" step="any" />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="fudoTarjetas">Tarjetas Débito/Crédito ($)</label>
+                  <div class="input-money-wrapper">
+                    <span class="input-money-prefix">$</span>
+                    <input type="number" id="fudoTarjetas" class="form-control input-money tabular" placeholder="0" min="0" step="any" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="fudoDelivery">Delivery Apps (PedidosYa / Rappi) ($)</label>
+                <div class="input-money-wrapper">
+                  <span class="input-money-prefix">$</span>
+                  <input type="number" id="fudoDelivery" class="form-control input-money tabular" placeholder="0" min="0" step="any" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Columna ARQUEO REAL Y CAJA CHICA -->
+            <div style="background:#ffffff; padding:16px; border-radius:var(--radius-md); border:1px solid var(--border-color);">
+              <h3 style="font-size:13.5px; font-weight:800; color:#059669; margin-bottom:12px; display:flex; align-items:center; gap:6px;">
+                📦 2. Arqueo Físico en Gaveta y Egresos de Caja
+              </h3>
+
+              <div class="form-group">
+                <label class="form-label" for="realEfectivo">Efectivo Contado en Gaveta ($) *</label>
+                <div class="input-money-wrapper">
+                  <span class="input-money-prefix">$</span>
+                  <input type="number" id="realEfectivo" class="form-control input-money tabular" placeholder="0" min="0" step="any" required />
+                </div>
+                <p class="form-hint">Billetes físicos contados al momento de cerrar el turno.</p>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="gastosCajaChica">Gastos Pagados con Caja Chica ($)</label>
+                <div class="input-money-wrapper">
+                  <span class="input-money-prefix">$</span>
+                  <input type="number" id="gastosCajaChica" class="form-control input-money tabular" placeholder="0" min="0" step="any" />
+                </div>
+                <p class="form-hint">Ticket de verdulería, hielo, taxi o compras menores pagadas de la caja.</p>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="propinasPagadas">Propinas Digitales Abonadas en Efectivo ($)</label>
+                <div class="input-money-wrapper">
+                  <span class="input-money-prefix">$</span>
+                  <input type="number" id="propinasPagadas" class="form-control input-money tabular" placeholder="0" min="0" step="any" />
+                </div>
+                <p class="form-hint">Propinas cobradas por tarjeta/MP que se entregaron en efectivo al equipo.</p>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="cajaNotas">Observaciones / Motivo de Desvío</label>
+                <input type="text" id="cajaNotas" class="form-control" placeholder="Ej: Faltó ticket de pan de $1.200 o billete roto" />
+              </div>
+
+              <!-- Monitor reactivo de diferencia -->
+              <div id="diffMonitorCard" class="diff-monitor-card cuadrada">
+                <div>
+                  <div id="diffStatusText" style="font-size:14px; font-weight:900;">Caja Cuadrada ✅</div>
+                  <div id="diffDetail" class="diff-desc">Efectivo Justificado vs Fudo Efectivo</div>
+                </div>
+                <div id="diffValue" class="diff-value">$ 0</div>
+              </div>
+
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width:100%; margin-top:18px; padding:13px; font-size:14px;">
+            💾 Guardar Conciliación de Caja
+          </button>
+        </form>
+      </div>
+
+      <!-- Tabla Histórico de Cierres -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">📋 Historial de Cierres de Caja</h2>
+            <p class="card-subtitle">Registro auditable de diferencias por turno.</p>
+          </div>
+          <button id="btnExportExcelCajas" type="button" class="btn btn-secondary btn-sm">
+            📊 Exportar a Excel (CSV)
+          </button>
+        </div>
+
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Turno</th>
+                <th>Venta Fudo</th>
+                <th>Fudo Efectivo</th>
+                <th>Efectivo Justificado</th>
+                <th>Diferencia</th>
+                <th>Estado</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="tableCajasBody">
+              <!-- Renderizado dinámico -->
+            </tbody>
+          </table>
+        </div>
+
+        <div id="emptyCajasState" class="empty-state hidden" style="text-align:center; padding:32px 16px; color:var(--text-muted);">
+          <div style="font-size:32px; margin-bottom:8px;">💵</div>
+          <h3 style="font-size:15px; font-weight:800; color:var(--text-main);">Sin cierres de caja registrados</h3>
+          <p style="font-size:12.5px;">Completá el formulario superior para registrar el primer arqueo del turno.</p>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- =====================================================================
+         PANEL 2: FACTURAS Y GASTOS (PROVEEDORES)
+         ===================================================================== -->
+    <section id="panel-facturas" class="tab-panel hidden" role="tabpanel">
+
+      <!-- Formulario Carga de Factura -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">🧾 Cargar Factura o Comprobante de Compra</h2>
+            <p class="card-subtitle">Registrá facturas de proveedores clasificados por categorías gastronómicas para calcular el Food Cost.</p>
+          </div>
+        </div>
+
+        <form id="formFactura" autocomplete="off">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="facturaFecha">Fecha Emisión</label>
+              <input type="date" id="facturaFecha" class="form-control" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="facturaProveedor">Proveedor *</label>
+              <input type="text" id="facturaProveedor" class="form-control" list="proveedoresList" placeholder="Ej: Frigorífico Central, Panadería San Telmo..." required />
+              <datalist id="proveedoresList">
+                <!-- Autocompletado dinámico -->
+              </datalist>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="facturaCategoria">Categoría de Gasto</label>
+              <select id="facturaCategoria" class="form-control" required>
+                <option value="carne">🥩 Carne y Medallones (Food Cost)</option>
+                <option value="panaderia">🥖 Panadería y Verdulería (Food Cost)</option>
+                <option value="papas">🍟 Papas e Insumos Congelados (Food Cost)</option>
+                <option value="bebidas">🥤 Bebidas (Cerveza, Gaseosas, Agua)</option>
+                <option value="packaging">📦 Packaging y Descartables</option>
+                <option value="servicios">⚡ Servicios, Alquiler y Mantenimiento</option>
+                <option value="sueldos">👥 Sueldos, Adelantos y Varios</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="facturaTipo">Tipo de Comprobante</label>
+              <select id="facturaTipo" class="form-control" required>
+                <option value="Factura A">Factura A</option>
+                <option value="Factura B">Factura B</option>
+                <option value="Factura C">Factura C</option>
+                <option value="Remito / Ticket X">Remito / Ticket X</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="facturaNumero">Número de Comprobante</label>
+              <input type="text" id="facturaNumero" class="form-control tabular" placeholder="Ej: 0001-00045812" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="facturaMonto">Monto Total ($) *</label>
+              <div class="input-money-wrapper">
+                <span class="input-money-prefix">$</span>
+                <input type="number" id="facturaMonto" class="form-control input-money tabular" placeholder="0" min="0" step="any" required />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="facturaEstado">Estado de Pago</label>
+              <select id="facturaEstado" class="form-control" required>
+                <option value="pagado">Pagada ✅</option>
+                <option value="pendiente">Pendiente de Pago ⏳</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="facturaNotas">Detalle / Artículos Comprados</label>
+            <input type="text" id="facturaNotas" class="form-control" placeholder="Ej: 60 kg de Roast Beef, 40 kg Tapa de Asado" />
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="padding:11px 20px;">
+            ➕ Cargar Factura al Sistema
+          </button>
+        </form>
+      </div>
+
+      <!-- Tabla de Facturas con Filtros -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">📋 Facturas Registradas</h2>
+            <p class="card-subtitle">Historial de compras con filtro rápido por mes y categoría.</p>
+          </div>
+          <button id="btnExportExcelFacturas" type="button" class="btn btn-secondary btn-sm">
+            📊 Exportar Facturas (CSV)
+          </button>
+        </div>
+
+        <!-- Barra de Filtros -->
+        <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
+          <select id="filtroFacturaMes" class="form-control" style="max-width:180px;">
+            <option value="all">Todos los Meses</option>
+          </select>
+
+          <select id="filtroFacturaCategoria" class="form-control" style="max-width:220px;">
+            <option value="all">Todas las Categorías</option>
+            <option value="carne">Carne y Medallones</option>
+            <option value="panaderia">Panadería y Verdulería</option>
+            <option value="papas">Papas e Insumos</option>
+            <option value="bebidas">Bebidas</option>
+            <option value="packaging">Packaging</option>
+            <option value="servicios">Servicios y Alquiler</option>
+            <option value="sueldos">Sueldos y Adelantos</option>
+          </select>
+
+          <select id="filtroFacturaEstado" class="form-control" style="max-width:160px;">
+            <option value="all">Todos los Estados</option>
+            <option value="pagado">Solo Pagadas</option>
+            <option value="pendiente">Solo Pendientes</option>
+          </select>
+
+          <input type="search" id="filtroFacturaBusqueda" class="form-control" placeholder="Buscar por proveedor o número..." style="flex:1; min-width:200px;" />
+        </div>
+
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Proveedor</th>
+                <th>Categoría</th>
+                <th>Comprobante</th>
+                <th>Total ($)</th>
+                <th>Estado</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="tableFacturasBody">
+              <!-- Renderizado dinámico -->
+            </tbody>
+          </table>
+        </div>
+
+        <div id="emptyFacturasState" class="empty-state hidden" style="text-align:center; padding:32px 16px; color:var(--text-muted);">
+          <div style="font-size:32px; margin-bottom:8px;">🧾</div>
+          <h3 style="font-size:15px; font-weight:800; color:var(--text-main);">No hay facturas cargadas</h3>
+          <p style="font-size:12.5px;">Cargá las compras de insumos para calcular el costo real de las hamburguesas.</p>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- =====================================================================
+         PANEL 3: DASHBOARD P&L Y CONTROL FINANCIERO
+         ===================================================================== -->
+    <section id="panel-dashboard" class="tab-panel hidden" role="tabpanel">
+
+      <!-- Filtro de período -->
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:20px;">
+        <div>
+          <h2 style="font-size:20px; font-weight:900; color:var(--text-main); letter-spacing:-0.02em;">📊 Resumen Financiero & Food Cost</h2>
+          <p style="font-size:13px; color:var(--text-muted);">Métricas clave de rentabilidad para Cope Burgers Puerto Madero.</p>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:8px;">
+          <label for="dashboardMes" style="font-size:12.5px; font-weight:700; color:#334155;">Período:</label>
+          <select id="dashboardMes" class="form-control" style="width:200px; font-weight:700;">
+            <!-- Poblado dinámicamente -->
+          </select>
+        </div>
+      </div>
+
+      <!-- KPI Grid -->
+      <div class="kpi-grid">
+        <!-- KPI 1: Ventas -->
+        <div class="kpi-card accent-blue">
+          <span class="kpi-label">Ventas Totales (Fudo) <span>📈</span></span>
+          <span id="kpiVentas" class="kpi-value tabular">$ 0</span>
+          <span id="kpiVentasSub" class="kpi-sub">0 turnos cerrados</span>
+        </div>
+
+        <!-- KPI 2: Egresos -->
+        <div class="kpi-card accent-red">
+          <span class="kpi-label">Egresos Facturados <span>📉</span></span>
+          <span id="kpiEgresos" class="kpi-value tabular">$ 0</span>
+          <span id="kpiEgresosSub" class="kpi-sub">0 facturas</span>
+        </div>
+
+        <!-- KPI 3: Margen / Resultado -->
+        <div class="kpi-card accent-green">
+          <span class="kpi-label">Resultado Operativo <span>💰</span></span>
+          <span id="kpiResultado" class="kpi-value tabular">$ 0</span>
+          <span id="kpiResultadoSub" class="kpi-sub">Margen: 0% de ventas</span>
+        </div>
+
+        <!-- KPI 4: Food Cost -->
+        <div class="kpi-card">
+          <span class="kpi-label">Ratio Food Cost (%) <span>🍔</span></span>
+          <span id="kpiFoodCost" class="kpi-value tabular">0.0%</span>
+          <div class="food-cost-gauge">
+            <div id="kpiFoodCostFill" class="food-cost-fill good" style="width:0%;"></div>
+          </div>
+          <span id="kpiFoodCostSub" class="kpi-sub" style="margin-top:6px;">$ 0 (Objetivo: 28% a 32%)</span>
+        </div>
+
+        <!-- KPI 5: Deuda Pendiente -->
+        <div class="kpi-card accent-amber">
+          <span class="kpi-label">Deuda a Proveedores <span>⏳</span></span>
+          <span id="kpiDeuda" class="kpi-value tabular">$ 0</span>
+          <span id="kpiDeudaSub" class="kpi-sub">0 facturas pendientes</span>
+        </div>
+      </div>
+
+      <!-- Desglose por categorías -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">📊 Desglose de Gastos por Categoría</h2>
+            <p class="card-subtitle">Distribución porcentual de los costos en el período seleccionado.</p>
+          </div>
+        </div>
+
+        <div id="expensesBreakdown">
+          <!-- Renderizado dinámico de barras -->
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- =======================================================================
+       MODAL DE AUTENTICACIÓN BLOQUEANTE (CLAVE 'Cope2026')
+       ======================================================================= -->
+  <div id="authModal" class="auth-overlay">
+    <div class="auth-card">
+      <div class="auth-lock-icon" aria-hidden="true">🔒</div>
+      <h1 class="auth-title">Contabilidad Cope</h1>
+      <p class="auth-subtitle">Ingresá la clave de acceso para ver y gestionar las finanzas de Cope Burgers Puerto Madero.</p>
+
+      <div id="authError" class="auth-error hidden"></div>
+
+      <form id="authForm" autocomplete="off">
+        <div class="form-group" style="text-align:left;">
+          <label class="form-label" for="authPassword">Clave de Seguridad</label>
+          <input type="password" id="authPassword" class="form-control" placeholder="••••••••" required />
+        </div>
+
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:18px; text-align:left;">
+          <input type="checkbox" id="authRemember" style="width:16px; height:16px; accent-color:var(--cope-blue); cursor:pointer;" />
+          <label for="authRemember" style="font-size:12px; color:var(--text-muted); cursor:pointer; user-select:none;">Recordar sesión en este equipo</label>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width:100%; padding:12px; font-size:14px;">
+          Ingresar al Panel
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Contenedor de Toasts -->
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <!-- Script de Contabilidad -->
+  <script src="./js/contabilidad.js"></script>
+</body>
+</html>
