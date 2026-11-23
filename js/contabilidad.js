@@ -1,6 +1,7 @@
 /**
  * COPE BURGERS PUERTO MADERO — MÓDULO DE CONTABILIDAD Y FINANZAS
- * Conciliación diaria Fudo POS, Arqueo de Caja Chica, Facturación con Escáner OCR y Google Sheets Cloud Sync.
+ * Conciliación diaria Fudo POS, Arqueo de Caja Chica, Facturación con Escáner OCR,
+ * Categorías Dinámicas de Gastos y Google Sheets Cloud Sync.
  */
 
 (function () {
@@ -13,21 +14,22 @@
   const GEMINI_KEY_STORAGE = 'cope_gemini_api_key';
   const SHEETS_URL_STORAGE = 'cope_sheets_url';
 
-  // Categorías fijas de gastronomía
-  const CATEGORIES = [
-    { id: 'carne', name: 'Carne y Medallones (Food Cost)', isFoodCost: true, badgeClass: 'food' },
-    { id: 'panaderia', name: 'Panadería y Verdulería (Food Cost)', isFoodCost: true, badgeClass: 'food' },
-    { id: 'papas', name: 'Papas e Insumos Congelados (Food Cost)', isFoodCost: true, badgeClass: 'food' },
-    { id: 'bebidas', name: 'Bebidas (Cerveza, Gaseosas, Agua)', isFoodCost: true, badgeClass: 'beverage' },
-    { id: 'packaging', name: 'Packaging y Descartables', isFoodCost: false, badgeClass: 'packaging' },
-    { id: 'servicios', name: 'Servicios, Alquiler y Mantenimiento', isFoodCost: false, badgeClass: 'services' },
-    { id: 'sueldos', name: 'Sueldos, Adelantos y Varios', isFoodCost: false, badgeClass: '' }
+  // Categorías fijas de base gastronómica
+  const DEFAULT_CATEGORIES = [
+    { id: 'carne', name: 'Carne y Medallones (Food Cost)', isFoodCost: true, badgeClass: 'food', isDefault: true },
+    { id: 'panaderia', name: 'Panadería y Verdulería (Food Cost)', isFoodCost: true, badgeClass: 'food', isDefault: true },
+    { id: 'papas', name: 'Papas e Insumos Congelados (Food Cost)', isFoodCost: true, badgeClass: 'food', isDefault: true },
+    { id: 'bebidas', name: 'Bebidas (Cerveza, Gaseosas, Agua)', isFoodCost: true, badgeClass: 'beverage', isDefault: true },
+    { id: 'packaging', name: 'Packaging y Descartables', isFoodCost: false, badgeClass: 'packaging', isDefault: true },
+    { id: 'servicios', name: 'Servicios, Alquiler y Mantenimiento', isFoodCost: false, badgeClass: 'services', isDefault: true },
+    { id: 'sueldos', name: 'Sueldos, Adelantos y Varios', isFoodCost: false, badgeClass: '', isDefault: true }
   ];
 
   // Estado de la aplicación
   let state = {
     cajas: [],
-    facturas: []
+    facturas: [],
+    customCategories: []
   };
 
   // Elementos DOM
@@ -42,6 +44,7 @@
     loadState();
     bindEvents();
     initDefaults();
+    populateCategorySelects();
     renderAll();
     checkGoogleSheetsStatus();
   });
@@ -75,6 +78,15 @@
     els.formApiKeyConfig = document.getElementById('formApiKeyConfig');
     els.inputGeminiApiKey = document.getElementById('inputGeminiApiKey');
     els.btnCloseApiKeyModal = document.getElementById('btnCloseApiKeyModal');
+
+    // Categorías Modal & Controles
+    els.btnManageCategories = document.getElementById('btnManageCategories');
+    els.categoriesModal = document.getElementById('categoriesModal');
+    els.btnCloseCategoriesModal = document.getElementById('btnCloseCategoriesModal');
+    els.formNewCategory = document.getElementById('formNewCategory');
+    els.newCategoryName = document.getElementById('newCategoryName');
+    els.newCategoryIsFoodCost = document.getElementById('newCategoryIsFoodCost');
+    els.categoriesList = document.getElementById('categoriesList');
 
     // Formulario Caja
     els.formCaja = document.getElementById('formCaja');
@@ -156,6 +168,93 @@
   }
 
   /* ==========================================================================
+     CATEGORÍAS (PREDETERMINADAS + PERSONALIZADAS)
+     ========================================================================== */
+  function getAllCategories() {
+    return [...DEFAULT_CATEGORIES, ...(state.customCategories || [])];
+  }
+
+  function getCategoryById(id) {
+    return getAllCategories().find(c => c.id === id) || { id, name: id, isFoodCost: false, badgeClass: '' };
+  }
+
+  function populateCategorySelects() {
+    const cats = getAllCategories();
+
+    // 1. Selector en formulario de carga
+    if (els.facturaCategoria) {
+      const currentVal = els.facturaCategoria.value;
+      els.facturaCategoria.innerHTML = cats.map(c => 
+        `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)}</option>`
+      ).join('');
+      if (currentVal && cats.some(c => c.id === currentVal)) {
+        els.facturaCategoria.value = currentVal;
+      }
+    }
+
+    // 2. Selector en barra de filtros
+    if (els.filtroFacturaCategoria) {
+      const currentFilter = els.filtroFacturaCategoria.value || 'all';
+      els.filtroFacturaCategoria.innerHTML = '<option value="all">Todas las Categorías</option>' +
+        cats.map(c => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)}</option>`).join('');
+      if (currentFilter && (currentFilter === 'all' || cats.some(c => c.id === currentFilter))) {
+        els.filtroFacturaCategoria.value = currentFilter;
+      }
+    }
+
+    // 3. Lista dentro del modal de administración
+    if (els.categoriesList) {
+      els.categoriesList.innerHTML = cats.map(c => `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 12px; background:#ffffff; border:1px solid var(--border-color); border-radius:var(--radius-sm);">
+          <div>
+            <strong style="font-size:13px; color:var(--text-main);">${escapeHtml(c.name)}</strong>
+            <span style="font-size:11px; margin-left:8px; font-weight:700; color:${c.isFoodCost ? '#059669' : '#64748b'}; background:${c.isFoodCost ? '#ecfdf5' : '#f1f5f9'}; padding:2px 6px; border-radius:4px;">
+              ${c.isFoodCost ? '🍔 Food Cost' : '🏢 Operativo'}
+            </span>
+          </div>
+          ${c.isDefault ? '<span style="font-size:11px; color:#94a3b8; font-weight:700;">Predeterminada</span>' : `<button type="button" class="btn-icon" title="Eliminar categoría" onclick="window.copeContab.deleteCategory('${c.id}')">🗑️</button>`}
+        </div>
+      `).join('');
+    }
+  }
+
+  function handleNewCategorySubmit(e) {
+    e.preventDefault();
+    const name = (els.newCategoryName.value || '').trim();
+    const isFoodCost = els.newCategoryIsFoodCost.checked;
+
+    if (!name) return;
+
+    // Crear slug ID
+    const slug = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '_').slice(0, 15);
+    const id = slug + '_' + Date.now().toString(36).substr(-3);
+
+    const newCat = {
+      id,
+      name,
+      isFoodCost,
+      badgeClass: isFoodCost ? 'food' : '',
+      isDefault: false
+    };
+
+    if (!state.customCategories) state.customCategories = [];
+    state.customCategories.push(newCat);
+    saveState();
+
+    populateCategorySelects();
+    renderFacturasTable();
+    renderDashboard();
+
+    if (els.facturaCategoria) {
+      els.facturaCategoria.value = id;
+    }
+
+    els.newCategoryName.value = '';
+    els.newCategoryIsFoodCost.checked = false;
+    showToast(`Categoría "${name}" creada exitosamente`, 'success');
+  }
+
+  /* ==========================================================================
      AUTENTICACIÓN
      ========================================================================== */
   function setupAuth() {
@@ -215,13 +314,14 @@
         const parsed = JSON.parse(raw);
         state.cajas = Array.isArray(parsed.cajas) ? parsed.cajas : [];
         state.facturas = Array.isArray(parsed.facturas) ? parsed.facturas : [];
+        state.customCategories = Array.isArray(parsed.customCategories) ? parsed.customCategories : [];
       } else {
-        state = { cajas: [], facturas: [] };
+        state = { cajas: [], facturas: [], customCategories: [] };
         saveState();
       }
     } catch (err) {
       console.error('Error al leer localStorage:', err);
-      state = { cajas: [], facturas: [] };
+      state = { cajas: [], facturas: [], customCategories: [] };
     }
   }
 
@@ -231,6 +331,7 @@
         version: 1,
         cajas: state.cajas,
         facturas: state.facturas,
+        customCategories: state.customCategories || [],
         updatedAt: new Date().toISOString()
       }));
     } catch (err) {
@@ -331,7 +432,7 @@
       els.dashboardMes.addEventListener('change', renderDashboard);
     }
 
-    // Escáner OCR Facturas
+    // Escáner OCR Facturas (Cámara / Foto / PDF)
     if (els.btnScanCamera && els.inputScanCamera) {
       els.btnScanCamera.addEventListener('click', () => els.inputScanCamera.click());
       els.inputScanCamera.addEventListener('change', handleScanInput);
@@ -346,7 +447,22 @@
       });
     }
 
-    // Modales de Configuración
+    // Modal de Administración de Categorías
+    if (els.btnManageCategories && els.categoriesModal) {
+      els.btnManageCategories.addEventListener('click', () => {
+        populateCategorySelects();
+        els.categoriesModal.classList.remove('hidden');
+        if (els.newCategoryName) els.newCategoryName.focus();
+      });
+    }
+    if (els.btnCloseCategoriesModal && els.categoriesModal) {
+      els.btnCloseCategoriesModal.addEventListener('click', () => els.categoriesModal.classList.add('hidden'));
+    }
+    if (els.formNewCategory) {
+      els.formNewCategory.addEventListener('submit', handleNewCategorySubmit);
+    }
+
+    // Modales de Configuración Sheets y Gemini
     if (els.btnSheetsSyncModal && els.sheetsModal) {
       els.btnSheetsSyncModal.addEventListener('click', () => els.sheetsModal.classList.remove('hidden'));
     }
@@ -666,7 +782,12 @@
       flashInput(els.facturaProveedor);
     }
     if (data.categoria && els.facturaCategoria) {
-      els.facturaCategoria.value = data.categoria;
+      const exists = getAllCategories().some(c => c.id === data.categoria);
+      if (exists) {
+        els.facturaCategoria.value = data.categoria;
+      } else {
+        els.facturaCategoria.value = 'servicios';
+      }
       flashInput(els.facturaCategoria);
     }
     if (data.tipoComprobante && els.facturaTipo) {
@@ -817,7 +938,7 @@
     if (els.emptyFacturasState) els.emptyFacturasState.classList.add('hidden');
 
     const html = list.map(f => {
-      const catObj = CATEGORIES.find(c => c.id === f.categoria) || { name: f.categoria, badgeClass: '' };
+      const catObj = getCategoryById(f.categoria);
       const isPaid = f.estadoPago === 'pagado';
 
       return `
@@ -860,8 +981,9 @@
     const resultadoOperativo = ventasTotales - egresosTotales;
     const margenOperativo = ventasTotales > 0 ? (resultadoOperativo / ventasTotales) * 100 : 0;
 
+    // Calcular Food Cost dinámicamente con cualquier categoría marcada como isFoodCost
     const foodCostFacturas = filteredFacturas.filter(f => {
-      const cat = CATEGORIES.find(c => c.id === f.categoria);
+      const cat = getCategoryById(f.categoria);
       return cat && cat.isFoodCost;
     });
     const foodCostTotal = foodCostFacturas.reduce((acc, f) => acc + (f.montoTotal || 0), 0);
@@ -910,17 +1032,23 @@
       return;
     }
 
+    const cats = getAllCategories();
     const byCat = {};
-    CATEGORIES.forEach(c => byCat[c.id] = 0);
+    cats.forEach(c => byCat[c.id] = 0);
     facturas.forEach(f => {
       byCat[f.categoria] = (byCat[f.categoria] || 0) + (f.montoTotal || 0);
     });
 
-    const rows = CATEGORIES.map(c => {
+    const rows = cats.map(c => {
       const monto = byCat[c.id] || 0;
       const pct = egresosTotales > 0 ? (monto / egresosTotales) * 100 : 0;
       return { ...c, monto, pct };
-    }).sort((a, b) => b.monto - a.monto);
+    }).filter(r => r.monto > 0).sort((a, b) => b.monto - a.monto);
+
+    if (rows.length === 0) {
+      els.expensesBreakdown.innerHTML = '<p class="form-hint">No hay gastos registrados en el período seleccionado.</p>';
+      return;
+    }
 
     const html = rows.map(r => `
       <div class="breakdown-row">
@@ -1044,7 +1172,7 @@
   }
 
   /* ==========================================================================
-     GLOBAL API HANDLERS (DELETE & TOGGLE)
+     GLOBAL API HANDLERS (DELETE & TOGGLE & CATEGORIES)
      ========================================================================== */
   window.copeContab = {
     deleteCaja(id) {
@@ -1074,6 +1202,19 @@
       renderFacturasTable();
       renderDashboard();
       showToast(`Estado de factura actualizado (${fac.estadoPago})`);
+    },
+
+    deleteCategory(id) {
+      const cat = (state.customCategories || []).find(c => c.id === id);
+      if (!cat) return;
+      if (!confirm(`¿Eliminar la categoría "${cat.name}"? Las facturas ya registradas mantendrán su historial.`)) return;
+
+      state.customCategories = state.customCategories.filter(c => c.id !== id);
+      saveState();
+      populateCategorySelects();
+      renderFacturasTable();
+      renderDashboard();
+      showToast(`Categoría "${cat.name}" eliminada`);
     }
   };
 
@@ -1118,7 +1259,7 @@
     ];
 
     const rows = state.facturas.map(f => {
-      const catObj = CATEGORIES.find(c => c.id === f.categoria) || { name: f.categoria };
+      const catObj = getCategoryById(f.categoria);
       return [
         f.fecha, `"${(f.proveedor || '').replace(/"/g, '""')}"`, `"${catObj.name}"`,
         `"${f.tipoComprobante}"`, `"${f.nroComprobante || ''}"`, formatDecimalCsv(f.montoTotal),
@@ -1145,7 +1286,8 @@
       version: 1,
       exportedAt: new Date().toISOString(),
       cajas: state.cajas,
-      facturas: state.facturas
+      facturas: state.facturas,
+      customCategories: state.customCategories || []
     };
 
     const jsonStr = JSON.stringify(backupData, null, 2);
@@ -1168,7 +1310,9 @@
         if (confirm(`Se restaurarán ${parsed.cajas ? parsed.cajas.length : 0} cierres y ${parsed.facturas ? parsed.facturas.length : 0} facturas. ¿Deseás continuar?`)) {
           state.cajas = Array.isArray(parsed.cajas) ? parsed.cajas : [];
           state.facturas = Array.isArray(parsed.facturas) ? parsed.facturas : [];
+          state.customCategories = Array.isArray(parsed.customCategories) ? parsed.customCategories : [];
           saveState();
+          populateCategorySelects();
           updateProveedoresDatalist();
           renderAll();
           showToast('Backup restaurado con éxito', 'success');

@@ -53,14 +53,7 @@ Reglas de extracción:
    - "Remito / Ticket X" (tickets fiscales sin letra o remitos X)
 5. "nroComprobante": Punto de venta y número con guión (ej: "0005-00123456").
 6. "montoTotal": Monto final total a pagar con decimales como número puro (ej: 145800.50). ¡Importante! Buscar el "Total", "Importe Total", o la cifra final más grande.
-7. "categoria": Debe ser EXACTAMENTE uno de estos 7 IDs según los productos facturados:
-   - "carne" (si incluye carne picada, medallones, roast beef, tapa, vacío, panceta, pollo)
-   - "panaderia" (si incluye panes brioche, pan de papa, verduras, lechuga, tomate, cebolla)
-   - "papas" (si incluye papas bastón congeladas, aceite de freír, cheddar en barra, condimentos, salsas)
-   - "bebidas" (si incluye cerveza tirada/lata, gaseosas Pepsi/7Up, aguas, vinos)
-   - "packaging" (si incluye cajas de burger, bolsas kraft, papel antigrasa, servilletas, vasos, stickers)
-   - "servicios" (si incluye alquiler de Puerto Madero, expensas, luz Edenor, gas Metrogas, internet, reparaciones)
-   - "sueldos" (si son recibos de sueldo, adelantos, propinas, cargas sociales)
+7. "categoria": Asigná la categoría que mejor describa los productos o servicios facturados (ej: "carne", "panaderia", "papas", "bebidas", "packaging", "servicios", "sueldos", "marketing", "impuestos", "limpieza", etc.).
 8. "notas": Breve resumen de los ítems principales facturados (ej: "60 kg Roast Beef, 40 kg Tapa de Asado").
 9. "confianza": "alta", "media" o "baja".
 
@@ -69,7 +62,7 @@ Respondé ÚNICAMENTE un objeto JSON válido, sin bloques markdown ni texto extr
   "proveedor": "string",
   "cuit": "string",
   "fecha": "YYYY-MM-DD",
-  "categoria": "carne | panaderia | papas | bebidas | packaging | servicios | sueldos",
+  "categoria": "string",
   "tipoComprobante": "Factura A | Factura B | Factura C | Remito / Ticket X",
   "nroComprobante": "string",
   "montoTotal": number,
