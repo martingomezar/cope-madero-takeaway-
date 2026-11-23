@@ -588,32 +588,54 @@
        MODAL: CONFIGURACIÓN CLAVE OCR (GEMINI AI VISION)
        ======================================================================= -->
   <div id="apiKeyModal" class="auth-overlay hidden">
-    <div class="auth-card" style="max-width: 460px; text-align: left;">
+    <div class="auth-card" style="max-width: 500px; text-align: left;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
         <h2 style="font-size:18px; font-weight:900; color:var(--text-main); display:flex; align-items:center; gap:8px;">
-          🔑 Configurar OCR con IA (Gemini)
+          🔑 Configurar OCR con IA (Gemini & OpenRouter)
         </h2>
         <button type="button" id="btnCloseApiKeyModal" class="btn-icon" style="font-size:16px;">✕</button>
       </div>
-      <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:16px; line-height:1.4;">
-        Para escanear facturas con fotos podés usar la variable de entorno <code>GEMINI_API_KEY</code> en Vercel o ingresar una clave gratuita de <strong>Google AI Studio</strong> en este navegador.
+      <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:14px; line-height:1.4;">
+        Podés usar <strong>Google Gemini</strong> como IA principal y <strong>OpenRouter</strong> como respaldo gratuito si Gemini satura su cuota o se queda sin capacidad.
       </p>
 
       <form id="formApiKeyConfig" autocomplete="off">
-        <div class="form-group">
-          <label class="form-label" for="inputGeminiApiKey">Gemini API Key</label>
-          <input type="password" id="inputGeminiApiKey" class="form-control" placeholder="AIzaSy..." />
-          <p class="form-hint">Obtené tu clave gratuita en <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style="color:var(--cope-blue); font-weight:700;">aistudio.google.com</a>.</p>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" for="selectOcrProvider">Estrategia de Escaneo</label>
+          <select id="selectOcrProvider" class="form-control">
+            <option value="auto">🤖 Automático (Gemini principal + OpenRouter de respaldo)</option>
+            <option value="gemini">✨ Solo Google Gemini</option>
+            <option value="openrouter">🌐 Solo OpenRouter Free</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <label class="form-label" for="inputGeminiApiKey" style="margin-bottom:0;">Google Gemini API Key</label>
+            <button type="button" id="btnTestGeminiKey" class="btn-text-action" style="font-size:11.5px; color:var(--cope-blue); background:none; border:none; cursor:pointer; font-weight:700;">
+              ⚡ Probar Gemini
+            </button>
+          </div>
+          <input type="password" id="inputGeminiApiKey" class="form-control" placeholder="AIzaSy..." style="margin-top:4px;" />
+          <p class="form-hint">Clave gratuita en <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style="color:var(--cope-blue); font-weight:700;">aistudio.google.com</a>.</p>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <label class="form-label" for="inputOpenRouterApiKey" style="margin-bottom:0;">OpenRouter API Key (Respaldo)</label>
+            <button type="button" id="btnTestOpenRouterKey" class="btn-text-action" style="font-size:11.5px; color:var(--cope-blue); background:none; border:none; cursor:pointer; font-weight:700;">
+              ⚡ Probar OpenRouter
+            </button>
+          </div>
+          <input type="password" id="inputOpenRouterApiKey" class="form-control" placeholder="sk-or-v1-..." style="margin-top:4px;" />
+          <p class="form-hint">Clave gratuita en <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" style="color:var(--cope-blue); font-weight:700;">openrouter.ai/keys</a>.</p>
         </div>
 
         <div id="apiKeyTestStatus" class="hidden" style="margin-top:10px; padding:10px 12px; border-radius:8px; font-size:12px; line-height:1.4;"></div>
 
         <div style="display:flex; gap:8px; margin-top:14px;">
-          <button type="button" id="btnTestApiKey" class="btn btn-secondary" style="flex:1;">
-            ⚡ Probar Conexión
-          </button>
-          <button type="submit" class="btn btn-primary" style="flex:1;">
-            💾 Guardar Clave
+          <button type="submit" class="btn btn-primary" style="width:100%;">
+            💾 Guardar Configuración de IA
           </button>
         </div>
       </form>

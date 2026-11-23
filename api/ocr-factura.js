@@ -1,5 +1,6 @@
 // api/ocr-factura.js — Vercel Serverless Function
-// Reconocimiento óptico de comprobantes fiscales argentinos (AFIP / Tickets / Remitos / PDFs) con IA Vision
+// Reconocimiento óptico de comprobantes fiscales argentinos (AFIP / Tickets / Remitos / PDFs)
+// con Google Gemini AI y respaldo automático / opcional con OpenRouter Vision
 
 export default async function handler(req, res) {
   // CORS
@@ -8,24 +9,34 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
   res.setHeader(
     'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, X-Gemini-Key'
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, X-Gemini-Key, X-OpenRouter-Key'
   );
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  // GET de diagnóstico: verificar clave y ver modelos disponibles
+  // GET de diagnóstico: verificar clave
   if (req.method === 'GET') {
-    const apiKey = req.query.key || req.headers['x-gemini-key'] || process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return res.status(401).json({ ok: false, error: 'NO_API_KEY', message: 'No se proveyó clave para verificar.' });
+    const provider = req.query.provider || 'gemini';
+    if (provider === 'openrouter') {
+      const openRouterKey = req.query.key || req.headers['x-openrouter-key'] || process.env.OPENROUTER_API_KEY;
+      if (!openRouterKey) {
+        return res.status(401).json({ ok: false, error: 'NO_API_KEY', message: 'No se proveyó clave de OpenRouter.' });
+      }
+      const check = await verifyOpenRouterKey(openRouterKey);
+      return res.status(check.ok ? 200 : (check.status || 400)).json(check);
+    } else {
+      const apiKey = req.query.key || req.headers['x-gemini-key'] || process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        return res.status(401).json({ ok: false, error: 'NO_API_KEY', message: 'No se proveyó clave de Gemini.' });
+      }
+      const check = await resolveAvailableGeminiModels(apiKey);
+      if (!check.ok) {
+        return res.status(check.status || 500).json({ ok: false, error: check.error, details: check.details });
+      }
+      return res.status(200).json({ ok: true, provider: 'gemini', models: check.models, selectedModel: check.models[0] });
     }
-    const check = await resolveAvailableGeminiModels(apiKey);
-    if (!check.ok) {
-      return res.status(check.status || 500).json({ ok: false, error: check.error, details: check.details });
-    }
-    return res.status(200).json({ ok: true, models: check.models, selectedModel: check.models[0] });
   }
 
   if (req.method !== 'POST') {
@@ -33,23 +44,45 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { imageBase64, mimeType = 'image/jpeg', apiKey: customKey, test } = req.body || {};
+    const { 
+      imageBase64, 
+      mimeType = 'image/jpeg', 
+      apiKey: customGeminiKey, 
+      openRouterKey: customOpenRouterKey,
+      provider = 'auto', // 'auto' | 'gemini' | 'openrouter'
+      test = false,
+      testProvider = 'gemini' // 'gemini' | 'openrouter'
+    } = req.body || {};
 
-    const apiKey = customKey || req.headers['x-gemini-key'] || process.env.GEMINI_API_KEY;
-    if (!apiKey) {
+    const geminiKey = customGeminiKey || req.headers['x-gemini-key'] || process.env.GEMINI_API_KEY;
+    const openRouterKey = customOpenRouterKey || req.headers['x-openrouter-key'] || process.env.OPENROUTER_API_KEY;
+
+    // Modo prueba de conexión
+    if (test) {
+      if (testProvider === 'openrouter' || (!geminiKey && openRouterKey)) {
+        if (!openRouterKey) {
+          return res.status(400).json({ ok: false, error: 'NO_KEY', details: 'No se proporcionó clave de OpenRouter para verificar.' });
+        }
+        const check = await verifyOpenRouterKey(openRouterKey);
+        return res.status(check.ok ? 200 : (check.status || 400)).json(check);
+      } else {
+        if (!geminiKey) {
+          return res.status(400).json({ ok: false, error: 'NO_KEY', details: 'No se proporcionó clave de Gemini para verificar.' });
+        }
+        const check = await resolveAvailableGeminiModels(geminiKey);
+        if (!check.ok) {
+          return res.status(check.status || 400).json({ ok: false, error: check.error, details: check.details });
+        }
+        return res.status(200).json({ ok: true, provider: 'gemini', models: check.models, selectedModel: check.models[0] });
+      }
+    }
+
+    if (!geminiKey && !openRouterKey) {
       return res.status(401).json({
         ok: false,
         error: 'NO_API_KEY',
-        message: 'No se configuró GEMINI_API_KEY en Vercel ni se proveyó una clave temporal. Podés ingresar tu clave gratuita de Google AI Studio en el panel.'
+        message: 'No se configuró ninguna clave de IA (Gemini ni OpenRouter). Podés ingresar tu clave gratuita en el panel.'
       });
-    }
-
-    if (test) {
-      const check = await resolveAvailableGeminiModels(apiKey);
-      if (!check.ok) {
-        return res.status(check.status || 400).json({ ok: false, error: check.error, details: check.details });
-      }
-      return res.status(200).json({ ok: true, models: check.models, selectedModel: check.models[0] });
     }
 
     if (!imageBase64) {
@@ -92,24 +125,64 @@ Respondé ÚNICAMENTE un objeto JSON válido, sin bloques markdown ni texto extr
 }
 `;
 
-    // Llamada con resolución dinámica de modelos y fallbacks
-    const textOutput = await callGeminiWithFallback(apiKey, promptText, mimeType, cleanBase64);
+    let textOutput = null;
+    let providerUsed = 'gemini';
+    let geminiErr = null;
+
+    // Ejecución con failover automático inteligente
+    if (provider === 'openrouter' || (!geminiKey && openRouterKey)) {
+      try {
+        textOutput = await callOpenRouterVision(openRouterKey, promptText, mimeType, cleanBase64);
+        providerUsed = 'openrouter';
+      } catch (err) {
+        if (geminiKey) {
+          console.warn('[OCR Failover] OpenRouter falló, intentando con Gemini...', err.message);
+          textOutput = await callGeminiWithFallback(geminiKey, promptText, mimeType, cleanBase64);
+          providerUsed = 'gemini (fallback)';
+        } else {
+          throw err;
+        }
+      }
+    } else {
+      // Estrategia por defecto: Gemini primero, con fallback automático a OpenRouter si falla
+      try {
+        textOutput = await callGeminiWithFallback(geminiKey, promptText, mimeType, cleanBase64);
+        providerUsed = 'gemini';
+      } catch (err) {
+        geminiErr = err;
+        if (openRouterKey) {
+          console.warn(`[OCR Failover] Gemini falló (${err.message}), activando respaldo con OpenRouter...`);
+          try {
+            textOutput = await callOpenRouterVision(openRouterKey, promptText, mimeType, cleanBase64);
+            providerUsed = 'openrouter (fallback)';
+          } catch (orErr) {
+            throw new Error(`Fallaron ambos proveedores. Gemini: ${geminiErr.message}. OpenRouter: ${orErr.message}`);
+          }
+        } else {
+          throw err;
+        }
+      }
+    }
 
     // Parsear JSON devuelto por la IA
     const parsedData = extractJsonFromText(textOutput);
 
     return res.status(200).json({
       ok: true,
+      provider: providerUsed,
       data: parsedData
     });
 
   } catch (err) {
     console.error('Error en ocr-factura:', err);
-    return res.status(500).json({ ok: false, error: 'GEMINI_ERROR', details: err.message });
+    return res.status(500).json({ ok: false, error: 'OCR_ERROR', details: err.message });
   }
 }
 
-// Resuelve qué modelos están habilitados y soportan generateContent para esta API Key específica
+// ============================================================================
+// GOOGLE GEMINI VISION
+// ============================================================================
+
 async function resolveAvailableGeminiModels(apiKey) {
   try {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
@@ -129,12 +202,10 @@ async function resolveAvailableGeminiModels(apiKey) {
     const data = await res.json();
     const models = data.models || [];
 
-    // Filtrar únicamente los modelos que soportan generateContent
     const usable = models
       .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
       .map(m => m.name.replace(/^models\//, ''));
 
-    // Ordenar con ranking: preferimos modelos Flash vigentes y multimodales
     usable.sort((a, b) => {
       const score = name => {
         const n = name.toLowerCase();
@@ -185,7 +256,6 @@ async function resolveAvailableGeminiModels(apiKey) {
   }
 }
 
-// Ejecuta la llamada probando los modelos disponibles y tolerando configuraciones
 async function callGeminiWithFallback(apiKey, promptText, mimeType, cleanBase64) {
   const discovery = await resolveAvailableGeminiModels(apiKey);
   if (!discovery.ok) {
@@ -193,7 +263,7 @@ async function callGeminiWithFallback(apiKey, promptText, mimeType, cleanBase64)
       throw new Error('Tu Gemini API Key no es válida. Revisá que la hayas copiado completa de aistudio.google.com/app/apikey.');
     }
     if (discovery.status === 403 || discovery.error === 'PERMISSION_DENIED') {
-      throw new Error(`Permisos insuficientes con tu API Key (${discovery.details}). Verificá que la Generative Language API esté habilitada.`);
+      throw new Error(`Permisos insuficientes con tu Gemini API Key (${discovery.details}).`);
     }
     throw new Error(`Error de Google Gemini (${discovery.status}): ${discovery.details}`);
   }
@@ -205,7 +275,6 @@ async function callGeminiWithFallback(apiKey, promptText, mimeType, cleanBase64)
     try {
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
-      // Primer intento con response_mime_type: 'application/json'
       let response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -225,10 +294,7 @@ async function callGeminiWithFallback(apiKey, promptText, mimeType, cleanBase64)
         })
       });
 
-      // Si da 400 (por ejemplo si el modelo no soporta response_mime_type en esa versión), reintentar sin él
       if (response.status === 400) {
-        const errText400 = await response.text();
-        console.warn(`[Gemini 400 en ${modelName}], reintentando sin response_mime_type...`, errText400);
         response = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -249,14 +315,12 @@ async function callGeminiWithFallback(apiKey, promptText, mimeType, cleanBase64)
       }
 
       if (response.status === 404) {
-        console.warn(`[Gemini 404 en ${modelName}], probando siguiente alternativa...`);
         lastError = `Modelo ${modelName} no encontrado (404)`;
         continue;
       }
 
       if (!response.ok) {
         const errText = await response.text();
-        console.warn(`[Gemini Error ${response.status} en ${modelName}]:`, errText);
         lastError = errText;
         continue;
       }
@@ -269,7 +333,6 @@ async function callGeminiWithFallback(apiKey, promptText, mimeType, cleanBase64)
         return textOutput;
       }
     } catch (err) {
-      console.warn(`[Gemini Exception en ${modelName}]:`, err.message);
       lastError = err.message;
     }
   }
@@ -277,19 +340,128 @@ async function callGeminiWithFallback(apiKey, promptText, mimeType, cleanBase64)
   throw new Error(lastError || 'No se pudo conectar con ningún modelo de Gemini disponible.');
 }
 
-// Extrae el objeto JSON de la respuesta textual
+// ============================================================================
+// OPENROUTER VISION
+// ============================================================================
+
+async function verifyOpenRouterKey(openRouterKey) {
+  try {
+    const res = await fetch('https://openrouter.ai/api/v1/auth/key', {
+      headers: {
+        'Authorization': `Bearer ${openRouterKey}`,
+        'HTTP-Referer': 'https://cope-madero-takeaway.vercel.app',
+        'X-Title': 'Cope Burgers Contabilidad'
+      }
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      let parsed = null;
+      try { parsed = JSON.parse(errText); } catch (_) {}
+      return {
+        ok: false,
+        status: res.status,
+        error: 'OPENROUTER_KEY_INVALID',
+        details: (parsed && parsed.error && parsed.error.message) || errText
+      };
+    }
+
+    const data = await res.json();
+    return {
+      ok: true,
+      provider: 'openrouter',
+      label: data.data?.label || 'OpenRouter API Key',
+      models: [
+        'openrouter/free',
+        'nvidia/nemotron-3.5-super-vl:free',
+        'google/gemma-4-31b-it:free',
+        'inclusionai/ling-3.2-flash:free'
+      ],
+      selectedModel: 'openrouter/free (Router Automático de Modelos de Visión)'
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      status: 500,
+      error: 'OPENROUTER_CONNECTION_ERROR',
+      details: err.message
+    };
+  }
+}
+
+async function callOpenRouterVision(openRouterKey, promptText, mimeType, cleanBase64) {
+  const dataUrl = `data:${mimeType};base64,${cleanBase64}`;
+
+  const payload = {
+    model: 'openrouter/free',
+    models: [
+      'openrouter/free',
+      'nvidia/nemotron-3.5-super-vl:free',
+      'google/gemma-4-31b-it:free',
+      'inclusionai/ling-3.2-flash:free'
+    ],
+    messages: [
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'text',
+            text: promptText
+          },
+          {
+            type: 'image_url',
+            image_url: {
+              url: dataUrl
+            }
+          }
+        ]
+      }
+    ],
+    temperature: 0.1
+  };
+
+  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${openRouterKey}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': 'https://cope-madero-takeaway.vercel.app',
+      'X-Title': 'Cope Burgers Contabilidad'
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    let parsed = null;
+    try { parsed = JSON.parse(errText); } catch (_) {}
+    throw new Error((parsed && parsed.error && parsed.error.message) || `OpenRouter Error ${response.status}: ${errText}`);
+  }
+
+  const resJson = await response.json();
+  const choice = resJson.choices && resJson.choices[0];
+  const textOutput = choice && choice.message && choice.message.content;
+  if (!textOutput) {
+    throw new Error('OpenRouter devolvió una respuesta vacía.');
+  }
+
+  return textOutput;
+}
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+
 function extractJsonFromText(textOutput) {
   try {
     return JSON.parse(textOutput);
   } catch (e1) {
-    // Buscar bloques de código ```json ... ```
     const codeBlockMatch = textOutput.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
     if (codeBlockMatch && codeBlockMatch[1]) {
       try {
         return JSON.parse(codeBlockMatch[1]);
       } catch (e2) {}
     }
-    // Buscar cualquier bloque entre llaves { ... }
     const braceMatch = textOutput.match(/\{[\s\S]*\}/);
     if (braceMatch) {
       try {

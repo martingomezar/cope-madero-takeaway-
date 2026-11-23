@@ -12,6 +12,8 @@
   const SESSION_AUTH_KEY = 'cope_contab_auth';
   const LOCAL_AUTH_KEY = 'cope_contab_remember';
   const GEMINI_KEY_STORAGE = 'cope_gemini_api_key';
+  const OPENROUTER_KEY_STORAGE = 'cope_openrouter_api_key';
+  const OCR_PROVIDER_STORAGE = 'cope_ocr_provider_preference';
   const SHEETS_URL_STORAGE = 'cope_sheets_url';
 
   // Categorías fijas de base gastronómica
@@ -76,9 +78,12 @@
 
     els.apiKeyModal = document.getElementById('apiKeyModal');
     els.formApiKeyConfig = document.getElementById('formApiKeyConfig');
+    els.selectOcrProvider = document.getElementById('selectOcrProvider');
     els.inputGeminiApiKey = document.getElementById('inputGeminiApiKey');
+    els.btnTestGeminiKey = document.getElementById('btnTestGeminiKey');
+    els.inputOpenRouterApiKey = document.getElementById('inputOpenRouterApiKey');
+    els.btnTestOpenRouterKey = document.getElementById('btnTestOpenRouterKey');
     els.btnCloseApiKeyModal = document.getElementById('btnCloseApiKeyModal');
-    els.btnTestApiKey = document.getElementById('btnTestApiKey');
     els.apiKeyTestStatus = document.getElementById('apiKeyTestStatus');
 
     // Categorías Modal & Controles
@@ -353,6 +358,12 @@
     if (els.inputGeminiApiKey) {
       els.inputGeminiApiKey.value = localStorage.getItem(GEMINI_KEY_STORAGE) || '';
     }
+    if (els.inputOpenRouterApiKey) {
+      els.inputOpenRouterApiKey.value = localStorage.getItem(OPENROUTER_KEY_STORAGE) || '';
+    }
+    if (els.selectOcrProvider) {
+      els.selectOcrProvider.value = localStorage.getItem(OCR_PROVIDER_STORAGE) || 'auto';
+    }
 
     populateMonthSelectors();
     updateProveedoresDatalist();
@@ -483,6 +494,12 @@
         if (els.inputGeminiApiKey) {
           els.inputGeminiApiKey.value = localStorage.getItem(GEMINI_KEY_STORAGE) || '';
         }
+        if (els.inputOpenRouterApiKey) {
+          els.inputOpenRouterApiKey.value = localStorage.getItem(OPENROUTER_KEY_STORAGE) || '';
+        }
+        if (els.selectOcrProvider) {
+          els.selectOcrProvider.value = localStorage.getItem(OCR_PROVIDER_STORAGE) || 'auto';
+        }
         if (els.apiKeyTestStatus) {
           els.apiKeyTestStatus.classList.add('hidden');
         }
@@ -492,8 +509,11 @@
     if (els.btnCloseApiKeyModal && els.apiKeyModal) {
       els.btnCloseApiKeyModal.addEventListener('click', () => els.apiKeyModal.classList.add('hidden'));
     }
-    if (els.btnTestApiKey) {
-      els.btnTestApiKey.addEventListener('click', handleTestApiKey);
+    if (els.btnTestGeminiKey) {
+      els.btnTestGeminiKey.addEventListener('click', handleTestGeminiKey);
+    }
+    if (els.btnTestOpenRouterKey) {
+      els.btnTestOpenRouterKey.addEventListener('click', handleTestOpenRouterKey);
     }
     if (els.formApiKeyConfig) {
       els.formApiKeyConfig.addEventListener('submit', handleSaveApiKeyConfig);
@@ -727,18 +747,23 @@
       if (els.ocrStatusTitle) els.ocrStatusTitle.textContent = '🔍 Analizando comprobante con IA...';
       if (els.ocrStatusDesc) els.ocrStatusDesc.textContent = isPdf ? 'Leyendo factura fiscal en PDF con IA de Visión.' : 'Extrayendo proveedor, fecha, montos e IVA.';
 
-      const customKey = localStorage.getItem(GEMINI_KEY_STORAGE) || '';
+      const customGeminiKey = localStorage.getItem(GEMINI_KEY_STORAGE) || '';
+      const customOpenRouterKey = localStorage.getItem(OPENROUTER_KEY_STORAGE) || '';
+      const ocrProvider = localStorage.getItem(OCR_PROVIDER_STORAGE) || 'auto';
 
       const res = await fetch('/api/ocr-factura', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Gemini-Key': customKey
+          'X-Gemini-Key': customGeminiKey,
+          'X-OpenRouter-Key': customOpenRouterKey
         },
         body: JSON.stringify({
           imageBase64: base64Data,
           mimeType: mimeType,
-          apiKey: customKey
+          apiKey: customGeminiKey,
+          openRouterKey: customOpenRouterKey,
+          provider: ocrProvider
         })
       });
 
@@ -746,8 +771,8 @@
 
       if (!res.ok || !resJson.ok) {
         if (resJson.error === 'NO_API_KEY') {
-          if (els.ocrStatusTitle) els.ocrStatusTitle.textContent = '🔑 Se requiere Gemini API Key';
-          if (els.ocrStatusDesc) els.ocrStatusDesc.textContent = 'Hacé clic en el botón "OCR" arriba para ingresar tu clave gratuita.';
+          if (els.ocrStatusTitle) els.ocrStatusTitle.textContent = '🔑 Se requiere clave de IA';
+          if (els.ocrStatusDesc) els.ocrStatusDesc.textContent = 'Hacé clic en el botón "OCR" arriba para configurar Gemini u OpenRouter gratis.';
           if (els.apiKeyModal) els.apiKeyModal.classList.remove('hidden');
           return;
         }
@@ -757,10 +782,11 @@
       const data = resJson.data || {};
       applyOcrDataToForm(data);
 
+      const providerLabel = resJson.provider ? ` (vía ${resJson.provider})` : '';
       if (els.ocrStatusTitle) els.ocrStatusTitle.textContent = '✅ Factura reconocida con éxito';
-      if (els.ocrStatusDesc) els.ocrStatusDesc.textContent = `${data.proveedor || 'Proveedor'} · Total: ${formatMoney(data.montoTotal || 0)}. Revisá y guardá.`;
+      if (els.ocrStatusDesc) els.ocrStatusDesc.textContent = `${data.proveedor || 'Proveedor'} · Total: ${formatMoney(data.montoTotal || 0)}${providerLabel}. Revisá y guardá.`;
 
-      showToast(`Factura de ${data.proveedor || 'proveedor'} detectada`, 'success');
+      showToast(`Factura de ${data.proveedor || 'proveedor'} detectada${providerLabel}`, 'success');
 
     } catch (err) {
       console.error('Error durante el escaneo OCR:', err);
@@ -1171,76 +1197,116 @@
     }
   }
 
-  async function handleTestApiKey() {
+  async function handleTestGeminiKey() {
     const key = (els.inputGeminiApiKey ? els.inputGeminiApiKey.value : '').trim();
     if (!key) {
-      if (els.apiKeyTestStatus) {
-        els.apiKeyTestStatus.classList.remove('hidden');
-        els.apiKeyTestStatus.style.background = '#fef2f2';
-        els.apiKeyTestStatus.style.color = '#991b1b';
-        els.apiKeyTestStatus.style.border = '1px solid #fecaca';
-        els.apiKeyTestStatus.textContent = 'Por favor ingresá una clave para probar.';
-      }
+      showApiKeyStatus('Por favor ingresá una clave de Google Gemini para probar.', 'error');
       return;
     }
 
-    const btn = els.btnTestApiKey;
-    const originalText = btn.innerHTML;
+    const btn = els.btnTestGeminiKey;
+    const orig = btn.innerHTML;
     btn.disabled = true;
-    btn.textContent = '⏳ Verificando...';
-
-    if (els.apiKeyTestStatus) {
-      els.apiKeyTestStatus.classList.remove('hidden');
-      els.apiKeyTestStatus.style.background = '#f1f5f9';
-      els.apiKeyTestStatus.style.color = '#334155';
-      els.apiKeyTestStatus.style.border = '1px solid #cbd5e1';
-      els.apiKeyTestStatus.textContent = 'Conectando con Google AI Studio y descubriendo modelos activos...';
-    }
+    btn.textContent = '⏳ Probando...';
+    showApiKeyStatus('Conectando con Google AI Studio y descubriendo modelos...', 'info');
 
     try {
       const res = await fetch('/api/ocr-factura', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ test: true, apiKey: key })
+        body: JSON.stringify({ test: true, testProvider: 'gemini', apiKey: key })
       });
       const data = await res.json();
       if (!res.ok || !data.ok) {
-        throw new Error(data.details || data.error || 'Error al validar la clave con Google');
+        throw new Error(data.details || data.error || 'Error al validar clave de Gemini');
       }
 
-      if (els.apiKeyTestStatus) {
-        els.apiKeyTestStatus.classList.remove('hidden');
-        els.apiKeyTestStatus.style.background = '#ecfdf5';
-        els.apiKeyTestStatus.style.color = '#065f46';
-        els.apiKeyTestStatus.style.border = '1px solid #a7f3d0';
-        els.apiKeyTestStatus.innerHTML = `<strong>✅ ¡Conexión Exitosa con Gemini!</strong><br>Modelo seleccionado: <code>${data.selectedModel}</code> (${data.models ? data.models.length : 0} modelos disponibles para escaneo fiscal).`;
-      }
-      showToast('¡Clave de Gemini verificada y lista!', 'success');
+      showApiKeyStatus(`<strong>✅ ¡Conexión con Gemini Exitosa!</strong><br>Modelo seleccionado: <code>${data.selectedModel}</code> (${data.models ? data.models.length : 0} modelos activos para visión).`, 'success');
+      showToast('¡Clave de Gemini verificada!', 'success');
     } catch (err) {
-      if (els.apiKeyTestStatus) {
-        els.apiKeyTestStatus.classList.remove('hidden');
-        els.apiKeyTestStatus.style.background = '#fef2f2';
-        els.apiKeyTestStatus.style.color = '#991b1b';
-        els.apiKeyTestStatus.style.border = '1px solid #fecaca';
-        els.apiKeyTestStatus.innerHTML = `<strong>⚠️ Error en la verificación:</strong><br>${err.message}`;
-      }
-      showToast('Error en la verificación de clave', 'error');
+      showApiKeyStatus(`<strong>⚠️ Error en Gemini:</strong><br>${err.message}`, 'error');
+      showToast('Error al verificar clave de Gemini', 'error');
     } finally {
       btn.disabled = false;
-      btn.innerHTML = originalText;
+      btn.innerHTML = orig;
     }
+  }
+
+  async function handleTestOpenRouterKey() {
+    const key = (els.inputOpenRouterApiKey ? els.inputOpenRouterApiKey.value : '').trim();
+    if (!key) {
+      showApiKeyStatus('Por favor ingresá una clave de OpenRouter para probar.', 'error');
+      return;
+    }
+
+    const btn = els.btnTestOpenRouterKey;
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.textContent = '⏳ Probando...';
+    showApiKeyStatus('Conectando con OpenRouter y verificando acceso a modelos gratuitos...', 'info');
+
+    try {
+      const res = await fetch('/api/ocr-factura', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ test: true, testProvider: 'openrouter', openRouterKey: key })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.details || data.error || 'Error al validar clave de OpenRouter');
+      }
+
+      showApiKeyStatus(`<strong>✅ ¡Conexión con OpenRouter Exitosa!</strong><br>Cuenta: <code>${data.label || 'Válida'}</code><br>Router activo: <code>openrouter/free</code> (modelos multimodales sin costo listos como respaldo).`, 'success');
+      showToast('¡Clave de OpenRouter verificada!', 'success');
+    } catch (err) {
+      showApiKeyStatus(`<strong>⚠️ Error en OpenRouter:</strong><br>${err.message}`, 'error');
+      showToast('Error al verificar clave de OpenRouter', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = orig;
+    }
+  }
+
+  function showApiKeyStatus(html, type) {
+    if (!els.apiKeyTestStatus) return;
+    els.apiKeyTestStatus.classList.remove('hidden');
+    if (type === 'success') {
+      els.apiKeyTestStatus.style.background = '#ecfdf5';
+      els.apiKeyTestStatus.style.color = '#065f46';
+      els.apiKeyTestStatus.style.border = '1px solid #a7f3d0';
+    } else if (type === 'error') {
+      els.apiKeyTestStatus.style.background = '#fef2f2';
+      els.apiKeyTestStatus.style.color = '#991b1b';
+      els.apiKeyTestStatus.style.border = '1px solid #fecaca';
+    } else {
+      els.apiKeyTestStatus.style.background = '#f1f5f9';
+      els.apiKeyTestStatus.style.color = '#334155';
+      els.apiKeyTestStatus.style.border = '1px solid #cbd5e1';
+    }
+    els.apiKeyTestStatus.innerHTML = html;
   }
 
   function handleSaveApiKeyConfig(e) {
     e.preventDefault();
-    const key = (els.inputGeminiApiKey.value || '').trim();
-    if (key) {
-      localStorage.setItem(GEMINI_KEY_STORAGE, key);
-      showToast('Clave de Gemini guardada en este equipo', 'success');
+    const geminiKey = (els.inputGeminiApiKey ? els.inputGeminiApiKey.value : '').trim();
+    const openRouterKey = (els.inputOpenRouterApiKey ? els.inputOpenRouterApiKey.value : '').trim();
+    const provider = (els.selectOcrProvider ? els.selectOcrProvider.value : 'auto');
+
+    if (geminiKey) {
+      localStorage.setItem(GEMINI_KEY_STORAGE, geminiKey);
     } else {
       localStorage.removeItem(GEMINI_KEY_STORAGE);
-      showToast('Clave de Gemini eliminada');
     }
+
+    if (openRouterKey) {
+      localStorage.setItem(OPENROUTER_KEY_STORAGE, openRouterKey);
+    } else {
+      localStorage.removeItem(OPENROUTER_KEY_STORAGE);
+    }
+
+    localStorage.setItem(OCR_PROVIDER_STORAGE, provider);
+
+    showToast('Configuración de IA guardada en este equipo', 'success');
     if (els.apiKeyModal) els.apiKeyModal.classList.add('hidden');
   }
 

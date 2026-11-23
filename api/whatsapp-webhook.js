@@ -314,6 +314,39 @@ Respondé ÚNICAMENTE un objeto JSON con este formato:
     }
   }
 
+  if (!textOutput && process.env.OPENROUTER_API_KEY) {
+    console.warn('[WhatsApp Failover] Gemini no respondió, intentando con OpenRouter Vision...');
+    try {
+      const orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://cope-madero-takeaway.vercel.app',
+          'X-Title': 'Cope Burgers WhatsApp Webhook'
+        },
+        body: JSON.stringify({
+          model: 'openrouter/free',
+          models: ['openrouter/free', 'nvidia/nemotron-3.5-super-vl:free', 'google/gemma-4-31b-it:free'],
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'text', text: promptText },
+              { type: 'image_url', image_url: { url: `data:${mimeType};base64,${cleanBase64}` } }
+            ]
+          }],
+          temperature: 0.1
+        })
+      });
+      if (orRes.ok) {
+        const orData = await orRes.json();
+        textOutput = orData.choices?.[0]?.message?.content;
+      }
+    } catch (e) {
+      console.warn('[WhatsApp Failover] Error en OpenRouter:', e.message);
+    }
+  }
+
   if (!textOutput) {
     throw new Error(lastErr || 'No se pudo obtener respuesta de la IA en ningún modelo disponible.');
   }
