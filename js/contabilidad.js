@@ -567,7 +567,7 @@
   }
 
   /* ==========================================================================
-     ESCÁNER OCR INTELIGENTE (FOTO / CÁMARA -> IA -> FORMULARIO)
+     ESCÁNER OCR INTELIGENTE (FOTO / CÁMARA / PDF -> IA -> FORMULARIO)
      ========================================================================== */
   async function handleScanInput(e) {
     const file = e.target.files && e.target.files[0];
@@ -575,15 +575,28 @@
 
     if (!els.ocrPreviewBox) return;
     els.ocrPreviewBox.classList.remove('hidden');
-    if (els.ocrStatusTitle) els.ocrStatusTitle.textContent = '📸 Procesando imagen...';
-    if (els.ocrStatusDesc) els.ocrStatusDesc.textContent = 'Optimizando resolución para escaneo fiscal.';
+
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const mimeType = isPdf ? 'application/pdf' : 'image/jpeg';
+
+    if (els.ocrStatusTitle) els.ocrStatusTitle.textContent = isPdf ? '📄 Procesando documento PDF...' : '📸 Procesando imagen...';
+    if (els.ocrStatusDesc) els.ocrStatusDesc.textContent = isPdf ? `Archivo: ${file.name} (${Math.round(file.size / 1024)} KB)` : 'Optimizando resolución para escaneo fiscal.';
 
     try {
-      const { base64Data, dataUrl } = await compressImageForOcr(file, 1600, 0.85);
-      if (els.ocrPreviewImg) els.ocrPreviewImg.src = dataUrl;
+      let base64Data = '';
+      if (isPdf) {
+        if (els.ocrPreviewImg) {
+          els.ocrPreviewImg.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52"><rect width="52" height="52" rx="8" fill="%23fee2e2"/><path d="M16 12h14l8 8v20H16z" fill="%23fca5a5"/><path d="M30 12v8h8z" fill="%23ef4444"/><text x="26" y="34" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="10" fill="%23991b1b">PDF</text></svg>';
+        }
+        base64Data = await readFileAsBase64(file);
+      } else {
+        const compressed = await compressImageForOcr(file, 1600, 0.85);
+        if (els.ocrPreviewImg) els.ocrPreviewImg.src = compressed.dataUrl;
+        base64Data = compressed.base64Data;
+      }
 
       if (els.ocrStatusTitle) els.ocrStatusTitle.textContent = '🔍 Analizando comprobante con IA...';
-      if (els.ocrStatusDesc) els.ocrStatusDesc.textContent = 'Extrayendo proveedor, fecha, montos e IVA.';
+      if (els.ocrStatusDesc) els.ocrStatusDesc.textContent = isPdf ? 'Leyendo factura fiscal en PDF con IA de Visión.' : 'Extrayendo proveedor, fecha, montos e IVA.';
 
       const customKey = localStorage.getItem(GEMINI_KEY_STORAGE) || '';
 
@@ -595,7 +608,7 @@
         },
         body: JSON.stringify({
           imageBase64: base64Data,
-          mimeType: 'image/jpeg',
+          mimeType: mimeType,
           apiKey: customKey
         })
       });
@@ -609,7 +622,7 @@
           if (els.apiKeyModal) els.apiKeyModal.classList.remove('hidden');
           return;
         }
-        throw new Error(resJson.details || resJson.error || 'Error al procesar la imagen con OCR.');
+        throw new Error(resJson.details || resJson.error || 'Error al procesar el archivo con OCR.');
       }
 
       const data = resJson.data || {};
@@ -622,12 +635,25 @@
 
     } catch (err) {
       console.error('Error durante el escaneo OCR:', err);
-      if (els.ocrStatusTitle) els.ocrStatusTitle.textContent = '⚠️ No se pudo procesar la foto';
-      if (els.ocrStatusDesc) els.ocrStatusDesc.textContent = err.message || 'Intentá con una foto más nítida o ingresá manualmente.';
+      if (els.ocrStatusTitle) els.ocrStatusTitle.textContent = '⚠️ No se pudo procesar el archivo';
+      if (els.ocrStatusDesc) els.ocrStatusDesc.textContent = err.message || 'Intentá con un archivo más claro o ingresá manualmente.';
       showToast('Error en el escaneo: ' + (err.message || 'Error de lectura'), 'error');
     } finally {
       e.target.value = '';
     }
+  }
+
+  function readFileAsBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result;
+        const base64 = dataUrl.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   }
 
   function applyOcrDataToForm(data) {

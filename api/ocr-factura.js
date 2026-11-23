@@ -40,7 +40,7 @@ export default async function handler(req, res) {
 
     const promptText = `
 Sos un auditor y contador gastronómico argentino experto para la hamburguesería Cope Burgers Puerto Madero.
-Tu tarea es examinar la foto de una factura de compra, ticket térmico de controlador fiscal, o remito comercial argentino, y extraer los datos fiscales y financieros exactos en formato JSON estricto.
+Tu tarea es examinar la foto o documento PDF de una factura electrónica de compra (AFIP Factura A, B o C), ticket térmico de controlador fiscal, o remito comercial argentino, y extraer los datos fiscales y financieros exactos en formato JSON estricto.
 
 Reglas de extracción:
 1. "proveedor": Razón social o nombre de fantasía del emisor (ej: "Cervecería y Maltería Quilmes", "Frigorífico Morres", "Panificadora San Telmo"). Si no es legible, poné "Proveedor no identificado".

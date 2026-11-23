@@ -67,9 +67,21 @@ export default async function handler(req, res) {
           } else {
             console.warn('[WhatsApp] Falta WHATSAPP_TOKEN para descargar la imagen');
           }
+        } else if (message.type === 'document') {
+          // Soporte directo para archivos PDF enviados por WhatsApp
+          const doc = message.document;
+          const mediaId = doc.id;
+          mimeType = doc.mime_type || 'application/pdf';
+          caption = doc.caption || doc.filename || '';
+
+          if (WHATSAPP_TOKEN) {
+            imageBase64 = await downloadMetaMediaAsBase64(mediaId, WHATSAPP_TOKEN);
+          } else {
+            console.warn('[WhatsApp] Falta WHATSAPP_TOKEN para descargar el documento PDF');
+          }
         } else if (message.type === 'text') {
           // Si el usuario escribe texto de ayuda
-          await sendWhatsAppReply(fromNumber, '👋 ¡Hola! Para registrar un gasto en Cope Burgers, sacale una foto clara a la factura o remito y enviala por este chat.');
+          await sendWhatsAppReply(fromNumber, '👋 ¡Hola! Para registrar un gasto en Cope Burgers, enviá una foto clara o el archivo PDF de la factura/remito por este chat.');
           return;
         }
       }
