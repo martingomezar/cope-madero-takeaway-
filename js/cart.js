@@ -43,20 +43,24 @@ window.CopeCart = (function () {
     }
   }
 
-  function buildCartKey(productId, variantId, isVeggie, hasExtraMeat, drinkChoice, notes) {
+  function buildCartKey(productId, variantId, isVeggie, hasExtraMeat, hasExtraCheddar, hasExtraBacon, drinkChoice, notes) {
     const pId = productId || '';
     const vId = variantId || 'base';
     const veg = isVeggie ? 'veggie' : 'carne';
-    const ext = hasExtraMeat ? 'extrameat' : 'standard';
+    const extM = hasExtraMeat ? 'extrameat' : 'standard';
+    const extC = hasExtraCheddar ? 'extracheddar' : 'nocheddar';
+    const extB = hasExtraBacon ? 'extrabacon' : 'nobacon';
     const drk = drinkChoice || 'nodrink';
     const nts = (notes || '').trim().toLowerCase();
-    return [pId, vId, veg, ext, drk, nts].join('::');
+    return [pId, vId, veg, extM, extC, extB, drk, nts].join('::');
   }
 
   function addItem(product, opts) {
     const variantId = opts.variantId || null;
     const isVeggie = Boolean(opts.isVeggie);
     const hasExtraMeat = Boolean(opts.hasExtraMeat);
+    const hasExtraCheddar = Boolean(opts.hasExtraCheddar);
+    const hasExtraBacon = Boolean(opts.hasExtraBacon);
     const drinkChoice = opts.drinkChoice || null;
     const notes = (opts.notes || '').trim();
     const qty = Math.max(1, parseInt(opts.quantity || 1, 10));
@@ -76,8 +80,14 @@ window.CopeCart = (function () {
     if (hasExtraMeat && product.canAddExtraMeat) {
       unitPrice += (product.extraMeatPrice || 4000);
     }
+    if (hasExtraCheddar && product.canAddExtraCheddar) {
+      unitPrice += (product.extraCheddarPrice || 2000);
+    }
+    if (hasExtraBacon && product.canAddExtraBacon) {
+      unitPrice += (product.extraBaconPrice || 2000);
+    }
 
-    const key = buildCartKey(product.id, variantId, isVeggie, hasExtraMeat, drinkChoice, notes);
+    const key = buildCartKey(product.id, variantId, isVeggie, hasExtraMeat, hasExtraCheddar, hasExtraBacon, drinkChoice, notes);
     const existing = items.find((i) => i.key === key);
 
     if (existing) {
@@ -95,6 +105,8 @@ window.CopeCart = (function () {
         variantLabel,
         isVeggie,
         hasExtraMeat,
+        hasExtraCheddar,
+        hasExtraBacon,
         drinkChoice,
         notes,
         quantity: qty

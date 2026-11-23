@@ -31,13 +31,21 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'No items provided' });
     }
 
-    const mpItems = items.map((i) => ({
-      id: String(i.id || i.key || 'item'),
-      title: i.name + (i.variantLabel ? ` (${i.variantLabel})` : '') + (i.isVeggie ? ' [NotBurger Veggie]' : ''),
-      quantity: Number(i.quantity) || 1,
-      unit_price: Number(i.unitPrice),
-      currency_id: 'ARS'
-    }));
+    const mpItems = items.map((i) => {
+      let title = i.name;
+      if (i.variantLabel) title += ` (${i.variantLabel})`;
+      if (i.isVeggie) title += ' [NotBurger Veggie]';
+      if (i.hasExtraMeat) title += ' [+Extra Carne]';
+      if (i.hasExtraCheddar) title += ' [+Extra Cheddar]';
+      if (i.hasExtraBacon) title += ' [+Extra Bacon]';
+      return {
+        id: String(i.id || i.key || 'item'),
+        title,
+        quantity: Number(i.quantity) || 1,
+        unit_price: Number(i.unitPrice),
+        currency_id: 'ARS'
+      };
+    });
 
     // Si es un pedido con envío por moto Uber
     const isDelivery = Boolean(delivery && delivery.isDelivery);

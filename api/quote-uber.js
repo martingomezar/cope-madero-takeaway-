@@ -171,8 +171,8 @@ export default async function handler(req, res) {
     const pickupJson = encodeURIComponent(JSON.stringify(pickupObj));
     const dropJson = encodeURIComponent(JSON.stringify(dropObj));
 
-    const uberPackageDeeplink = `https://m.uber.com/ul/?client_id=${publicAppId}&action=setPickup&pickup[formatted_address]=${pickupFormatted}&pickup[latitude]=${STORE_ORIGIN.lat}&pickup[longitude]=${STORE_ORIGIN.lng}&pickup[nickname]=${encodeURIComponent(STORE_ORIGIN.name)}&dropoff[formatted_address]=${dropoffFormatted}&product_id=package`;
     const uberWebUrl = `https://m.uber.com/go/connect/home?pickup=${pickupJson}&pickupAddressName=${encodeURIComponent(STORE_ORIGIN.name)}&pickupLat=${STORE_ORIGIN.lat}&pickupLng=${STORE_ORIGIN.lng}&drop%5B0%5D=${dropJson}&destinationAddressName=${dropoffFormatted}&destinationLat=-34.6080&destinationLng=-58.3630`;
+    const uberPackageDeeplink = uberWebUrl;
 
     return res.status(200).json({
       ok: true,

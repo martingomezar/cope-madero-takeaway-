@@ -15,6 +15,8 @@
   let activeModalVariantId = null;
   let activeModalIsVeggie = false;
   let activeModalHasExtraMeat = false;
+  let activeModalHasExtraCheddar = false;
+  let activeModalHasExtraBacon = false;
   let activeModalDrink = null;
   let activeModalQty = 1;
 
@@ -65,6 +67,13 @@
     modalVariantsList: document.getElementById('modalVariantsList'),
     modalExtraMeatGroup: document.getElementById('modalExtraMeatGroup'),
     modalExtraMeatCheckbox: document.getElementById('modalExtraMeatCheckbox'),
+    lblExtraMeatText: document.getElementById('lblExtraMeatText'),
+    modalExtraCheddarGroup: document.getElementById('modalExtraCheddarGroup'),
+    modalExtraCheddarCheckbox: document.getElementById('modalExtraCheddarCheckbox'),
+    lblExtraCheddarText: document.getElementById('lblExtraCheddarText'),
+    modalExtraBaconGroup: document.getElementById('modalExtraBaconGroup'),
+    modalExtraBaconCheckbox: document.getElementById('modalExtraBaconCheckbox'),
+    lblExtraBaconText: document.getElementById('lblExtraBaconText'),
     modalVeggieGroup: document.getElementById('modalVeggieGroup'),
     modalVeggieCheckbox: document.getElementById('modalVeggieCheckbox'),
     modalDrinkGroup: document.getElementById('modalDrinkGroup'),
@@ -414,7 +423,7 @@
         ? `<div class="card-tags">${quickTags.map((t) => `<span class="card-tag tag-${t.type}">${t.label}</span>`).join('')}</div>`
         : '';
 
-      const isCustomizable = origProd.hasVariants || origProd.hasDrinkSelection || origProd.canAddExtraMeat || origProd.hasVeggieOption;
+      const isCustomizable = origProd.hasVariants || origProd.hasDrinkSelection || origProd.canAddExtraMeat || origProd.hasVeggieOption || origProd.canAddExtraCheddar || origProd.canAddExtraBacon;
       const btnLabel = isCustomizable
         ? (window.COPE_I18N ? window.COPE_I18N.t('btn_customize') : 'Personalizar')
         : (window.COPE_I18N ? `+ ${window.COPE_I18N.t('btn_add')}` : '+ Agregar');
@@ -454,7 +463,7 @@
           showToast(window.COPE_I18N ? window.COPE_I18N.t('coming_soon_order') : 'Próximamente podrás pedir aquí');
           return;
         }
-        if (e.target.closest('.btn-add') && !prod.hasVariants && !prod.hasDrinkSelection && !prod.canAddExtraMeat && !prod.hasVeggieOption) {
+        if (e.target.closest('.btn-add') && !prod.hasVariants && !prod.hasDrinkSelection && !prod.canAddExtraMeat && !prod.hasVeggieOption && !prod.canAddExtraCheddar && !prod.canAddExtraBacon) {
           e.stopPropagation();
           Cart.addItem(prod, { quantity: 1 });
           showToast(`✓ Agregado: ${prod.name}`);
@@ -474,6 +483,8 @@
     activeModalQty = 1;
     activeModalIsVeggie = false;
     activeModalHasExtraMeat = false;
+    activeModalHasExtraCheddar = false;
+    activeModalHasExtraBacon = false;
     els.modalNotesInput.value = '';
 
     els.modalProductName.textContent = prod.name;
@@ -528,6 +539,33 @@
       els.modalExtraMeatCheckbox.disabled = false;
       els.modalExtraMeatGroup.style.opacity = '1';
       els.modalExtraMeatGroup.style.pointerEvents = 'auto';
+    }
+
+    // Extra Queso Cheddar (todas las opciones de burgers y papas)
+    if (prod.canAddExtraCheddar && els.modalExtraCheddarGroup) {
+      els.modalExtraCheddarGroup.classList.remove('hidden');
+      els.modalExtraCheddarCheckbox.checked = false;
+      if (els.lblExtraCheddarText) {
+        els.lblExtraCheddarText.textContent = window.COPE_I18N ? window.COPE_I18N.t('modal_extra_cheddar_text') : '🧀 Agregar Extra Queso Cheddar (+ $2.000)';
+      }
+    } else if (els.modalExtraCheddarGroup) {
+      els.modalExtraCheddarGroup.classList.add('hidden');
+      els.modalExtraCheddarCheckbox.checked = false;
+    }
+
+    // Extra Bacon (hamburguesas con bacon)
+    if (prod.canAddExtraBacon && els.modalExtraBaconGroup) {
+      els.modalExtraBaconGroup.classList.remove('hidden');
+      els.modalExtraBaconCheckbox.checked = false;
+      els.modalExtraBaconCheckbox.disabled = false;
+      els.modalExtraBaconGroup.style.opacity = '1';
+      els.modalExtraBaconGroup.style.pointerEvents = 'auto';
+      if (els.lblExtraBaconText) {
+        els.lblExtraBaconText.textContent = window.COPE_I18N ? window.COPE_I18N.t('modal_extra_bacon_text') : '🥓 Agregar Extra Bacon Crocante (+ $2.000)';
+      }
+    } else if (els.modalExtraBaconGroup) {
+      els.modalExtraBaconGroup.classList.add('hidden');
+      els.modalExtraBaconCheckbox.checked = false;
     }
 
     // Opción Veggie (Not Burger)
@@ -607,6 +645,12 @@
     if (activeModalHasExtraMeat && activeModalProduct.canAddExtraMeat) {
       unitPrice += (activeModalProduct.extraMeatPrice || 4000);
     }
+    if (activeModalHasExtraCheddar && activeModalProduct.canAddExtraCheddar) {
+      unitPrice += (activeModalProduct.extraCheddarPrice || 2000);
+    }
+    if (activeModalHasExtraBacon && activeModalProduct.canAddExtraBacon) {
+      unitPrice += (activeModalProduct.extraBaconPrice || 2000);
+    }
     const total = unitPrice * activeModalQty;
     els.modalAddCartPrice.textContent = formatMoney(total);
   }
@@ -653,6 +697,8 @@
       const details = [];
       if (item.variantLabel) details.push(item.variantLabel);
       if (item.hasExtraMeat) details.push('🥩 +1 Extra Medallón de Carne');
+      if (item.hasExtraCheddar) details.push('🧀 +Extra Cheddar');
+      if (item.hasExtraBacon) details.push('🥓 +Extra Bacon');
       if (item.isVeggie) details.push('<span class="cart-notburger-badge"><img src="img/notco-cross.svg" alt="✕" class="notco-cart-cross" /> Not Burger (Veggie)</span>');
       if (item.drinkChoice) details.push('🥤 ' + item.drinkChoice);
       if (item.notes) details.push('📝 ' + item.notes);
@@ -921,6 +967,8 @@
       if (i.variantLabel) extras.push(i.variantLabel.split(' ')[0]);
       if (i.isVeggie) extras.push('🌱 Not Burger');
       if (i.hasExtraMeat) extras.push('+Extra Carne');
+      if (i.hasExtraCheddar) extras.push('+Extra Cheddar');
+      if (i.hasExtraBacon) extras.push('+Extra Bacon');
       if (i.drinkChoice) extras.push(`🥤 ${i.drinkChoice}`);
       const extraText = extras.length ? ` (${extras.join(', ')})` : '';
 
@@ -1050,6 +1098,12 @@
         if (item.hasExtraMeat) {
           msg += `   ↳ 🥩 Extra: +1 Medallón de Carne (+$4.000)\n`;
         }
+        if (item.hasExtraCheddar) {
+          msg += `   ↳ 🧀 Extra: +Extra Queso Cheddar (+$2.000)\n`;
+        }
+        if (item.hasExtraBacon) {
+          msg += `   ↳ 🥓 Extra: +Extra Bacon Crocante (+$2.000)\n`;
+        }
         if (item.isVeggie) {
           msg += `   ↳ 🌱 Opción Vegetariana: Con Not Burger y pan 100% vegano\n`;
         }
@@ -1099,6 +1153,8 @@
           variantLabel: i.variantLabel || null,
           isVeggie: Boolean(i.isVeggie),
           hasExtraMeat: Boolean(i.hasExtraMeat),
+          hasExtraCheddar: Boolean(i.hasExtraCheddar),
+          hasExtraBacon: Boolean(i.hasExtraBacon),
           drinkChoice: i.drinkChoice || null,
           notes: i.notes || ''
         })),
@@ -1351,6 +1407,24 @@
       updateModalAddPrice();
     });
 
+    if (els.modalExtraCheddarCheckbox) {
+      els.modalExtraCheddarCheckbox.addEventListener('change', (e) => {
+        activeModalHasExtraCheddar = e.target.checked;
+        updateModalAddPrice();
+      });
+    }
+
+    if (els.modalExtraBaconCheckbox) {
+      els.modalExtraBaconCheckbox.addEventListener('change', (e) => {
+        activeModalHasExtraBacon = e.target.checked;
+        if (activeModalHasExtraBacon && activeModalIsVeggie) {
+          activeModalIsVeggie = false;
+          els.modalVeggieCheckbox.checked = false;
+        }
+        updateModalAddPrice();
+      });
+    }
+
     els.modalVeggieCheckbox.addEventListener('change', (e) => {
       activeModalIsVeggie = e.target.checked;
       if (activeModalIsVeggie) {
@@ -1359,10 +1433,29 @@
         els.modalExtraMeatCheckbox.disabled = true;
         els.modalExtraMeatGroup.style.opacity = '0.4';
         els.modalExtraMeatGroup.style.pointerEvents = 'none';
+
+        // Veggie is incompatible with extra bacon
+        activeModalHasExtraBacon = false;
+        if (els.modalExtraBaconCheckbox) {
+          els.modalExtraBaconCheckbox.checked = false;
+          els.modalExtraBaconCheckbox.disabled = true;
+          if (els.modalExtraBaconGroup) {
+            els.modalExtraBaconGroup.style.opacity = '0.4';
+            els.modalExtraBaconGroup.style.pointerEvents = 'none';
+          }
+        }
       } else {
         els.modalExtraMeatCheckbox.disabled = false;
         els.modalExtraMeatGroup.style.opacity = '1';
         els.modalExtraMeatGroup.style.pointerEvents = 'auto';
+
+        if (els.modalExtraBaconCheckbox) {
+          els.modalExtraBaconCheckbox.disabled = false;
+          if (els.modalExtraBaconGroup) {
+            els.modalExtraBaconGroup.style.opacity = '1';
+            els.modalExtraBaconGroup.style.pointerEvents = 'auto';
+          }
+        }
       }
       updateModalAddPrice();
     });
@@ -1381,6 +1474,8 @@
         variantId: activeModalVariantId,
         isVeggie: activeModalIsVeggie,
         hasExtraMeat: activeModalHasExtraMeat,
+        hasExtraCheddar: activeModalHasExtraCheddar,
+        hasExtraBacon: activeModalHasExtraBacon,
         drinkChoice: activeModalDrink,
         notes: els.modalNotesInput.value.trim(),
         quantity: activeModalQty

@@ -1447,6 +1447,44 @@ button:disabled,
   accent-color: #d97706;
 }
 
+/* Extra Cheddar */
+.extra-cheddar-toggle-box {
+  background: #fffbeb;
+  border: 1.5px solid #fde68a;
+}
+
+.extra-cheddar-label {
+  color: #b45309;
+}
+
+.extra-cheddar-label input {
+  accent-color: #f59e0b;
+}
+
+.extra-cheddar-toggle-box:has(input:checked) {
+  background: #fef3c7;
+  border-color: #f59e0b;
+}
+
+/* Extra Bacon */
+.extra-bacon-toggle-box {
+  background: #faf5ff;
+  border: 1.5px solid #e9d5ff;
+}
+
+.extra-bacon-label {
+  color: #6b21a8;
+}
+
+.extra-bacon-label input {
+  accent-color: #9333ea;
+}
+
+.extra-bacon-toggle-box:has(input:checked) {
+  background: #f3e8ff;
+  border-color: #a855f7;
+}
+
 .veggie-toggle-box {
   background: #f0fdf4;
   border: 1.5px solid #86efac;

@@ -33,6 +33,8 @@ window.COPE_PRODUCTS = [
     badge: '1 Medallón',
     image: 'img/cheeseburger.jpeg',
     price: 9000,
+    canAddExtraCheddar: true,
+    extraCheddarPrice: 2000,
     hasVeggieOption: true,
     veggieNote: 'Opción con Not Burger y pan 100% vegano'
   },
@@ -44,6 +46,10 @@ window.COPE_PRODUCTS = [
     badge: '1 Medallón · Favorita 🔥',
     image: 'img/cheesebacon-simple.jpeg',
     price: 9500,
+    canAddExtraCheddar: true,
+    extraCheddarPrice: 2000,
+    canAddExtraBacon: true,
+    extraBaconPrice: 2000,
     hasVeggieOption: true,
     veggieNote: 'Opción con Not Burger y pan 100% vegano'
   },
@@ -55,6 +61,8 @@ window.COPE_PRODUCTS = [
     badge: '1 Medallón · Fresca',
     image: 'img/clasica-simple.jpeg',
     price: 9500,
+    canAddExtraCheddar: true,
+    extraCheddarPrice: 2000,
     hasVeggieOption: true,
     veggieNote: 'Opción con Not Burger y pan 100% vegano'
   },
@@ -66,6 +74,8 @@ window.COPE_PRODUCTS = [
     badge: '1 Medallón · Especial ⭐',
     image: 'img/grancope-simple.jpeg',
     price: 9500,
+    canAddExtraCheddar: true,
+    extraCheddarPrice: 2000,
     hasVeggieOption: true,
     veggieNote: 'Opción con Not Burger y pan 100% vegano'
   },
@@ -83,6 +93,8 @@ window.COPE_PRODUCTS = [
     price: 13000,
     canAddExtraMeat: true,
     extraMeatPrice: 4000,
+    canAddExtraCheddar: true,
+    extraCheddarPrice: 2000,
     hasVeggieOption: true,
     veggieNote: 'Opción con Not Burger y pan 100% vegano'
   },
@@ -96,6 +108,10 @@ window.COPE_PRODUCTS = [
     price: 13500,
     canAddExtraMeat: true,
     extraMeatPrice: 4000,
+    canAddExtraCheddar: true,
+    extraCheddarPrice: 2000,
+    canAddExtraBacon: true,
+    extraBaconPrice: 2000,
     hasVeggieOption: true,
     veggieNote: 'Opción con Not Burger y pan 100% vegano'
   },
@@ -109,6 +125,8 @@ window.COPE_PRODUCTS = [
     price: 13500,
     canAddExtraMeat: true,
     extraMeatPrice: 4000,
+    canAddExtraCheddar: true,
+    extraCheddarPrice: 2000,
     hasVeggieOption: true,
     veggieNote: 'Opción con Not Burger y pan 100% vegano'
   },
@@ -122,6 +140,8 @@ window.COPE_PRODUCTS = [
     price: 13500,
     canAddExtraMeat: true,
     extraMeatPrice: 4000,
+    canAddExtraCheddar: true,
+    extraCheddarPrice: 2000,
     hasVeggieOption: true,
     veggieNote: 'Opción con Not Burger y pan 100% vegano'
   },
@@ -139,6 +159,8 @@ window.COPE_PRODUCTS = [
     price: 15000,
     canAddExtraMeat: true,
     extraMeatPrice: 4000,
+    canAddExtraCheddar: true,
+    extraCheddarPrice: 2000,
     hasDrinkSelection: true,
     drinks: DRINKS_OPTIONS,
     hasVeggieOption: true,
@@ -154,6 +176,10 @@ window.COPE_PRODUCTS = [
     price: 15500,
     canAddExtraMeat: true,
     extraMeatPrice: 4000,
+    canAddExtraCheddar: true,
+    extraCheddarPrice: 2000,
+    canAddExtraBacon: true,
+    extraBaconPrice: 2000,
     hasDrinkSelection: true,
     drinks: DRINKS_OPTIONS,
     hasVeggieOption: true,
@@ -169,6 +195,8 @@ window.COPE_PRODUCTS = [
     price: 15500,
     canAddExtraMeat: true,
     extraMeatPrice: 4000,
+    canAddExtraCheddar: true,
+    extraCheddarPrice: 2000,
     hasDrinkSelection: true,
     drinks: DRINKS_OPTIONS,
     hasVeggieOption: true,
@@ -184,6 +212,8 @@ window.COPE_PRODUCTS = [
     price: 15500,
     canAddExtraMeat: true,
     extraMeatPrice: 4000,
+    canAddExtraCheddar: true,
+    extraCheddarPrice: 2000,
     hasDrinkSelection: true,
     drinks: DRINKS_OPTIONS,
     hasVeggieOption: true,
@@ -197,6 +227,10 @@ window.COPE_PRODUCTS = [
     badge: 'Para Compartir (3 Burgers) 👥',
     image: 'img/sampler-cope.jpeg',
     price: 32000,
+    canAddExtraCheddar: true,
+    extraCheddarPrice: 2000,
+    canAddExtraBacon: true,
+    extraBaconPrice: 2000,
     hasDrinkSelection: true,
     drinks: DRINKS_OPTIONS
   },
@@ -211,7 +245,9 @@ window.COPE_PRODUCTS = [
     description: 'Porción generosa de papas fritas bastón crujientes, doradas en su punto justo al estilo americano con sal marina.',
     badge: 'Crujientes 🍟',
     image: 'img/papas-fritas.jpeg',
-    price: 4000
+    price: 4000,
+    canAddExtraCheddar: true,
+    extraCheddarPrice: 2000
   },
 
   // =========================================================================
