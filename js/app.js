@@ -280,7 +280,7 @@
 
   function renderStoreMeta() {
     if (els.storeTitle) els.storeTitle.textContent = CFG.STORE_NAME + ' · ' + CFG.BRANCH_NAME;
-    if (els.storeAddress) els.storeAddress.textContent = CFG.ADDRESS + ', ' + CFG.CITY;
+    if (els.storeAddress) els.storeAddress.textContent = CFG.LOCATION_LABEL || 'Puerto Madero · Dique 4';
     if (els.storeAddressLink && CFG.MAPS_URL) els.storeAddressLink.href = CFG.MAPS_URL;
     if (els.storeInstagramLink && CFG.INSTAGRAM_URL) els.storeInstagramLink.href = CFG.INSTAGRAM_URL;
     if (els.storeHoursText) els.storeHoursText.textContent = CFG.SCHEDULE.display;

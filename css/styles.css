@@ -116,30 +116,64 @@ body.modal-open {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
-.header-location-tag {
+.header-location-link {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   font-size: 12px;
   font-weight: 700;
-  color: #475569;
+  color: #334155;
+  text-decoration: none;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
-.header-mode-tag {
-  display: inline-block;
-  background: #fffbeb;
-  color: #b45309;
-  border: 1px solid #fde68a;
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 2px 8px;
-  border-radius: var(--radius-full);
+.header-location-link:hover {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: var(--cope-blue);
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+
+.header-location-link .location-pin {
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* Botón Icono Instagram (Limpio y Directo) */
+.ig-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f58529, #dd2a7b, #8134af);
+  color: #ffffff;
+  text-decoration: none;
+  box-shadow: 0 2px 6px rgba(221, 42, 123, 0.22);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  flex-shrink: 0;
+}
+
+.ig-icon-btn:hover {
+  transform: scale(1.12);
+  box-shadow: 0 4px 12px rgba(221, 42, 123, 0.38);
+  color: #ffffff;
+}
+
+.ig-icon-btn svg {
+  display: block;
+  stroke: #ffffff;
 }
 
 /* Centro Hero con Imagotipo Digital */
@@ -2031,9 +2065,18 @@ button:disabled,
   .header-flags-bar {
     width: auto;
     justify-content: center;
-    margin-top: 4px;
+    margin-top: 0;
+  }
+  .header-top-bar {
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .header-location-link {
+    font-size: 11.5px;
+    padding: 3.5px 8px;
   }
   .header-meta-row {
     justify-content: center;
+    gap: 6px;
   }
 }

@@ -5,6 +5,7 @@
 window.COPE_CONFIG = {
   STORE_NAME: 'Cope Burgers',
   BRANCH_NAME: 'Puerto Madero',
+  LOCATION_LABEL: 'Puerto Madero · Dique 4',
   SLOGAN: 'El Auténtico Estilo Americano',
   ADDRESS: 'Macacha Güemes 260',
   CITY: 'Puerto Madero, CABA',
