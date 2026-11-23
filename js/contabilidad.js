@@ -1,6 +1,6 @@
 /**
  * COPE BURGERS PUERTO MADERO — MÓDULO DE CONTABILIDAD Y FINANZAS
- * Conciliación diaria Fudo POS, Arqueo de Caja Chica, Facturación y P&L Gastronómico.
+ * Conciliación diaria Fudo POS, Arqueo de Caja Chica, Facturación con Escáner OCR y Google Sheets Cloud Sync.
  */
 
 (function () {
@@ -10,6 +10,8 @@
   const AUTH_PASS = 'Cope2026';
   const SESSION_AUTH_KEY = 'cope_contab_auth';
   const LOCAL_AUTH_KEY = 'cope_contab_remember';
+  const GEMINI_KEY_STORAGE = 'cope_gemini_api_key';
+  const SHEETS_URL_STORAGE = 'cope_sheets_url';
 
   // Categorías fijas de gastronomía
   const CATEGORIES = [
@@ -41,6 +43,7 @@
     bindEvents();
     initDefaults();
     renderAll();
+    checkGoogleSheetsStatus();
   });
 
   function cacheDom() {
@@ -57,6 +60,21 @@
     els.tabPanels = document.querySelectorAll('.tab-panel');
     els.badgeCajasCount = document.getElementById('badgeCajasCount');
     els.badgeFacturasCount = document.getElementById('badgeFacturasCount');
+
+    // Header Sync & Modals
+    els.btnSheetsSyncModal = document.getElementById('btnSheetsSyncModal');
+    els.sheetsStatusLabel = document.getElementById('sheetsStatusLabel');
+    els.btnApiKeyModal = document.getElementById('btnApiKeyModal');
+    els.sheetsModal = document.getElementById('sheetsModal');
+    els.formSheetsConfig = document.getElementById('formSheetsConfig');
+    els.sheetsWebhookUrl = document.getElementById('sheetsWebhookUrl');
+    els.btnCloseSheetsModal = document.getElementById('btnCloseSheetsModal');
+    els.btnSyncNow = document.getElementById('btnSyncNow');
+
+    els.apiKeyModal = document.getElementById('apiKeyModal');
+    els.formApiKeyConfig = document.getElementById('formApiKeyConfig');
+    els.inputGeminiApiKey = document.getElementById('inputGeminiApiKey');
+    els.btnCloseApiKeyModal = document.getElementById('btnCloseApiKeyModal');
 
     // Formulario Caja
     els.formCaja = document.getElementById('formCaja');
@@ -81,6 +99,17 @@
     // Tabla Cajas
     els.tableCajasBody = document.getElementById('tableCajasBody');
     els.emptyCajasState = document.getElementById('emptyCajasState');
+
+    // Escáner OCR Factura
+    els.btnScanCamera = document.getElementById('btnScanCamera');
+    els.btnScanFile = document.getElementById('btnScanFile');
+    els.inputScanCamera = document.getElementById('inputScanCamera');
+    els.inputScanFile = document.getElementById('inputScanFile');
+    els.ocrPreviewBox = document.getElementById('ocrPreviewBox');
+    els.ocrPreviewImg = document.getElementById('ocrPreviewImg');
+    els.ocrStatusTitle = document.getElementById('ocrStatusTitle');
+    els.ocrStatusDesc = document.getElementById('ocrStatusDesc');
+    els.btnCancelOcr = document.getElementById('btnCancelOcr');
 
     // Formulario Factura
     els.formFactura = document.getElementById('formFactura');
@@ -187,7 +216,6 @@
         state.cajas = Array.isArray(parsed.cajas) ? parsed.cajas : [];
         state.facturas = Array.isArray(parsed.facturas) ? parsed.facturas : [];
       } else {
-        // Inicializar estructura limpia
         state = { cajas: [], facturas: [] };
         saveState();
       }
@@ -216,15 +244,19 @@
     if (els.cajaFecha && !els.cajaFecha.value) els.cajaFecha.value = today;
     if (els.facturaFecha && !els.facturaFecha.value) els.facturaFecha.value = today;
 
-    // Poblar meses en los selectores
+    if (els.sheetsWebhookUrl) {
+      els.sheetsWebhookUrl.value = localStorage.getItem(SHEETS_URL_STORAGE) || '';
+    }
+    if (els.inputGeminiApiKey) {
+      els.inputGeminiApiKey.value = localStorage.getItem(GEMINI_KEY_STORAGE) || '';
+    }
+
     populateMonthSelectors();
     updateProveedoresDatalist();
   }
 
   function populateMonthSelectors() {
-    const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
-    
-    // Generar últimos 12 meses
+    const currentMonth = new Date().toISOString().slice(0, 7);
     const months = [];
     const date = new Date();
     for (let i = 0; i < 12; i++) {
@@ -234,13 +266,11 @@
       date.setMonth(date.getMonth() - 1);
     }
 
-    // Selector Dashboard
     if (els.dashboardMes) {
       els.dashboardMes.innerHTML = '<option value="all">Todo el Histórico</option>' + 
         months.map(m => `<option value="${m.ym}" ${m.ym === currentMonth ? 'selected' : ''}>${m.label}</option>`).join('');
     }
 
-    // Selector Facturas
     if (els.filtroFacturaMes) {
       els.filtroFacturaMes.innerHTML = '<option value="all">Todos los Meses</option>' + 
         months.map(m => `<option value="${m.ym}">${m.label}</option>`).join('');
@@ -301,6 +331,45 @@
       els.dashboardMes.addEventListener('change', renderDashboard);
     }
 
+    // Escáner OCR Facturas
+    if (els.btnScanCamera && els.inputScanCamera) {
+      els.btnScanCamera.addEventListener('click', () => els.inputScanCamera.click());
+      els.inputScanCamera.addEventListener('change', handleScanInput);
+    }
+    if (els.btnScanFile && els.inputScanFile) {
+      els.btnScanFile.addEventListener('click', () => els.inputScanFile.click());
+      els.inputScanFile.addEventListener('change', handleScanInput);
+    }
+    if (els.btnCancelOcr) {
+      els.btnCancelOcr.addEventListener('click', () => {
+        if (els.ocrPreviewBox) els.ocrPreviewBox.classList.add('hidden');
+      });
+    }
+
+    // Modales de Configuración
+    if (els.btnSheetsSyncModal && els.sheetsModal) {
+      els.btnSheetsSyncModal.addEventListener('click', () => els.sheetsModal.classList.remove('hidden'));
+    }
+    if (els.btnCloseSheetsModal && els.sheetsModal) {
+      els.btnCloseSheetsModal.addEventListener('click', () => els.sheetsModal.classList.add('hidden'));
+    }
+    if (els.formSheetsConfig) {
+      els.formSheetsConfig.addEventListener('submit', handleSaveSheetsConfig);
+    }
+    if (els.btnSyncNow) {
+      els.btnSyncNow.addEventListener('click', fetchFromGoogleSheets);
+    }
+
+    if (els.btnApiKeyModal && els.apiKeyModal) {
+      els.btnApiKeyModal.addEventListener('click', () => els.apiKeyModal.classList.remove('hidden'));
+    }
+    if (els.btnCloseApiKeyModal && els.apiKeyModal) {
+      els.btnCloseApiKeyModal.addEventListener('click', () => els.apiKeyModal.classList.add('hidden'));
+    }
+    if (els.formApiKeyConfig) {
+      els.formApiKeyConfig.addEventListener('submit', handleSaveApiKeyConfig);
+    }
+
     // Exportar Excel CSV
     if (els.btnExportExcelCajas) {
       els.btnExportExcelCajas.addEventListener('click', () => exportCajasCsv());
@@ -327,7 +396,6 @@
       panel.classList.toggle('hidden', panel.id !== `panel-${tabId}`);
     });
 
-    // Re-renderizar si es necesario
     if (tabId === 'dashboard') {
       renderDashboard();
     }
@@ -345,14 +413,7 @@
     const totalJustificado = realEf + gastos + propinas;
     const diff = totalJustificado - fudoEf;
 
-    return {
-      fudoEf,
-      realEf,
-      gastos,
-      propinas,
-      totalJustificado,
-      diff
-    };
+    return { fudoEf, realEf, gastos, propinas, totalJustificado, diff };
   }
 
   function updateDiffMonitor() {
@@ -375,14 +436,14 @@
       if (els.diffValue) els.diffValue.textContent = `+${formatMoney(diff)}`;
       if (els.diffStatusText) els.diffStatusText.textContent = 'Sobrante en Caja ⚠️';
       if (els.diffDetail) {
-        els.diffDetail.textContent = `Hay más efectivo contado del que registró Fudo. Verificá si hubo cobros no cargados al sistema.`;
+        els.diffDetail.textContent = `Hay más efectivo en gaveta del registrado en Fudo. Revisá ventas sin cargar.`;
       }
     } else {
       els.diffMonitorCard.classList.add('faltante');
       if (els.diffValue) els.diffValue.textContent = formatMoney(diff);
       if (els.diffStatusText) els.diffStatusText.textContent = 'Faltante en Caja ❌';
       if (els.diffDetail) {
-        els.diffDetail.textContent = `Falta efectivo en gaveta. Verificá si hubo gastos chicos sin comprobante o propinas impagas.`;
+        els.diffDetail.textContent = `Falta dinero en gaveta. Verificá si hubo gastos menores sin ticket o propinas abonadas.`;
       }
     }
   }
@@ -390,7 +451,7 @@
   /* ==========================================================================
      HANDLER: CIERRE DE CAJA (FUDO VS ARQUEO)
      ========================================================================== */
-  function handleCajaSubmit(e) {
+  async function handleCajaSubmit(e) {
     e.preventDefault();
 
     const fecha = els.cajaFecha.value;
@@ -438,7 +499,10 @@
     renderCajasTable();
     renderDashboard();
 
-    // Reset de campos no persistentes
+    // Sincronizar con Google Sheets si está configurado
+    syncRowToGoogleSheets('caja', nuevoCierre);
+
+    // Reset
     els.fudoTotal.value = '';
     els.fudoEfectivo.value = '';
     els.fudoMp.value = '';
@@ -503,9 +567,146 @@
   }
 
   /* ==========================================================================
+     ESCÁNER OCR INTELIGENTE (FOTO / CÁMARA -> IA -> FORMULARIO)
+     ========================================================================== */
+  async function handleScanInput(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    if (!els.ocrPreviewBox) return;
+    els.ocrPreviewBox.classList.remove('hidden');
+    if (els.ocrStatusTitle) els.ocrStatusTitle.textContent = '📸 Procesando imagen...';
+    if (els.ocrStatusDesc) els.ocrStatusDesc.textContent = 'Optimizando resolución para escaneo fiscal.';
+
+    try {
+      const { base64Data, dataUrl } = await compressImageForOcr(file, 1600, 0.85);
+      if (els.ocrPreviewImg) els.ocrPreviewImg.src = dataUrl;
+
+      if (els.ocrStatusTitle) els.ocrStatusTitle.textContent = '🔍 Analizando comprobante con IA...';
+      if (els.ocrStatusDesc) els.ocrStatusDesc.textContent = 'Extrayendo proveedor, fecha, montos e IVA.';
+
+      const customKey = localStorage.getItem(GEMINI_KEY_STORAGE) || '';
+
+      const res = await fetch('/api/ocr-factura', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Gemini-Key': customKey
+        },
+        body: JSON.stringify({
+          imageBase64: base64Data,
+          mimeType: 'image/jpeg',
+          apiKey: customKey
+        })
+      });
+
+      const resJson = await res.json();
+
+      if (!res.ok || !resJson.ok) {
+        if (resJson.error === 'NO_API_KEY') {
+          if (els.ocrStatusTitle) els.ocrStatusTitle.textContent = '🔑 Se requiere Gemini API Key';
+          if (els.ocrStatusDesc) els.ocrStatusDesc.textContent = 'Hacé clic en el botón "OCR" arriba para ingresar tu clave gratuita.';
+          if (els.apiKeyModal) els.apiKeyModal.classList.remove('hidden');
+          return;
+        }
+        throw new Error(resJson.details || resJson.error || 'Error al procesar la imagen con OCR.');
+      }
+
+      const data = resJson.data || {};
+      applyOcrDataToForm(data);
+
+      if (els.ocrStatusTitle) els.ocrStatusTitle.textContent = '✅ Factura reconocida con éxito';
+      if (els.ocrStatusDesc) els.ocrStatusDesc.textContent = `${data.proveedor || 'Proveedor'} · Total: ${formatMoney(data.montoTotal || 0)}. Revisá y guardá.`;
+
+      showToast(`Factura de ${data.proveedor || 'proveedor'} detectada`, 'success');
+
+    } catch (err) {
+      console.error('Error durante el escaneo OCR:', err);
+      if (els.ocrStatusTitle) els.ocrStatusTitle.textContent = '⚠️ No se pudo procesar la foto';
+      if (els.ocrStatusDesc) els.ocrStatusDesc.textContent = err.message || 'Intentá con una foto más nítida o ingresá manualmente.';
+      showToast('Error en el escaneo: ' + (err.message || 'Error de lectura'), 'error');
+    } finally {
+      e.target.value = '';
+    }
+  }
+
+  function applyOcrDataToForm(data) {
+    if (data.fecha && els.facturaFecha) {
+      els.facturaFecha.value = data.fecha;
+      flashInput(els.facturaFecha);
+    }
+    if (data.proveedor && els.facturaProveedor) {
+      els.facturaProveedor.value = data.proveedor;
+      flashInput(els.facturaProveedor);
+    }
+    if (data.categoria && els.facturaCategoria) {
+      els.facturaCategoria.value = data.categoria;
+      flashInput(els.facturaCategoria);
+    }
+    if (data.tipoComprobante && els.facturaTipo) {
+      els.facturaTipo.value = data.tipoComprobante;
+      flashInput(els.facturaTipo);
+    }
+    if (data.nroComprobante && els.facturaNumero) {
+      els.facturaNumero.value = data.nroComprobante;
+      flashInput(els.facturaNumero);
+    }
+    if (data.montoTotal && els.facturaMonto) {
+      els.facturaMonto.value = data.montoTotal;
+      flashInput(els.facturaMonto);
+    }
+    if (data.notas && els.facturaNotas) {
+      els.facturaNotas.value = data.notas;
+      flashInput(els.facturaNotas);
+    }
+  }
+
+  function flashInput(input) {
+    input.classList.add('field-highlight');
+    setTimeout(() => input.classList.remove('field-highlight'), 1500);
+  }
+
+  function compressImageForOcr(file, maxDimension = 1600, quality = 0.85) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxDimension || height > maxDimension) {
+            if (width > height) {
+              height = Math.round((height * maxDimension) / width);
+              width = maxDimension;
+            } else {
+              width = Math.round((width * maxDimension) / height);
+              height = maxDimension;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const dataUrl = canvas.toDataURL('image/jpeg', quality);
+          const base64Data = dataUrl.split(',')[1];
+          resolve({ base64Data, dataUrl });
+        };
+        img.onerror = reject;
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  /* ==========================================================================
      HANDLER: CARGA DE FACTURAS Y EGRESOS
      ========================================================================== */
-  function handleFacturaSubmit(e) {
+  async function handleFacturaSubmit(e) {
     e.preventDefault();
 
     const fecha = els.facturaFecha.value;
@@ -545,11 +746,15 @@
     renderFacturasTable();
     renderDashboard();
 
+    // Sincronizar en tiempo real con Google Sheets
+    syncRowToGoogleSheets('factura', nuevaFactura);
+
     // Reset
     els.facturaProveedor.value = '';
     els.facturaNumero.value = '';
     els.facturaMonto.value = '';
     els.facturaNotas.value = '';
+    if (els.ocrPreviewBox) els.ocrPreviewBox.classList.add('hidden');
 
     showToast(`Factura de ${proveedor} cargada correctamente`, 'success');
   }
@@ -561,7 +766,6 @@
       els.badgeFacturasCount.textContent = state.facturas.length;
     }
 
-    // Filtrar facturas
     const selMes = els.filtroFacturaMes ? els.filtroFacturaMes.value : 'all';
     const selCat = els.filtroFacturaCategoria ? els.filtroFacturaCategoria.value : 'all';
     const selEstado = els.filtroFacturaEstado ? els.filtroFacturaEstado.value : 'all';
@@ -620,22 +824,16 @@
   function renderDashboard() {
     const selMes = els.dashboardMes ? els.dashboardMes.value : 'all';
 
-    // Filtrar cajas y facturas por mes seleccionado
     const filteredCajas = state.cajas.filter(c => selMes === 'all' || (c.fecha && c.fecha.startsWith(selMes)));
     const filteredFacturas = state.facturas.filter(f => selMes === 'all' || (f.fecha && f.fecha.startsWith(selMes)));
 
-    // Ventas Totales (Fudo)
     const ventasTotales = filteredCajas.reduce((acc, c) => acc + (c.fudoTotal || 0), 0);
     const diasCajas = filteredCajas.length;
 
-    // Egresos Totales
     const egresosTotales = filteredFacturas.reduce((acc, f) => acc + (f.montoTotal || 0), 0);
-
-    // Resultado Operativo
     const resultadoOperativo = ventasTotales - egresosTotales;
     const margenOperativo = ventasTotales > 0 ? (resultadoOperativo / ventasTotales) * 100 : 0;
 
-    // Food Cost (Categorías de Carne, Panadería, Papas y Bebidas)
     const foodCostFacturas = filteredFacturas.filter(f => {
       const cat = CATEGORIES.find(c => c.id === f.categoria);
       return cat && cat.isFoodCost;
@@ -643,11 +841,9 @@
     const foodCostTotal = foodCostFacturas.reduce((acc, f) => acc + (f.montoTotal || 0), 0);
     const ratioFoodCost = ventasTotales > 0 ? (foodCostTotal / ventasTotales) * 100 : 0;
 
-    // Deuda Pendiente
     const facturasPendientes = filteredFacturas.filter(f => f.estadoPago === 'pendiente');
     const deudaPendiente = facturasPendientes.reduce((acc, f) => acc + (f.montoTotal || 0), 0);
 
-    // Renderizar KPIs
     if (els.kpiVentas) els.kpiVentas.textContent = formatMoney(ventasTotales);
     if (els.kpiVentasSub) els.kpiVentasSub.textContent = `${diasCajas} ${diasCajas === 1 ? 'turno cerrado' : 'turnos cerrados'}`;
 
@@ -677,7 +873,6 @@
     if (els.kpiDeuda) els.kpiDeuda.textContent = formatMoney(deudaPendiente);
     if (els.kpiDeudaSub) els.kpiDeudaSub.textContent = `${facturasPendientes.length} facturas por pagar`;
 
-    // Desglose de Gastos por Categoría
     renderExpensesBreakdown(filteredFacturas, egresosTotales);
   }
 
@@ -698,11 +893,7 @@
     const rows = CATEGORIES.map(c => {
       const monto = byCat[c.id] || 0;
       const pct = egresosTotales > 0 ? (monto / egresosTotales) * 100 : 0;
-      return {
-        ...c,
-        monto,
-        pct
-      };
+      return { ...c, monto, pct };
     }).sort((a, b) => b.monto - a.monto);
 
     const html = rows.map(r => `
@@ -718,6 +909,112 @@
     `).join('');
 
     els.expensesBreakdown.innerHTML = `<div class="breakdown-list">${html}</div>`;
+  }
+
+  /* ==========================================================================
+     SINCRONIZACIÓN CON GOOGLE SHEETS
+     ========================================================================== */
+  function checkGoogleSheetsStatus() {
+    const url = localStorage.getItem(SHEETS_URL_STORAGE);
+    if (!els.btnSheetsSyncModal || !els.sheetsStatusLabel) return;
+
+    if (url && url.startsWith('http')) {
+      els.btnSheetsSyncModal.classList.remove('offline');
+      els.sheetsStatusLabel.textContent = 'Sheets: Conectado';
+    } else {
+      els.btnSheetsSyncModal.classList.add('offline');
+      els.sheetsStatusLabel.textContent = 'Sheets: Offline';
+    }
+  }
+
+  function handleSaveSheetsConfig(e) {
+    e.preventDefault();
+    const url = (els.sheetsWebhookUrl.value || '').trim();
+    if (!url) {
+      localStorage.removeItem(SHEETS_URL_STORAGE);
+      checkGoogleSheetsStatus();
+      if (els.sheetsModal) els.sheetsModal.classList.add('hidden');
+      showToast('Desconectado de Google Sheets');
+      return;
+    }
+
+    localStorage.setItem(SHEETS_URL_STORAGE, url);
+    checkGoogleSheetsStatus();
+    if (els.sheetsModal) els.sheetsModal.classList.add('hidden');
+    showToast('URL de Google Sheets guardada', 'success');
+
+    fetchFromGoogleSheets();
+  }
+
+  async function syncRowToGoogleSheets(type, data) {
+    const webhookUrl = localStorage.getItem(SHEETS_URL_STORAGE);
+    if (!webhookUrl || !webhookUrl.startsWith('http')) return;
+
+    try {
+      await fetch(webhookUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: type === 'caja' ? 'add_caja' : 'add_factura',
+          data: data
+        })
+      });
+      console.log(`[Google Sheets] ${type} sincronizada exitosamente`);
+    } catch (err) {
+      console.warn('[Google Sheets] Advertencia al sincronizar fila:', err.message);
+    }
+  }
+
+  async function fetchFromGoogleSheets() {
+    const webhookUrl = localStorage.getItem(SHEETS_URL_STORAGE);
+    if (!webhookUrl || !webhookUrl.startsWith('http')) {
+      showToast('Primero ingresá la URL del Web App de Google Sheets', 'error');
+      return;
+    }
+
+    showToast('Sincronizando con Google Sheets...', 'default');
+
+    try {
+      const res = await fetch(`${webhookUrl}?action=get_all`, {
+        cache: 'no-store'
+      });
+      const data = await res.json();
+
+      if (data && (Array.isArray(data.facturas) || Array.isArray(data.cajas))) {
+        const existingFacturaIds = new Set(state.facturas.map(f => f.id));
+        const remoteFacturas = (data.facturas || []).filter(f => !existingFacturaIds.has(f.id));
+
+        const existingCajaIds = new Set(state.cajas.map(c => c.id));
+        const remoteCajas = (data.cajas || []).filter(c => !existingCajaIds.has(c.id));
+
+        if (remoteFacturas.length > 0 || remoteCajas.length > 0) {
+          state.facturas = [...remoteFacturas, ...state.facturas];
+          state.cajas = [...remoteCajas, ...state.cajas];
+          saveState();
+          renderAll();
+          showToast(`Sincronizado: +${remoteFacturas.length} facturas, +${remoteCajas.length} cajas`, 'success');
+        } else {
+          showToast('Google Sheets ya está al día', 'success');
+        }
+      }
+    } catch (err) {
+      console.error('Error al sincronizar desde Google Sheets:', err);
+      showToast('Error de conexión con Google Sheets: ' + err.message, 'error');
+    }
+  }
+
+  function handleSaveApiKeyConfig(e) {
+    e.preventDefault();
+    const key = (els.inputGeminiApiKey.value || '').trim();
+    if (key) {
+      localStorage.setItem(GEMINI_KEY_STORAGE, key);
+      showToast('Clave de Gemini guardada en este equipo', 'success');
+    } else {
+      localStorage.removeItem(GEMINI_KEY_STORAGE);
+      showToast('Clave de Gemini eliminada');
+    }
+    if (els.apiKeyModal) els.apiKeyModal.classList.add('hidden');
   }
 
   /* ==========================================================================
@@ -764,36 +1061,17 @@
     }
 
     const headers = [
-      'Fecha',
-      'Turno',
-      'Fudo Total',
-      'Fudo Efectivo',
-      'Fudo Mercado Pago',
-      'Fudo Tarjetas',
-      'Fudo Delivery Apps',
-      'Efectivo Contado',
-      'Gastos Caja Chica',
-      'Propinas Efectivo',
-      'Total Justificado',
-      'Diferencia',
-      'Estado',
-      'Notas'
+      'Fecha', 'Turno', 'Fudo Total', 'Fudo Efectivo', 'Fudo Mercado Pago',
+      'Fudo Tarjetas', 'Fudo Delivery Apps', 'Efectivo Contado',
+      'Gastos Caja Chica', 'Propinas Efectivo', 'Total Justificado',
+      'Diferencia', 'Estado', 'Notas'
     ];
 
     const rows = state.cajas.map(c => [
-      c.fecha,
-      `"${c.turno}"`,
-      formatDecimalCsv(c.fudoTotal),
-      formatDecimalCsv(c.fudoEfectivo),
-      formatDecimalCsv(c.fudoMp),
-      formatDecimalCsv(c.fudoTarjetas),
-      formatDecimalCsv(c.fudoDelivery),
-      formatDecimalCsv(c.realEfectivo),
-      formatDecimalCsv(c.gastosCajaChica),
-      formatDecimalCsv(c.propinasPagadas),
-      formatDecimalCsv(c.totalJustificado),
-      formatDecimalCsv(c.diferencia),
-      `"${c.estado}"`,
+      c.fecha, `"${c.turno}"`, formatDecimalCsv(c.fudoTotal), formatDecimalCsv(c.fudoEfectivo),
+      formatDecimalCsv(c.fudoMp), formatDecimalCsv(c.fudoTarjetas), formatDecimalCsv(c.fudoDelivery),
+      formatDecimalCsv(c.realEfectivo), formatDecimalCsv(c.gastosCajaChica), formatDecimalCsv(c.propinasPagadas),
+      formatDecimalCsv(c.totalJustificado), formatDecimalCsv(c.diferencia), `"${c.estado}"`,
       `"${(c.notas || '').replace(/"/g, '""')}"`
     ]);
 
@@ -809,27 +1087,16 @@
     }
 
     const headers = [
-      'Fecha',
-      'Proveedor',
-      'Categoria',
-      'Tipo Comprobante',
-      'Numero Comprobante',
-      'Monto Total',
-      'Estado Pago',
-      'Notas'
+      'Fecha', 'Proveedor', 'Categoria', 'Tipo Comprobante',
+      'Numero Comprobante', 'Monto Total', 'Estado Pago', 'Notas'
     ];
 
     const rows = state.facturas.map(f => {
       const catObj = CATEGORIES.find(c => c.id === f.categoria) || { name: f.categoria };
       return [
-        f.fecha,
-        `"${(f.proveedor || '').replace(/"/g, '""')}"`,
-        `"${catObj.name}"`,
-        `"${f.tipoComprobante}"`,
-        `"${f.nroComprobante || ''}"`,
-        formatDecimalCsv(f.montoTotal),
-        `"${f.estadoPago}"`,
-        `"${(f.notas || '').replace(/"/g, '""')}"`
+        f.fecha, `"${(f.proveedor || '').replace(/"/g, '""')}"`, `"${catObj.name}"`,
+        `"${f.tipoComprobante}"`, `"${f.nroComprobante || ''}"`, formatDecimalCsv(f.montoTotal),
+        `"${f.estadoPago}"`, `"${(f.notas || '').replace(/"/g, '""')}"`
       ];
     });
 

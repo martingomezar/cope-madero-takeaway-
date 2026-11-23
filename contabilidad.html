@@ -36,6 +36,12 @@
       </div>
 
       <div class="header-actions">
+        <button id="btnSheetsSyncModal" type="button" class="sync-pill offline" title="Sincronización con Google Sheets en Drive">
+          ☁️ <span id="sheetsStatusLabel">Sheets: Offline</span>
+        </button>
+        <button id="btnApiKeyModal" type="button" class="btn-header" title="Configuración de IA para escaneo de facturas">
+          🔑 <span class="header-action-text">OCR</span>
+        </button>
         <a href="./index.html" class="btn-header" title="Volver al menú online">
           🍔 <span class="header-action-text">Menú Take Away</span>
         </a>
@@ -268,6 +274,40 @@
             <h2 class="card-title">🧾 Cargar Factura o Comprobante de Compra</h2>
             <p class="card-subtitle">Registrá facturas de proveedores clasificados por categorías gastronómicas para calcular el Food Cost.</p>
           </div>
+        </div>
+
+        <!-- Escáner OCR Inteligente -->
+        <div class="ocr-scanner-box">
+          <div class="ocr-scanner-content">
+            <div class="ocr-scanner-icon" aria-hidden="true">📸</div>
+            <div>
+              <div class="ocr-scanner-title">Escanear Comprobante con Foto o Cámara</div>
+              <div class="ocr-scanner-sub">Sacá una foto de la factura, ticket o remito y la IA completará los campos automáticamente.</div>
+            </div>
+          </div>
+          <div class="ocr-scanner-actions">
+            <button type="button" id="btnScanCamera" class="btn btn-primary btn-sm">
+              📸 Sacar Foto
+            </button>
+            <button type="button" id="btnScanFile" class="btn btn-secondary btn-sm">
+              📁 Subir Imagen
+            </button>
+            <input type="file" id="inputScanCamera" accept="image/*" capture="environment" class="hidden" />
+            <input type="file" id="inputScanFile" accept="image/*,application/pdf" class="hidden" />
+          </div>
+        </div>
+
+        <!-- Caja de Previsualización y Estado de Escaneo -->
+        <div id="ocrPreviewBox" class="ocr-preview-box hidden">
+          <div class="ocr-preview-thumb-wrap">
+            <img id="ocrPreviewImg" src="" alt="Comprobante" class="ocr-preview-thumb" />
+            <div class="ocr-scan-line"></div>
+          </div>
+          <div class="ocr-preview-info">
+            <div id="ocrStatusTitle" class="ocr-status-title">🔍 Escaneando comprobante...</div>
+            <div id="ocrStatusDesc" class="ocr-status-desc">Extrayendo proveedor, fecha, montos e IVA con IA de Visión.</div>
+          </div>
+          <button type="button" id="btnCancelOcr" class="btn-icon" title="Cerrar vista previa">✕</button>
         </div>
 
         <form id="formFactura" autocomplete="off">
@@ -512,6 +552,69 @@
 
         <button type="submit" class="btn btn-primary" style="width:100%; padding:12px; font-size:14px;">
           Ingresar al Panel
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- =======================================================================
+       MODAL: CONFIGURACIÓN GOOGLE SHEETS
+       ======================================================================= -->
+  <div id="sheetsModal" class="auth-overlay hidden">
+    <div class="auth-card" style="max-width: 480px; text-align: left;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <h2 style="font-size:18px; font-weight:900; color:var(--text-main); display:flex; align-items:center; gap:8px;">
+          ☁️ Conectar Google Sheets
+        </h2>
+        <button type="button" id="btnCloseSheetsModal" class="btn-icon" style="font-size:16px;">✕</button>
+      </div>
+      <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:16px; line-height:1.4;">
+        Sincronizá todas las facturas y cierres de caja en una planilla de cálculo en tu Google Drive (carpeta <strong>2026/Cope Madero</strong>).
+      </p>
+
+      <form id="formSheetsConfig" autocomplete="off">
+        <div class="form-group">
+          <label class="form-label" for="sheetsWebhookUrl">URL de la Web App de Google Apps Script</label>
+          <input type="url" id="sheetsWebhookUrl" class="form-control" placeholder="https://script.google.com/macros/s/.../exec" />
+          <p class="form-hint">Pegá la URL generada al publicar el script en tu Google Sheet.</p>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:20px;">
+          <button type="submit" class="btn btn-primary" style="flex:1;">
+            💾 Guardar y Probar Conexión
+          </button>
+          <button type="button" id="btnSyncNow" class="btn btn-secondary">
+            🔄 Sincronizar Ahora
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =======================================================================
+       MODAL: CONFIGURACIÓN CLAVE OCR (GEMINI AI VISION)
+       ======================================================================= -->
+  <div id="apiKeyModal" class="auth-overlay hidden">
+    <div class="auth-card" style="max-width: 460px; text-align: left;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <h2 style="font-size:18px; font-weight:900; color:var(--text-main); display:flex; align-items:center; gap:8px;">
+          🔑 Configurar OCR con IA (Gemini)
+        </h2>
+        <button type="button" id="btnCloseApiKeyModal" class="btn-icon" style="font-size:16px;">✕</button>
+      </div>
+      <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:16px; line-height:1.4;">
+        Para escanear facturas con fotos podés usar la variable de entorno <code>GEMINI_API_KEY</code> en Vercel o ingresar una clave gratuita de <strong>Google AI Studio</strong> en este navegador.
+      </p>
+
+      <form id="formApiKeyConfig" autocomplete="off">
+        <div class="form-group">
+          <label class="form-label" for="inputGeminiApiKey">Gemini API Key</label>
+          <input type="password" id="inputGeminiApiKey" class="form-control" placeholder="AIzaSy..." />
+          <p class="form-hint">Obtené una clave gratuita en <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style="color:var(--cope-blue); font-weight:700;">aistudio.google.com</a>.</p>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width:100%; margin-top:14px;">
+          💾 Guardar Clave en este Equipo
         </button>
       </form>
     </div>
