@@ -33,7 +33,7 @@ window.COPE_I18N = (function () {
       btn_customize: 'Personalizar',
       btn_add: 'Agregar',
       coming_soon_order: 'Próximamente podrás pedir aquí',
-      wa_order_btn: 'Pedir por WhatsApp',
+      wa_order_btn: 'WhatsApp',
       wa_order_msg: '¡Hola Cope Burgers Puerto Madero! Quiero hacer un pedido:',
       veggie_badge: 'Opción NotBurger Veggie 🌱',
 
@@ -139,7 +139,7 @@ window.COPE_I18N = (function () {
       btn_customize: 'Customize',
       btn_add: 'Add',
       coming_soon_order: 'Online ordering coming soon here',
-      wa_order_btn: 'Order via WhatsApp',
+      wa_order_btn: 'WhatsApp',
       wa_order_msg: 'Hello Cope Burgers Puerto Madero! I would like to place an order:',
       veggie_badge: 'NotBurger Veggie Option 🌱',
 
@@ -245,7 +245,7 @@ window.COPE_I18N = (function () {
       btn_customize: 'Personalizar',
       btn_add: 'Adicionar',
       coming_soon_order: 'Em breve você poderá pedir aqui',
-      wa_order_btn: 'Pedir pelo WhatsApp',
+      wa_order_btn: 'WhatsApp',
       wa_order_msg: 'Olá Cope Burgers Puerto Madero! Gostaria de fazer um pedido:',
       veggie_badge: 'Opção NotBurger Veggie 🌱',
 
