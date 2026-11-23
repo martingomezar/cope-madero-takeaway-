@@ -78,6 +78,8 @@
     els.formApiKeyConfig = document.getElementById('formApiKeyConfig');
     els.inputGeminiApiKey = document.getElementById('inputGeminiApiKey');
     els.btnCloseApiKeyModal = document.getElementById('btnCloseApiKeyModal');
+    els.btnTestApiKey = document.getElementById('btnTestApiKey');
+    els.apiKeyTestStatus = document.getElementById('apiKeyTestStatus');
 
     // Categorías Modal & Controles
     els.btnManageCategories = document.getElementById('btnManageCategories');
@@ -477,10 +479,21 @@
     }
 
     if (els.btnApiKeyModal && els.apiKeyModal) {
-      els.btnApiKeyModal.addEventListener('click', () => els.apiKeyModal.classList.remove('hidden'));
+      els.btnApiKeyModal.addEventListener('click', () => {
+        if (els.inputGeminiApiKey) {
+          els.inputGeminiApiKey.value = localStorage.getItem(GEMINI_KEY_STORAGE) || '';
+        }
+        if (els.apiKeyTestStatus) {
+          els.apiKeyTestStatus.classList.add('hidden');
+        }
+        els.apiKeyModal.classList.remove('hidden');
+      });
     }
     if (els.btnCloseApiKeyModal && els.apiKeyModal) {
       els.btnCloseApiKeyModal.addEventListener('click', () => els.apiKeyModal.classList.add('hidden'));
+    }
+    if (els.btnTestApiKey) {
+      els.btnTestApiKey.addEventListener('click', handleTestApiKey);
     }
     if (els.formApiKeyConfig) {
       els.formApiKeyConfig.addEventListener('submit', handleSaveApiKeyConfig);
@@ -1155,6 +1168,66 @@
     } catch (err) {
       console.error('Error al sincronizar desde Google Sheets:', err);
       showToast('Error de conexión con Google Sheets: ' + err.message, 'error');
+    }
+  }
+
+  async function handleTestApiKey() {
+    const key = (els.inputGeminiApiKey ? els.inputGeminiApiKey.value : '').trim();
+    if (!key) {
+      if (els.apiKeyTestStatus) {
+        els.apiKeyTestStatus.classList.remove('hidden');
+        els.apiKeyTestStatus.style.background = '#fef2f2';
+        els.apiKeyTestStatus.style.color = '#991b1b';
+        els.apiKeyTestStatus.style.border = '1px solid #fecaca';
+        els.apiKeyTestStatus.textContent = 'Por favor ingresá una clave para probar.';
+      }
+      return;
+    }
+
+    const btn = els.btnTestApiKey;
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.textContent = '⏳ Verificando...';
+
+    if (els.apiKeyTestStatus) {
+      els.apiKeyTestStatus.classList.remove('hidden');
+      els.apiKeyTestStatus.style.background = '#f1f5f9';
+      els.apiKeyTestStatus.style.color = '#334155';
+      els.apiKeyTestStatus.style.border = '1px solid #cbd5e1';
+      els.apiKeyTestStatus.textContent = 'Conectando con Google AI Studio y descubriendo modelos activos...';
+    }
+
+    try {
+      const res = await fetch('/api/ocr-factura', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ test: true, apiKey: key })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.details || data.error || 'Error al validar la clave con Google');
+      }
+
+      if (els.apiKeyTestStatus) {
+        els.apiKeyTestStatus.classList.remove('hidden');
+        els.apiKeyTestStatus.style.background = '#ecfdf5';
+        els.apiKeyTestStatus.style.color = '#065f46';
+        els.apiKeyTestStatus.style.border = '1px solid #a7f3d0';
+        els.apiKeyTestStatus.innerHTML = `<strong>✅ ¡Conexión Exitosa con Gemini!</strong><br>Modelo seleccionado: <code>${data.selectedModel}</code> (${data.models ? data.models.length : 0} modelos disponibles para escaneo fiscal).`;
+      }
+      showToast('¡Clave de Gemini verificada y lista!', 'success');
+    } catch (err) {
+      if (els.apiKeyTestStatus) {
+        els.apiKeyTestStatus.classList.remove('hidden');
+        els.apiKeyTestStatus.style.background = '#fef2f2';
+        els.apiKeyTestStatus.style.color = '#991b1b';
+        els.apiKeyTestStatus.style.border = '1px solid #fecaca';
+        els.apiKeyTestStatus.innerHTML = `<strong>⚠️ Error en la verificación:</strong><br>${err.message}`;
+      }
+      showToast('Error en la verificación de clave', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
     }
   }
 

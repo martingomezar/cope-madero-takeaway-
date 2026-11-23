@@ -15,16 +15,25 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
+  // GET de diagnóstico: verificar clave y ver modelos disponibles
+  if (req.method === 'GET') {
+    const apiKey = req.query.key || req.headers['x-gemini-key'] || process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return res.status(401).json({ ok: false, error: 'NO_API_KEY', message: 'No se proveyó clave para verificar.' });
+    }
+    const check = await resolveAvailableGeminiModels(apiKey);
+    if (!check.ok) {
+      return res.status(check.status || 500).json({ ok: false, error: check.error, details: check.details });
+    }
+    return res.status(200).json({ ok: true, models: check.models, selectedModel: check.models[0] });
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { imageBase64, mimeType = 'image/jpeg', apiKey: customKey } = req.body || {};
-
-    if (!imageBase64) {
-      return res.status(400).json({ error: 'Se requiere imageBase64 en el cuerpo de la solicitud.' });
-    }
+    const { imageBase64, mimeType = 'image/jpeg', apiKey: customKey, test } = req.body || {};
 
     const apiKey = customKey || req.headers['x-gemini-key'] || process.env.GEMINI_API_KEY;
     if (!apiKey) {
@@ -35,8 +44,20 @@ export default async function handler(req, res) {
       });
     }
 
+    if (test) {
+      const check = await resolveAvailableGeminiModels(apiKey);
+      if (!check.ok) {
+        return res.status(check.status || 400).json({ ok: false, error: check.error, details: check.details });
+      }
+      return res.status(200).json({ ok: true, models: check.models, selectedModel: check.models[0] });
+    }
+
+    if (!imageBase64) {
+      return res.status(400).json({ error: 'Se requiere imageBase64 en el cuerpo de la solicitud.' });
+    }
+
     // Limpiar prefijo data:...;base64, si viene incluido
-    const cleanBase64 = imageBase64.replace(/^data:[a-zA-Z0-9/]+;base64,/, '');
+    const cleanBase64 = imageBase64.includes(';base64,') ? imageBase64.split(';base64,')[1] : imageBase64;
 
     const promptText = `
 Sos un auditor y contador gastronómico argentino experto para la hamburguesería Cope Burgers Puerto Madero.
@@ -71,41 +92,11 @@ Respondé ÚNICAMENTE un objeto JSON válido, sin bloques markdown ni texto extr
 }
 `;
 
-    const geminiPayload = {
-      contents: [
-        {
-          parts: [
-            { text: promptText },
-            {
-              inline_data: {
-                mime_type: mimeType,
-                data: cleanBase64
-              }
-            }
-          ]
-        }
-      ],
-      generationConfig: {
-        temperature: 0.1,
-        response_mime_type: 'application/json'
-      }
-    };
-
-    // Llamada con rotación inteligente de modelos (evita errores 404 si Google deprecó o movió endpoints)
-    const textOutput = await callGeminiWithFallback(apiKey, geminiPayload);
+    // Llamada con resolución dinámica de modelos y fallbacks
+    const textOutput = await callGeminiWithFallback(apiKey, promptText, mimeType, cleanBase64);
 
     // Parsear JSON devuelto por la IA
-    let parsedData = {};
-    try {
-      parsedData = JSON.parse(textOutput);
-    } catch (parseErr) {
-      const match = textOutput.match(/\{[\s\S]*\}/);
-      if (match) {
-        parsedData = JSON.parse(match[0]);
-      } else {
-        throw new Error('La IA no devolvió un JSON válido: ' + textOutput.slice(0, 200));
-      }
-    }
+    const parsedData = extractJsonFromText(textOutput);
 
     return res.status(200).json({
       ok: true,
@@ -118,40 +109,155 @@ Respondé ÚNICAMENTE un objeto JSON válido, sin bloques markdown ni texto extr
   }
 }
 
-// Llamada con fallback automático entre modelos y versiones (v1beta y v1)
-async function callGeminiWithFallback(apiKey, payload) {
-  const candidateEndpoints = [
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
-    'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent',
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent',
-    'https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent',
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
-  ];
+// Resuelve qué modelos están habilitados y soportan generateContent para esta API Key específica
+async function resolveAvailableGeminiModels(apiKey) {
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+    if (!res.ok) {
+      const errText = await res.text();
+      let parsed = null;
+      try { parsed = JSON.parse(errText); } catch (_) {}
+      const errMsg = (parsed && parsed.error && parsed.error.message) || errText;
+      return {
+        ok: false,
+        status: res.status,
+        error: res.status === 400 ? 'API_KEY_INVALID' : (res.status === 403 ? 'PERMISSION_DENIED' : 'GOOGLE_API_ERROR'),
+        details: errMsg
+      };
+    }
 
-  let lastErrorDetails = null;
+    const data = await res.json();
+    const models = data.models || [];
 
-  for (const endpoint of candidateEndpoints) {
+    // Filtrar únicamente los modelos que soportan generateContent
+    const usable = models
+      .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
+      .map(m => m.name.replace(/^models\//, ''));
+
+    // Ordenar con ranking: preferimos modelos Flash vigentes y multimodales
+    usable.sort((a, b) => {
+      const score = name => {
+        const n = name.toLowerCase();
+        if (n.includes('embedding') || n.includes('aqa') || n.includes('imagen')) return -100;
+        let s = 0;
+        if (n.includes('flash')) s += 60;
+        if (n.includes('2.5')) s += 40;
+        else if (n.includes('2.0')) s += 30;
+        else if (n.includes('1.5')) s += 20;
+        if (n.includes('pro')) s += 15;
+        if (n.includes('latest')) s += 5;
+        if (n.includes('exp')) s -= 5;
+        return s;
+      };
+      return score(b) - score(a);
+    });
+
+    if (usable.length === 0) {
+      return {
+        ok: true,
+        models: [
+          'gemini-2.0-flash',
+          'gemini-1.5-flash',
+          'gemini-1.5-flash-latest',
+          'gemini-1.5-flash-002',
+          'gemini-1.5-flash-001',
+          'gemini-2.5-flash',
+          'gemini-1.5-pro'
+        ]
+      };
+    }
+
+    return { ok: true, models: usable };
+  } catch (err) {
+    console.warn('[resolveAvailableGeminiModels] Exception en ListModels:', err.message);
+    return {
+      ok: true,
+      models: [
+        'gemini-2.0-flash',
+        'gemini-1.5-flash',
+        'gemini-1.5-flash-latest',
+        'gemini-1.5-flash-002',
+        'gemini-1.5-flash-001',
+        'gemini-2.5-flash',
+        'gemini-1.5-pro'
+      ]
+    };
+  }
+}
+
+// Ejecuta la llamada probando los modelos disponibles y tolerando configuraciones
+async function callGeminiWithFallback(apiKey, promptText, mimeType, cleanBase64) {
+  const discovery = await resolveAvailableGeminiModels(apiKey);
+  if (!discovery.ok) {
+    if (discovery.status === 400 || discovery.error === 'API_KEY_INVALID') {
+      throw new Error('Tu Gemini API Key no es válida. Revisá que la hayas copiado completa de aistudio.google.com/app/apikey.');
+    }
+    if (discovery.status === 403 || discovery.error === 'PERMISSION_DENIED') {
+      throw new Error(`Permisos insuficientes con tu API Key (${discovery.details}). Verificá que la Generative Language API esté habilitada.`);
+    }
+    throw new Error(`Error de Google Gemini (${discovery.status}): ${discovery.details}`);
+  }
+
+  const candidateModels = discovery.models.slice(0, 6);
+  let lastError = null;
+
+  for (const modelName of candidateModels) {
     try {
-      const url = `${endpoint}?key=${apiKey}`;
-      const response = await fetch(url, {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+
+      // Primer intento con response_mime_type: 'application/json'
+      let response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                { text: promptText },
+                { inline_data: { mime_type: mimeType, data: cleanBase64 } }
+              ]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.1,
+            response_mime_type: 'application/json'
+          }
+        })
       });
 
+      // Si da 400 (por ejemplo si el modelo no soporta response_mime_type en esa versión), reintentar sin él
+      if (response.status === 400) {
+        const errText400 = await response.text();
+        console.warn(`[Gemini 400 en ${modelName}], reintentando sin response_mime_type...`, errText400);
+        response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  { text: promptText },
+                  { inline_data: { mime_type: mimeType, data: cleanBase64 } }
+                ]
+              }
+            ],
+            generationConfig: {
+              temperature: 0.1
+            }
+          })
+        });
+      }
+
       if (response.status === 404) {
-        console.warn(`[Gemini Fallback] Modelo en 404: ${endpoint}, probando siguiente alternativa...`);
+        console.warn(`[Gemini 404 en ${modelName}], probando siguiente alternativa...`);
+        lastError = `Modelo ${modelName} no encontrado (404)`;
         continue;
       }
 
       if (!response.ok) {
         const errText = await response.text();
-        console.warn(`[Gemini Error ${response.status}] en ${endpoint}:`, errText);
-        lastErrorDetails = errText;
-        if (response.status === 400 || response.status === 401 || response.status === 403) {
-          throw new Error(errText);
-        }
+        console.warn(`[Gemini Error ${response.status} en ${modelName}]:`, errText);
+        lastError = errText;
         continue;
       }
 
@@ -163,12 +269,33 @@ async function callGeminiWithFallback(apiKey, payload) {
         return textOutput;
       }
     } catch (err) {
-      lastErrorDetails = err.message;
-      if (err.message && (err.message.includes('API_KEY_INVALID') || err.message.includes('PERMISSION_DENIED'))) {
-        throw err;
-      }
+      console.warn(`[Gemini Exception en ${modelName}]:`, err.message);
+      lastError = err.message;
     }
   }
 
-  throw new Error(lastErrorDetails || 'No se pudo conectar con ningún modelo de Gemini disponible.');
+  throw new Error(lastError || 'No se pudo conectar con ningún modelo de Gemini disponible.');
+}
+
+// Extrae el objeto JSON de la respuesta textual
+function extractJsonFromText(textOutput) {
+  try {
+    return JSON.parse(textOutput);
+  } catch (e1) {
+    // Buscar bloques de código ```json ... ```
+    const codeBlockMatch = textOutput.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+    if (codeBlockMatch && codeBlockMatch[1]) {
+      try {
+        return JSON.parse(codeBlockMatch[1]);
+      } catch (e2) {}
+    }
+    // Buscar cualquier bloque entre llaves { ... }
+    const braceMatch = textOutput.match(/\{[\s\S]*\}/);
+    if (braceMatch) {
+      try {
+        return JSON.parse(braceMatch[0]);
+      } catch (e3) {}
+    }
+    throw new Error('La IA no devolvió un JSON válido: ' + textOutput.slice(0, 150));
+  }
 }

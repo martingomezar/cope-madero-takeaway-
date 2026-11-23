@@ -603,12 +603,19 @@
         <div class="form-group">
           <label class="form-label" for="inputGeminiApiKey">Gemini API Key</label>
           <input type="password" id="inputGeminiApiKey" class="form-control" placeholder="AIzaSy..." />
-          <p class="form-hint">Obtené una clave gratuita en <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style="color:var(--cope-blue); font-weight:700;">aistudio.google.com</a>.</p>
+          <p class="form-hint">Obtené tu clave gratuita en <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style="color:var(--cope-blue); font-weight:700;">aistudio.google.com</a>.</p>
         </div>
 
-        <button type="submit" class="btn btn-primary" style="width:100%; margin-top:14px;">
-          💾 Guardar Clave en este Equipo
-        </button>
+        <div id="apiKeyTestStatus" class="hidden" style="margin-top:10px; padding:10px 12px; border-radius:8px; font-size:12px; line-height:1.4;"></div>
+
+        <div style="display:flex; gap:8px; margin-top:14px;">
+          <button type="button" id="btnTestApiKey" class="btn btn-secondary" style="flex:1;">
+            ⚡ Probar Conexión
+          </button>
+          <button type="submit" class="btn btn-primary" style="flex:1;">
+            💾 Guardar Clave
+          </button>
+        </div>
       </form>
     </div>
   </div>

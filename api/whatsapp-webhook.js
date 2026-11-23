@@ -189,14 +189,14 @@ async function sendWhatsAppReply(to, text) {
   }
 }
 
-// Llamar a Gemini Vision para extraer los datos fiscales de la foto
+// Llamar a Gemini Vision para extraer los datos fiscales de la foto o documento
 async function parseInvoiceWithGemini(base64Data, mimeType, caption) {
   const apiKey = GEMINI_API_KEY;
   if (!apiKey) {
-    throw new Error('Falta GEMINI_API_KEY en variables de entorno');
+    throw new Error('Falta GEMINI_API_KEY en variables de entorno de Vercel');
   }
 
-  const cleanBase64 = base64Data.replace(/^data:[a-zA-Z0-9/]+;base64,/, '');
+  const cleanBase64 = base64Data.includes(';base64,') ? base64Data.split(';base64,')[1] : base64Data;
 
   const promptText = `
 Sos un auditor y contador gastronómico argentino experto para la hamburguesería Cope Burgers Puerto Madero.
@@ -224,22 +224,52 @@ Respondé ÚNICAMENTE un objeto JSON con este formato:
 }
 `;
 
-  const candidateEndpoints = [
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
-    'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent',
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent',
-    'https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent',
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
+  // Descubrir dinámicamente modelos habilitados en Google Generative Language API
+  let candidateModels = [
+    'gemini-2.0-flash',
+    'gemini-1.5-flash',
+    'gemini-1.5-flash-latest',
+    'gemini-1.5-flash-002',
+    'gemini-1.5-flash-001',
+    'gemini-2.5-flash',
+    'gemini-1.5-pro'
   ];
+
+  try {
+    const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+    if (listRes.ok) {
+      const listData = await listRes.json();
+      const available = (listData.models || [])
+        .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
+        .map(m => m.name.replace(/^models\//, ''));
+      if (available.length > 0) {
+        candidateModels = available.sort((a, b) => {
+          const score = name => {
+            const n = name.toLowerCase();
+            if (n.includes('embedding') || n.includes('aqa') || n.includes('imagen')) return -100;
+            let s = 0;
+            if (n.includes('flash')) s += 60;
+            if (n.includes('2.5')) s += 40;
+            else if (n.includes('2.0')) s += 30;
+            else if (n.includes('1.5')) s += 20;
+            if (n.includes('pro')) s += 15;
+            return s;
+          };
+          return score(b) - score(a);
+        });
+      }
+    }
+  } catch (e) {
+    console.warn('[WhatsApp Gemini] No se pudo listar modelos, usando fallback:', e.message);
+  }
 
   let textOutput = null;
   let lastErr = null;
 
-  for (const endpoint of candidateEndpoints) {
+  for (const modelName of candidateModels.slice(0, 5)) {
     try {
-      const url = `${endpoint}?key=${apiKey}`;
-      const response = await fetch(url, {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+      let response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -253,10 +283,24 @@ Respondé ÚNICAMENTE un objeto JSON con este formato:
         })
       });
 
-      if (response.status === 404) {
-        continue;
+      if (response.status === 400) {
+        // Reintentar sin response_mime_type si el modelo no lo admite
+        response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{
+              parts: [
+                { text: promptText },
+                { inline_data: { mime_type: mimeType, data: cleanBase64 } }
+              ]
+            }],
+            generationConfig: { temperature: 0.1 }
+          })
+        });
       }
 
+      if (response.status === 404) continue;
       if (!response.ok) {
         lastErr = await response.text();
         continue;
@@ -274,7 +318,13 @@ Respondé ÚNICAMENTE un objeto JSON con este formato:
     throw new Error(lastErr || 'No se pudo obtener respuesta de la IA en ningún modelo disponible.');
   }
 
-  return JSON.parse(textOutput);
+  try {
+    return JSON.parse(textOutput);
+  } catch (e) {
+    const match = textOutput.match(/\{[\s\S]*\}/);
+    if (match) return JSON.parse(match[0]);
+    throw new Error('La IA no devolvió un JSON interpretable: ' + textOutput.slice(0, 100));
+  }
 }
 
 // Guardar fila en Google Sheets a través del Web App de Apps Script
