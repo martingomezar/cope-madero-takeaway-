@@ -63,42 +63,49 @@ body.modal-open {
   font-variant-numeric: tabular-nums;
 }
 
+/* Ocultar visualmente pero accesible para lectores de pantalla */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* ==========================================================================
-   HEADER PRINCIPAL
+   HEADER PRINCIPAL — ESTÉTICA OFICIAL BOLSA PACKAGING COPE BURGERS
    ========================================================================== */
 .site-header {
-  background: linear-gradient(135deg, var(--cope-blue-dark) 0%, var(--cope-blue) 100%);
-  color: var(--text-white);
-  padding: 20px 16px 24px;
-  box-shadow: var(--shadow-md);
+  background: #ffffff;
+  color: var(--text-main);
+  padding: 0;
+  box-shadow: 0 4px 20px rgba(0, 45, 98, 0.05);
   position: relative;
   overflow: hidden;
+  border-bottom: 1px solid var(--border-color);
 }
 
-.site-header::after {
-  content: '';
-  position: absolute;
-  top: -40px;
-  right: -40px;
-  width: 140px;
-  height: 140px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(245, 158, 11, 0.25) 0%, transparent 70%);
-  pointer-events: none;
-}
-
-.header-pattern-overlay {
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
-  background-size: 16px 16px;
-  pointer-events: none;
-  opacity: 0.6;
+.site-header .cope-packaging-stripes {
+  width: 100%;
+  height: 12px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--cope-blue) 0,
+    var(--cope-blue) 12px,
+    transparent 12px,
+    transparent 24px
+  );
+  opacity: 0.95;
 }
 
 .header-container {
   max-width: 960px;
   margin: 0 auto;
+  padding: 18px 16px 20px;
   position: relative;
   z-index: 2;
 }
@@ -106,37 +113,34 @@ body.modal-open {
 .header-top {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 12px;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 14px;
 }
 
-.brand-logo-wrap {
-  position: relative;
-  width: 62px;
-  height: 62px;
+.brand-bag-wrap {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
 }
 
-.brand-logo-img {
-  width: 100%;
-  height: 100%;
-  border-radius: var(--radius-md);
-  object-fit: cover;
-  border: 2px solid rgba(255, 255, 255, 0.35);
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
-  background: #ffffff;
+.brand-bag-logo-img {
+  height: 76px;
+  width: auto;
+  max-width: 175px;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 2px 8px rgba(0, 71, 187, 0.08));
+  transition: transform 0.2s ease;
 }
 
-.brand-logo-ring {
-  position: absolute;
-  inset: -4px;
-  border-radius: calc(var(--radius-md) + 4px);
-  border: 1px solid rgba(245, 158, 11, 0.45);
-  pointer-events: none;
+.brand-bag-logo-img:hover {
+  transform: scale(1.02);
 }
 
 .brand-info {
   flex: 1;
+  min-width: 0;
 }
 
 .brand-badges-row {
@@ -144,79 +148,84 @@ body.modal-open {
   align-items: center;
   flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: 4px;
+  margin-bottom: 5px;
 }
 
 .brand-badge-takeaway {
   display: inline-block;
-  background: rgba(245, 158, 11, 0.22);
-  color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.45);
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
   font-size: 10.5px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  padding: 2.5px 9px;
+  padding: 3px 10px;
   border-radius: var(--radius-full);
 }
 
 .brand-badge-location {
   display: inline-block;
-  background: rgba(255, 255, 255, 0.12);
-  color: #e2e8f0;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.02em;
-  padding: 2.5px 9px;
+  padding: 3px 10px;
   border-radius: var(--radius-full);
 }
 
 .brand-title {
-  font-size: 23px;
+  font-size: 21px;
   font-weight: 900;
   letter-spacing: -0.03em;
-  color: #ffffff;
-  line-height: 1.15;
+  color: var(--cope-blue);
+  line-height: 1.2;
 }
 
 .brand-slogan {
   font-size: 13px;
-  color: #cbd5e1;
+  color: var(--text-muted);
   font-weight: 600;
   letter-spacing: -0.01em;
+  margin-top: 1px;
 }
 
 .header-meta-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 14px;
+  gap: 8px 10px;
   font-size: 12.5px;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-color);
 }
 
 .meta-item {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #e2e8f0;
+  color: var(--text-muted);
   text-decoration: none;
-  font-weight: 500;
-}
-
-.interactive-meta {
-  background: rgba(255, 255, 255, 0.08);
-  padding: 3px 8px;
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  font-weight: 600;
+  background: var(--bg-card-subtle);
+  border: 1px solid var(--border-color);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
   transition: all 0.2s ease;
 }
 
+.interactive-meta {
+  color: var(--cope-blue);
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
 .interactive-meta:hover {
-  background: rgba(255, 255, 255, 0.18);
-  color: #ffffff;
+  background: var(--cope-blue-subtle);
+  border-color: #bfdbfe;
+  color: var(--cope-blue);
   text-decoration: none;
   transform: translateY(-1px);
 }
@@ -227,44 +236,46 @@ body.modal-open {
 }
 
 .rating-pill {
-  background: rgba(245, 158, 11, 0.2);
-  border: 1px solid rgba(245, 158, 11, 0.4);
-  color: #ffffff;
-  padding: 3px 9px;
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #92400e;
+  padding: 4px 10px;
   border-radius: var(--radius-full);
   font-weight: 700;
 }
 
 .rating-val {
-  color: #fbbf24;
+  color: #b45309;
   font-weight: 900;
 }
 
 .rating-count {
+  color: #92400e;
+  font-weight: 600;
   font-size: 11px;
-  color: #fde68a;
+  opacity: 0.85;
 }
 
 .status-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 3px 10px;
+  font-size: 11.5px;
+  font-weight: 800;
+  padding: 4px 12px;
   border-radius: var(--radius-full);
-  font-size: 12px;
-  font-weight: 700;
 }
 
 .status-badge.open {
-  background: rgba(16, 185, 129, 0.22);
-  color: #6ee7b7;
-  border: 1px solid rgba(16, 185, 129, 0.45);
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
 }
 
 .status-badge.closed {
-  background: rgba(239, 68, 68, 0.22);
-  color: #fca5a5;
-  border: 1px solid rgba(239, 68, 68, 0.45);
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
 }
 
 .status-dot {
@@ -764,6 +775,18 @@ body.modal-open {
 
 .footer-brand {
   margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.footer-brand-img {
+  height: 52px;
+  width: auto;
+  max-width: 140px;
+  object-fit: contain;
+  margin-bottom: 8px;
+  filter: drop-shadow(0 2px 6px rgba(0, 71, 187, 0.08));
 }
 
 .footer-title {
@@ -2044,12 +2067,10 @@ button:disabled,
   display: flex;
   align-items: center;
   gap: 4px;
-  background: rgba(255, 255, 255, 0.14);
+  background: #f1f5f9;
   padding: 4px 6px;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  border-radius: 24px;
+  border: 1px solid #e2e8f0;
 }
 
 .flag-chip {
@@ -2058,27 +2079,25 @@ button:disabled,
   gap: 4px;
   background: transparent;
   border: none;
-  color: #ffffff;
-  padding: 5px 8px;
+  color: #64748b;
+  padding: 5px 9px;
   border-radius: 14px;
   cursor: pointer;
   font-size: 11px;
   font-weight: 700;
   transition: all 0.2s ease;
-  opacity: 0.75;
 }
 
 .flag-chip:hover {
-  opacity: 1;
-  background: rgba(255, 255, 255, 0.2);
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.7);
 }
 
 .flag-chip.active {
-  opacity: 1;
-  background: #ffffff;
-  color: #0047bb;
+  background: var(--cope-blue);
+  color: #ffffff;
   font-weight: 800;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 2px 8px rgba(0, 71, 187, 0.25);
 }
 
 .flag-emoji {
@@ -2086,13 +2105,31 @@ button:disabled,
   line-height: 1;
 }
 
-@media (max-width: 540px) {
+@media (max-width: 640px) {
   .header-top {
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+  }
+  .brand-bag-logo-img {
+    height: 64px;
+  }
+  .brand-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .brand-badges-row {
+    justify-content: center;
   }
   .header-flags-bar {
-    width: 100%;
+    width: auto;
     justify-content: center;
-    margin-top: 6px;
+    margin-top: 4px;
+  }
+  .header-meta-row {
+    justify-content: center;
   }
 }
