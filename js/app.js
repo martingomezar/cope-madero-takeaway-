@@ -561,7 +561,7 @@
       els.modalExtraBaconGroup.style.opacity = '1';
       els.modalExtraBaconGroup.style.pointerEvents = 'auto';
       if (els.lblExtraBaconText) {
-        els.lblExtraBaconText.textContent = window.COPE_I18N ? window.COPE_I18N.t('modal_extra_bacon_text') : '🥓 Agregar Extra Bacon Crocante (+ $2.000)';
+        els.lblExtraBaconText.textContent = window.COPE_I18N ? window.COPE_I18N.t('modal_extra_bacon_text') : '🥓 Agregar Extra Bacon (+ $2.000)';
       }
     } else if (els.modalExtraBaconGroup) {
       els.modalExtraBaconGroup.classList.add('hidden');
@@ -1102,7 +1102,7 @@
           msg += `   ↳ 🧀 Extra: +Extra Queso Cheddar (+$2.000)\n`;
         }
         if (item.hasExtraBacon) {
-          msg += `   ↳ 🥓 Extra: +Extra Bacon Crocante (+$2.000)\n`;
+          msg += `   ↳ 🥓 Extra: +Extra Bacon (+$2.000)\n`;
         }
         if (item.isVeggie) {
           msg += `   ↳ 🌱 Opción Vegetariana: Con Not Burger y pan 100% vegano\n`;
