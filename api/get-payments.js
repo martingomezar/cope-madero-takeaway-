@@ -1,8 +1,51 @@
 // api/get-payments.js — Vercel Serverless Function
-// Consulta en tiempo real las últimas transacciones acreditadas en Mercado Pago
+// Consulta en tiempo real las últimas transacciones acreditadas (ingresos/cobros) en Mercado Pago
 // Protegido con PIN de seguridad para las terminales de caja
 
 const CAJA_MASTER_PIN = process.env.CAJA_MASTER_PIN || '2904';
+
+// Cache en memoria a nivel de función serverless para datos del comercio vendedor
+let cachedMerchantInfo = null;
+
+async function getMerchantInfo(token) {
+  if (cachedMerchantInfo) return cachedMerchantInfo;
+
+  // Si se configuró manualmente un MP_COLLECTOR_ID en las variables de Vercel
+  const envCollectorId = process.env.MP_COLLECTOR_ID;
+  if (envCollectorId) {
+    cachedMerchantInfo = {
+      id: String(envCollectorId).trim(),
+      email: '',
+      nickname: 'Configurado por ENV'
+    };
+    return cachedMerchantInfo;
+  }
+
+  try {
+    const meRes = await fetch('https://api.mercadopago.com/users/me', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (meRes.ok) {
+      const meData = await meRes.json();
+      if (meData && meData.id) {
+        cachedMerchantInfo = {
+          id: String(meData.id),
+          email: (meData.email || '').toLowerCase().trim(),
+          nickname: meData.nickname || ''
+        };
+        console.log(`[MercadoPago] Comercio Cope detectado: ID ${cachedMerchantInfo.id} (${cachedMerchantInfo.nickname || cachedMerchantInfo.email})`);
+        return cachedMerchantInfo;
+      }
+    } else {
+      console.warn(`[MercadoPago users/me] Error ${meRes.status} al consultar perfil de comercio.`);
+    }
+  } catch (err) {
+    console.warn('[MercadoPago users/me Exception]:', err.message);
+  }
+
+  return null;
+}
 
 export default async function handler(req, res) {
   // CORS headers
@@ -34,9 +77,20 @@ export default async function handler(req, res) {
   }
 
   try {
+    const merchant = await getMerchantInfo(token);
+    const merchantId = merchant ? merchant.id : null;
+    const merchantEmail = merchant ? merchant.email : null;
+
     const limit = Math.min(Number(req.query.limit) || 60, 100);
     const offset = Number(req.query.offset) || 0;
+
     let mpUrl = `https://api.mercadopago.com/v1/payments/search?sort=date_created&criteria=desc&limit=${limit}&offset=${offset}`;
+
+    // Si tenemos el collector.id, filtrar en la query para que MP devuelva SOLO cobros de la tienda
+    if (merchantId) {
+      mpUrl += `&collector.id=${encodeURIComponent(merchantId)}`;
+    }
+
     if (req.query.begin_date) {
       mpUrl += `&range=date_created&begin_date=${encodeURIComponent(req.query.begin_date)}`;
       if (req.query.end_date) {
@@ -44,19 +98,61 @@ export default async function handler(req, res) {
       }
     }
 
-    const mpRes = await fetch(mpUrl, {
+    let mpRes = await fetch(mpUrl, {
       headers: {
         Authorization: `Bearer ${token}`
       }
     });
 
+    // Si por alguna razón MP rechaza el filtro collector.id, reintentar sin él y filtrar en memoria
+    if (!mpRes.ok && merchantId) {
+      console.warn(`[MercadoPago] Falló búsqueda con collector.id (${mpRes.status}), reintentando búsqueda general.`);
+      let fallbackUrl = `https://api.mercadopago.com/v1/payments/search?sort=date_created&criteria=desc&limit=${limit}&offset=${offset}`;
+      if (req.query.begin_date) {
+        fallbackUrl += `&range=date_created&begin_date=${encodeURIComponent(req.query.begin_date)}`;
+        if (req.query.end_date) {
+          fallbackUrl += `&end_date=${encodeURIComponent(req.query.end_date)}`;
+        }
+      }
+      mpRes = await fetch(fallbackUrl, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    }
+
     if (!mpRes.ok) {
-      const errData = await mpRes.json();
+      const errData = await mpRes.json().catch(() => ({}));
       return res.status(mpRes.status).json({ error: errData.message || 'Error al consultar Mercado Pago' });
     }
 
     const data = await mpRes.json();
-    const results = (data.results || []).map((p) => {
+
+    // FILTRO ESTRICTO: Solo COBROS / INGRESOS de ventas del comercio
+    // Excluir compras, egresos, gastos o pagos salientes hechos por la cuenta
+    const rawResults = data.results || [];
+    const salesOnly = rawResults.filter((p) => {
+      // 1. Si el comercio fue el PAGADOR (egreso/gasto), descartar de inmediato
+      if (merchantId && p.payer && String(p.payer.id) === merchantId) {
+        return false;
+      }
+      if (merchantEmail && p.payer && p.payer.email && p.payer.email.toLowerCase() === merchantEmail) {
+        return false;
+      }
+
+      // 2. Si el dinero fue cobrado por OTRA cuenta (collector_id diferente al de Cope), descartar
+      if (merchantId && p.collector_id && String(p.collector_id) !== merchantId) {
+        return false;
+      }
+
+      // 3. Descartar operaciones personales/financieras que no son ventas de comida
+      const opType = (p.operation_type || '').toLowerCase();
+      if (['cellphone_recharge', 'investment', 'money_exchange', 'payment_addition'].includes(opType)) {
+        return false;
+      }
+
+      return true;
+    });
+
+    const results = salesOnly.map((p) => {
       let payerName = '';
       if (p.payer) {
         const first = p.payer.first_name || '';
@@ -151,12 +247,16 @@ export default async function handler(req, res) {
         delivery_address: deliveryAddress,
         delivery_apartment: deliveryApartment,
         delivery_fee: deliveryFee,
-        uber_link: uberLink
+        uber_link: uberLink,
+        collector_id: p.collector_id ? String(p.collector_id) : null,
+        operation_type: p.operation_type || null
       };
     });
 
     return res.status(200).json({
       timestamp: new Date().toISOString(),
+      merchant_id: merchantId,
+      merchant_nickname: merchant ? merchant.nickname : null,
       paging: data.paging || null,
       payments: results
     });
