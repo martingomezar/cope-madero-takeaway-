@@ -25,10 +25,10 @@ function setupSheets() {
     sheetFacturas = ss.insertSheet("Facturas");
     sheetFacturas.appendRow([
       "ID", "Fecha", "Proveedor", "Categoría", "Tipo Comprobante",
-      "Nro Comprobante", "Monto Total ($)", "Estado Pago", "Notas / Detalle",
+      "Nro Comprobante", "Neto Gravado ($)", "IVA ($)", "Total Bruto ($)", "Estado Pago", "Notas / Detalle",
       "Origen (Web/WhatsApp)", "Fecha de Carga"
     ]);
-    sheetFacturas.getRange("A1:K1").setFontWeight("bold").setBackground("#0047bb").setFontColor("#ffffff");
+    sheetFacturas.getRange("A1:M1").setFontWeight("bold").setBackground("#0047bb").setFontColor("#ffffff");
     sheetFacturas.setFrozenRows(1);
   }
 
@@ -64,6 +64,10 @@ function doPost(e) {
 
     if (action === "add_factura") {
       var sheetF = ss.getSheetByName("Facturas");
+      var montoTotal = Number(d.montoTotal) || 0;
+      var montoIva = Number(d.montoIva) || 0;
+      var montoNeto = Number(d.montoNeto) || (montoIva > 0 ? montoTotal - montoIva : montoTotal);
+
       sheetF.appendRow([
         d.id || ("fac_" + new Date().getTime()),
         d.fecha || Utilities.formatDate(new Date(), "GMT-3", "yyyy-MM-dd"),
@@ -71,7 +75,9 @@ function doPost(e) {
         d.categoria || "servicios",
         d.tipoComprobante || "Factura A",
         d.nroComprobante || "",
-        Number(d.montoTotal) || 0,
+        montoNeto,
+        montoIva,
+        montoTotal,
         d.estadoPago || "pagado",
         d.notas || "",
         d.origen || "Web",
@@ -139,6 +145,16 @@ function doGet(e) {
     for (var i = 1; i < dataF.length; i++) {
       var row = dataF[i];
       if (!row[0]) continue;
+
+      var isExtended = row.length >= 12 && !isNaN(row[8]);
+      var neto = isExtended ? (Number(row[6]) || 0) : (Number(row[6]) || 0);
+      var iva = isExtended ? (Number(row[7]) || 0) : 0;
+      var total = isExtended ? (Number(row[8]) || 0) : (Number(row[6]) || 0);
+      var estado = isExtended ? String(row[9]) : String(row[7]);
+      var notas = isExtended ? String(row[10] || "") : String(row[8] || "");
+      var origen = isExtended ? String(row[11] || "Web") : String(row[9] || "Web");
+      var createdAt = isExtended ? (row[12] ? new Date(row[12]).toISOString() : new Date().toISOString()) : (row[10] ? new Date(row[10]).toISOString() : new Date().toISOString());
+
       facturas.push({
         id: String(row[0]),
         fecha: formatDateCell(row[1]),
@@ -146,11 +162,13 @@ function doGet(e) {
         categoria: String(row[3]),
         tipoComprobante: String(row[4]),
         nroComprobante: String(row[5]),
-        montoTotal: Number(row[6]) || 0,
-        estadoPago: String(row[7]),
-        notas: String(row[8] || ""),
-        origen: String(row[9] || "Web"),
-        createdAt: row[10] ? new Date(row[10]).toISOString() : new Date().toISOString()
+        montoNeto: neto,
+        montoIva: iva,
+        montoTotal: total,
+        estadoPago: estado,
+        notas: notas,
+        origen: origen,
+        createdAt: createdAt
       });
     }
 

@@ -355,19 +355,60 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label" for="facturaMonto">Monto Total ($) *</label>
-              <div class="input-money-wrapper">
-                <span class="input-money-prefix">$</span>
-                <input type="number" id="facturaMonto" class="form-control input-money tabular" placeholder="0" min="0" step="any" required />
-              </div>
-            </div>
-
-            <div class="form-group">
               <label class="form-label" for="facturaEstado">Estado de Pago</label>
               <select id="facturaEstado" class="form-control" required>
                 <option value="pagado">Pagada ✅</option>
                 <option value="pendiente">Pendiente de Pago ⏳</option>
               </select>
+            </div>
+          </div>
+
+          <!-- FILA DE DISCRIMINACIÓN FISCAL: TOTAL NETO + IVA = TOTAL BRUTO -->
+          <div class="tax-breakdown-row">
+            <div class="form-group" style="flex:1.2; min-width:140px; margin-bottom:0;">
+              <label class="form-label" for="facturaNeto" style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                <span style="font-weight:700;">Subtotal Neto Gravado ($) *</span>
+                <span style="font-size:11px; color:#64748b; font-weight:normal;">(Sin IVA)</span>
+              </label>
+              <div class="input-money-wrapper">
+                <span class="input-money-prefix">$</span>
+                <input type="number" id="facturaNeto" class="form-control input-money tabular" placeholder="0" min="0" step="any" required />
+              </div>
+            </div>
+
+            <div class="form-group" style="width:130px; margin-bottom:0;">
+              <label class="form-label" for="facturaIvaPct" style="margin-bottom:4px;">Alícuota IVA</label>
+              <select id="facturaIvaPct" class="form-control tabular">
+                <option value="21">21% (General)</option>
+                <option value="10.5">10.5% (Reducido)</option>
+                <option value="27">27% (Servicios)</option>
+                <option value="0">0% (Exento / C)</option>
+                <option value="custom">Manual</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="flex:1; min-width:130px; margin-bottom:0;">
+              <label class="form-label" for="facturaIva" style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                <span style="font-weight:700;">IVA ($)</span>
+                <span style="font-size:11px; color:#64748b; font-weight:normal;">(Crédito Fiscal)</span>
+              </label>
+              <div class="input-money-wrapper">
+                <span class="input-money-prefix">$</span>
+                <input type="number" id="facturaIva" class="form-control input-money tabular" placeholder="0" min="0" step="any" />
+              </div>
+            </div>
+
+            <div class="tax-breakdown-separator">=</div>
+
+            <div class="form-group" style="flex:1.2; min-width:150px; margin-bottom:0;">
+              <label class="form-label" for="facturaMonto" style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                <span style="color:var(--cope-blue); font-weight:800;">Total Bruto ($) *</span>
+                <span style="font-size:11px; color:var(--cope-blue); font-weight:700;">(Total a pagar)</span>
+              </label>
+              <div class="input-money-wrapper">
+                <span class="input-money-prefix" style="color:var(--cope-blue); font-weight:900;">$</span>
+                <input type="number" id="facturaMonto" class="form-control input-money tabular" placeholder="0" min="0" step="any" required style="border-color:var(--cope-blue); font-weight:800; background:#f0f7ff;" />
+              </div>
             </div>
           </div>
 
@@ -422,7 +463,9 @@
                 <th>Proveedor</th>
                 <th>Categoría</th>
                 <th>Comprobante</th>
-                <th>Total ($)</th>
+                <th>Neto Gravado ($)</th>
+                <th>IVA ($)</th>
+                <th>Total Bruto ($)</th>
                 <th>Estado</th>
                 <th>Acción</th>
               </tr>

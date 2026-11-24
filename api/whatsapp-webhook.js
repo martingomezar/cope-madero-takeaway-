@@ -105,6 +105,10 @@ export default async function handler(req, res) {
 
       console.log('[WhatsApp] Factura interpretada por IA:', parsedData);
 
+      const montoTotal = Number(parsedData.montoTotal) || 0;
+      const montoIva = Number(parsedData.montoIva) || 0;
+      const montoNeto = Number(parsedData.montoNeto) || (montoIva > 0 ? montoTotal - montoIva : montoTotal);
+
       // 4. GUARDAR EN GOOGLE SHEETS
       const nuevaFactura = {
         id: 'fac_wpp_' + Date.now(),
@@ -113,7 +117,10 @@ export default async function handler(req, res) {
         categoria: parsedData.categoria || 'servicios',
         tipoComprobante: parsedData.tipoComprobante || 'Factura A',
         nroComprobante: parsedData.nroComprobante || 'S/N',
-        montoTotal: Number(parsedData.montoTotal) || 0,
+        montoNeto: montoNeto,
+        montoIva: montoIva,
+        montoTotal: montoTotal,
+        alicuotaIva: Number(parsedData.alicuotaIva) || (montoIva > 0 ? 21 : 0),
         estadoPago: 'pagado',
         notas: (parsedData.notas ? parsedData.notas + ' ' : '') + `(Recibido por WhatsApp de +${fromNumber})`,
         origen: 'WhatsApp',
@@ -131,12 +138,14 @@ export default async function handler(req, res) {
         `✅ *Factura Registrada con Éxito*\n` +
         `🍔 *Cope Burgers Puerto Madero*\n\n` +
         `• *Proveedor:* ${nuevaFactura.proveedor}\n` +
-        `• *Monto:* $ ${Math.round(nuevaFactura.montoTotal).toLocaleString('es-AR')}\n` +
-        `• *Categoría:* ${formatCategoriaLabel(nuevaFactura.categoria)}\n` +
+        `• *Subtotal Neto:* $ ${Math.round(nuevaFactura.montoNeto).toLocaleString('es-AR')}\n` +
+        `• *IVA:* $ ${Math.round(nuevaFactura.montoIva).toLocaleString('es-AR')}\n` +
+        `• *Total Bruto:* $ ${Math.round(nuevaFactura.montoTotal).toLocaleString('es-AR')}\n` +
         `• *Comprobante:* ${nuevaFactura.tipoComprobante} ${nuevaFactura.nroComprobante}\n` +
+        `• *Categoría:* ${formatCategoriaLabel(nuevaFactura.categoria)}\n` +
         `• *Fecha:* ${formatDisplayDate(nuevaFactura.fecha)}\n` +
         (parsedData.notas ? `• *Detalle:* ${parsedData.notas}\n\n` : `\n`) +
-        `_Ya figura en Google Sheets y en la web de Contabilidad._`;
+        `_Ya figura discriminada en Google Sheets y en la web de Contabilidad._`;
 
       if (fromNumber && WHATSAPP_TOKEN && PHONE_NUMBER_ID) {
         await sendWhatsAppReply(fromNumber, confirmationText);
@@ -200,7 +209,7 @@ async function parseInvoiceWithGemini(base64Data, mimeType, caption) {
 
   const promptText = `
 Sos un auditor y contador gastronómico argentino experto para la hamburguesería Cope Burgers Puerto Madero.
-Tu tarea es examinar la foto de una factura de compra, ticket de controlador fiscal, o remito comercial argentino enviado por WhatsApp y extraer los datos en formato JSON estricto.
+Tu tarea es examinar la foto de una factura de compra, ticket de controlador fiscal, o remito comercial argentino enviado por WhatsApp y extraer los datos en formato JSON estricto, DISCRIMINANDO NETO GRAVADO, IVA Y TOTAL BRUTO.
 Texto o contexto que escribió el usuario: "${caption || ''}"
 
 Categorías exactas:
@@ -212,6 +221,12 @@ Categorías exactas:
 - "servicios" (Alquiler en Dique 4, expensas, luz Edenor, gas, reparaciones, mantenimiento)
 - "sueldos" (Sueldos, adelantos, propinas, varios)
 
+Reglas de montos:
+- "montoNeto": Subtotal neto gravado sin IVA. Si es Factura C o monotributo donde no hay IVA, montoNeto es igual al montoTotal.
+- "alicuotaIva": Porcentaje de IVA principal (21, 10.5, 27 o 0).
+- "montoIva": Monto de IVA discriminado. Si es Factura C o exento poner 0.
+- "montoTotal": Total final a pagar (montoNeto + montoIva = montoTotal).
+
 Respondé ÚNICAMENTE un objeto JSON con este formato:
 {
   "proveedor": "Nombre del proveedor",
@@ -219,6 +234,9 @@ Respondé ÚNICAMENTE un objeto JSON con este formato:
   "categoria": "carne | panaderia | papas | bebidas | packaging | servicios | sueldos",
   "tipoComprobante": "Factura A | Factura B | Factura C | Remito / Ticket X",
   "nroComprobante": "string",
+  "montoNeto": number,
+  "alicuotaIva": number,
+  "montoIva": number,
   "montoTotal": number,
   "notas": "Breve resumen de los ítems comprados"
 }

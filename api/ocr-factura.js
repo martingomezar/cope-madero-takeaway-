@@ -94,7 +94,7 @@ export default async function handler(req, res) {
 
     const promptText = `
 Sos un auditor y contador gastronómico argentino experto para la hamburguesería Cope Burgers Puerto Madero.
-Tu tarea es examinar la foto o documento PDF de una factura electrónica de compra (AFIP Factura A, B o C), ticket térmico de controlador fiscal, o remito comercial argentino, y extraer los datos fiscales y financieros exactos en formato JSON estricto.
+Tu tarea es examinar la foto o documento PDF de una factura electrónica de compra (AFIP Factura A, B o C), ticket térmico de controlador fiscal, o remito comercial argentino, y extraer los datos fiscales y financieros exactos en formato JSON estricto, DISCRIMINANDO NETO GRAVADO, IVA Y TOTAL BRUTO.
 
 Reglas de extracción:
 1. "proveedor": Razón social o nombre de fantasía del emisor (ej: "Cervecería y Maltería Quilmes", "Frigorífico Morres", "Panificadora San Telmo"). Si no es legible, poné "Proveedor no identificado".
@@ -106,10 +106,13 @@ Reglas de extracción:
    - "Factura C" (si tiene letra C)
    - "Remito / Ticket X" (tickets fiscales sin letra o remitos X)
 5. "nroComprobante": Punto de venta y número con guión (ej: "0005-00123456").
-6. "montoTotal": Monto final total a pagar con decimales como número puro (ej: 145800.50). ¡Importante! Buscar el "Total", "Importe Total", o la cifra final más grande.
-7. "categoria": Asigná la categoría que mejor describa los productos o servicios facturados (ej: "carne", "panaderia", "papas", "bebidas", "packaging", "servicios", "sueldos", "marketing", "impuestos", "limpieza", etc.).
-8. "notas": Breve resumen de los ítems principales facturados (ej: "60 kg Roast Beef, 40 kg Tapa de Asado").
-9. "confianza": "alta", "media" o "baja".
+6. "montoNeto": Subtotal o Importe Neto Gravado (sin IVA). En Factura A, buscar el campo "Subtotal", "Neto Gravado" o "Importe Neto". Si es Factura C o Monotributo donde el IVA no aplica, montoNeto es igual al montoTotal.
+7. "alicuotaIva": Alícuota porcentual principal de IVA (número: 21, 10.5, 27 o 0). En Factura C es 0.
+8. "montoIva": Monto del IVA liquidado discriminado (ej: 21000). Si es Factura C, ticket sin discriminar o monotributo, poner 0.
+9. "montoTotal": Monto final Total Bruto a pagar con decimales como número puro (ej: 121000.00). Debe cumplirse: montoNeto + montoIva = montoTotal (o aproximado si hay otros tributos menores).
+10. "categoria": Asigná la categoría que mejor describa los productos o servicios facturados (ej: "carne", "panaderia", "papas", "bebidas", "packaging", "servicios", "sueldos", "marketing", "impuestos", "limpieza", etc.).
+11. "notas": Breve resumen de los ítems principales facturados (ej: "60 kg Roast Beef, 40 kg Tapa de Asado").
+12. "confianza": "alta", "media" o "baja".
 
 Respondé ÚNICAMENTE un objeto JSON válido, sin bloques markdown ni texto extra:
 {
@@ -119,6 +122,9 @@ Respondé ÚNICAMENTE un objeto JSON válido, sin bloques markdown ni texto extr
   "categoria": "string",
   "tipoComprobante": "Factura A | Factura B | Factura C | Remito / Ticket X",
   "nroComprobante": "string",
+  "montoNeto": number,
+  "alicuotaIva": number,
+  "montoIva": number,
   "montoTotal": number,
   "notas": "string",
   "confianza": "alta | media | baja"

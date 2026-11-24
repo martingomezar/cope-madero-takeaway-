@@ -138,6 +138,9 @@
     els.facturaCategoria = document.getElementById('facturaCategoria');
     els.facturaTipo = document.getElementById('facturaTipo');
     els.facturaNumero = document.getElementById('facturaNumero');
+    els.facturaNeto = document.getElementById('facturaNeto');
+    els.facturaIvaPct = document.getElementById('facturaIvaPct');
+    els.facturaIva = document.getElementById('facturaIva');
     els.facturaMonto = document.getElementById('facturaMonto');
     els.facturaEstado = document.getElementById('facturaEstado');
     els.facturaNotas = document.getElementById('facturaNotas');
@@ -430,6 +433,23 @@
     // Submit de Factura
     if (els.formFactura) {
       els.formFactura.addEventListener('submit', handleFacturaSubmit);
+    }
+
+    // Cálculo reactivo de Neto + IVA = Total Bruto
+    if (els.facturaNeto) {
+      els.facturaNeto.addEventListener('input', () => updateFacturaTaxCalculation('neto'));
+    }
+    if (els.facturaIvaPct) {
+      els.facturaIvaPct.addEventListener('change', () => updateFacturaTaxCalculation('pct'));
+    }
+    if (els.facturaIva) {
+      els.facturaIva.addEventListener('input', () => updateFacturaTaxCalculation('iva'));
+    }
+    if (els.facturaMonto) {
+      els.facturaMonto.addEventListener('input', () => updateFacturaTaxCalculation('total'));
+    }
+    if (els.facturaTipo) {
+      els.facturaTipo.addEventListener('change', handleFacturaTipoChange);
     }
 
     // Filtros de Facturas
@@ -811,6 +831,52 @@
     });
   }
 
+  function updateFacturaTaxCalculation(source) {
+    const neto = parseFloat(els.facturaNeto ? els.facturaNeto.value : 0) || 0;
+    const ivaPct = els.facturaIvaPct ? els.facturaIvaPct.value : '21';
+
+    if (source === 'neto' || source === 'pct') {
+      if (ivaPct === 'custom') {
+        const iva = parseFloat(els.facturaIva ? els.facturaIva.value : 0) || 0;
+        if (els.facturaMonto) els.facturaMonto.value = Math.round((neto + iva) * 100) / 100;
+      } else {
+        const pct = parseFloat(ivaPct) || 0;
+        const iva = Math.round(neto * (pct / 100) * 100) / 100;
+        if (els.facturaIva) els.facturaIva.value = iva > 0 ? iva : (pct === 0 ? 0 : '');
+        if (els.facturaMonto) els.facturaMonto.value = Math.round((neto + iva) * 100) / 100;
+      }
+    } else if (source === 'iva') {
+      const iva = parseFloat(els.facturaIva ? els.facturaIva.value : 0) || 0;
+      if (els.facturaMonto) els.facturaMonto.value = Math.round((neto + iva) * 100) / 100;
+    } else if (source === 'total') {
+      const total = parseFloat(els.facturaMonto ? els.facturaMonto.value : 0) || 0;
+      if (ivaPct !== 'custom') {
+        const pct = parseFloat(ivaPct) || 0;
+        const calculatedNeto = Math.round((total / (1 + (pct / 100))) * 100) / 100;
+        const calculatedIva = Math.round((total - calculatedNeto) * 100) / 100;
+        if (els.facturaNeto) els.facturaNeto.value = calculatedNeto;
+        if (els.facturaIva) els.facturaIva.value = calculatedIva;
+      } else {
+        const iva = parseFloat(els.facturaIva ? els.facturaIva.value : 0) || 0;
+        if (els.facturaNeto) els.facturaNeto.value = Math.max(0, Math.round((total - iva) * 100) / 100);
+      }
+    }
+  }
+
+  function handleFacturaTipoChange() {
+    const tipo = els.facturaTipo ? els.facturaTipo.value : '';
+    if (!els.facturaIvaPct) return;
+    if (tipo === 'Factura C' || tipo === 'Remito / Ticket X') {
+      els.facturaIvaPct.value = '0';
+      updateFacturaTaxCalculation('pct');
+    } else if (tipo === 'Factura A') {
+      if (els.facturaIvaPct.value === '0') {
+        els.facturaIvaPct.value = '21';
+      }
+      updateFacturaTaxCalculation('pct');
+    }
+  }
+
   function applyOcrDataToForm(data) {
     if (data.fecha && els.facturaFecha) {
       els.facturaFecha.value = data.fecha;
@@ -837,10 +903,42 @@
       els.facturaNumero.value = data.nroComprobante;
       flashInput(els.facturaNumero);
     }
-    if (data.montoTotal && els.facturaMonto) {
-      els.facturaMonto.value = data.montoTotal;
+
+    // Discriminación de montos fiscales
+    let neto = parseFloat(data.montoNeto) || 0;
+    let iva = parseFloat(data.montoIva) || 0;
+    let total = parseFloat(data.montoTotal) || 0;
+    const alicuota = data.alicuotaIva != null ? String(data.alicuotaIva) : '21';
+
+    if (total > 0 && neto === 0) {
+      if (data.tipoComprobante === 'Factura A') {
+        neto = Math.round((total / 1.21) * 100) / 100;
+        iva = Math.round((total - neto) * 100) / 100;
+      } else {
+        neto = total;
+        iva = 0;
+      }
+    } else if (neto > 0 && total === 0) {
+      total = Math.round((neto + iva) * 100) / 100;
+    }
+
+    if (els.facturaIvaPct) {
+      const optionExists = Array.from(els.facturaIvaPct.options).some(o => o.value === alicuota);
+      els.facturaIvaPct.value = optionExists ? alicuota : (iva > 0 ? 'custom' : '0');
+    }
+    if (els.facturaNeto) {
+      els.facturaNeto.value = neto > 0 ? neto : '';
+      flashInput(els.facturaNeto);
+    }
+    if (els.facturaIva) {
+      els.facturaIva.value = iva >= 0 ? iva : '';
+      flashInput(els.facturaIva);
+    }
+    if (els.facturaMonto) {
+      els.facturaMonto.value = total > 0 ? total : '';
       flashInput(els.facturaMonto);
     }
+
     if (data.notas && els.facturaNotas) {
       els.facturaNotas.value = data.notas;
       flashInput(els.facturaNotas);
@@ -900,7 +998,12 @@
     const categoria = els.facturaCategoria.value;
     const tipoComprobante = els.facturaTipo.value;
     const nroComprobante = (els.facturaNumero.value || '').trim();
-    const montoTotal = parseFloat(els.facturaMonto.value) || 0;
+    
+    const montoNeto = parseFloat(els.facturaNeto ? els.facturaNeto.value : 0) || 0;
+    const montoIva = parseFloat(els.facturaIva ? els.facturaIva.value : 0) || 0;
+    let montoTotal = parseFloat(els.facturaMonto ? els.facturaMonto.value : 0) || 0;
+    const alicuotaIva = els.facturaIvaPct ? els.facturaIvaPct.value : '21';
+    
     const estadoPago = els.facturaEstado.value;
     const notas = (els.facturaNotas.value || '').trim();
 
@@ -908,8 +1011,14 @@
       showToast('Ingresá el nombre del proveedor', 'error');
       return;
     }
+
+    if (montoTotal <= 0 && montoNeto > 0) {
+      montoTotal = Math.round((montoNeto + montoIva) * 100) / 100;
+      if (els.facturaMonto) els.facturaMonto.value = montoTotal;
+    }
+
     if (montoTotal <= 0) {
-      showToast('El monto debe ser mayor a 0', 'error');
+      showToast('El monto total debe ser mayor a 0', 'error');
       return;
     }
 
@@ -920,7 +1029,10 @@
       categoria,
       tipoComprobante,
       nroComprobante,
-      montoTotal,
+      montoNeto: montoNeto > 0 ? montoNeto : (montoIva > 0 ? montoTotal - montoIva : montoTotal),
+      montoIva: montoIva >= 0 ? montoIva : 0,
+      montoTotal: montoTotal,
+      alicuotaIva: alicuotaIva,
       estadoPago,
       notas,
       createdAt: new Date().toISOString()
@@ -938,6 +1050,8 @@
     // Reset
     els.facturaProveedor.value = '';
     els.facturaNumero.value = '';
+    if (els.facturaNeto) els.facturaNeto.value = '';
+    if (els.facturaIva) els.facturaIva.value = '';
     els.facturaMonto.value = '';
     els.facturaNotas.value = '';
     if (els.ocrPreviewBox) els.ocrPreviewBox.classList.add('hidden');
@@ -979,6 +1093,8 @@
     const html = list.map(f => {
       const catObj = getCategoryById(f.categoria);
       const isPaid = f.estadoPago === 'pagado';
+      const neto = f.montoNeto != null ? f.montoNeto : (f.montoIva ? f.montoTotal - f.montoIva : f.montoTotal);
+      const iva = f.montoIva != null ? f.montoIva : (f.montoTotal - neto);
 
       return `
         <tr>
@@ -986,7 +1102,9 @@
           <td><strong>${escapeHtml(f.proveedor)}</strong></td>
           <td><span class="cat-badge ${catObj.badgeClass}">${escapeHtml(catObj.name)}</span></td>
           <td class="tabular">${escapeHtml(f.tipoComprobante)} ${escapeHtml(f.nroComprobante || 'S/N')}</td>
-          <td class="tabular" style="font-weight:900;">${formatMoney(f.montoTotal)}</td>
+          <td class="tabular" style="font-weight:600;">${formatMoney(neto)}</td>
+          <td class="tabular" style="color:var(--text-muted); font-size:12.5px;">${formatMoney(iva)}</td>
+          <td class="tabular" style="font-weight:900; color:var(--text-main);">${formatMoney(f.montoTotal)}</td>
           <td>
             <button type="button" class="badge ${isPaid ? 'badge-pagado' : 'badge-pendiente'}" style="cursor:pointer;" title="Click para alternar estado" onclick="window.copeContab.togglePagoFactura('${f.id}')">
               ${isPaid ? 'Pagada ✅' : 'Pendiente ⏳'}
@@ -1017,6 +1135,15 @@
     const diasCajas = filteredCajas.length;
 
     const egresosTotales = filteredFacturas.reduce((acc, f) => acc + (f.montoTotal || 0), 0);
+    const egresosNetos = filteredFacturas.reduce((acc, f) => {
+      const neto = f.montoNeto != null ? f.montoNeto : (f.montoIva ? f.montoTotal - f.montoIva : f.montoTotal);
+      return acc + (neto || 0);
+    }, 0);
+    const totalIvaCredito = filteredFacturas.reduce((acc, f) => {
+      const iva = f.montoIva != null ? f.montoIva : ((f.montoTotal || 0) - (f.montoNeto != null ? f.montoNeto : f.montoTotal));
+      return acc + (iva || 0);
+    }, 0);
+
     const resultadoOperativo = ventasTotales - egresosTotales;
     const margenOperativo = ventasTotales > 0 ? (resultadoOperativo / ventasTotales) * 100 : 0;
 
@@ -1025,7 +1152,10 @@
       const cat = getCategoryById(f.categoria);
       return cat && cat.isFoodCost;
     });
-    const foodCostTotal = foodCostFacturas.reduce((acc, f) => acc + (f.montoTotal || 0), 0);
+    const foodCostTotal = foodCostFacturas.reduce((acc, f) => {
+      const neto = f.montoNeto != null ? f.montoNeto : f.montoTotal;
+      return acc + (neto || 0);
+    }, 0);
     const ratioFoodCost = ventasTotales > 0 ? (foodCostTotal / ventasTotales) * 100 : 0;
 
     const facturasPendientes = filteredFacturas.filter(f => f.estadoPago === 'pendiente');
@@ -1035,7 +1165,7 @@
     if (els.kpiVentasSub) els.kpiVentasSub.textContent = `${diasCajas} ${diasCajas === 1 ? 'turno cerrado' : 'turnos cerrados'}`;
 
     if (els.kpiEgresos) els.kpiEgresos.textContent = formatMoney(egresosTotales);
-    if (els.kpiEgresosSub) els.kpiEgresosSub.textContent = `${filteredFacturas.length} facturas registradas`;
+    if (els.kpiEgresosSub) els.kpiEgresosSub.textContent = `Neto: ${formatMoney(egresosNetos)} · IVA: ${formatMoney(totalIvaCredito)}`;
 
     if (els.kpiResultado) {
       els.kpiResultado.textContent = formatMoney(resultadoOperativo);
@@ -1394,14 +1524,19 @@
 
     const headers = [
       'Fecha', 'Proveedor', 'Categoria', 'Tipo Comprobante',
-      'Numero Comprobante', 'Monto Total', 'Estado Pago', 'Notas'
+      'Numero Comprobante', 'Neto Gravado ($)', 'IVA ($)', 'Total Bruto ($)', 'Estado Pago', 'Notas'
     ];
 
     const rows = state.facturas.map(f => {
       const catObj = getCategoryById(f.categoria);
+      const neto = f.montoNeto != null ? f.montoNeto : (f.montoIva ? f.montoTotal - f.montoIva : f.montoTotal);
+      const iva = f.montoIva != null ? f.montoIva : (f.montoTotal - neto);
       return [
         f.fecha, `"${(f.proveedor || '').replace(/"/g, '""')}"`, `"${catObj.name}"`,
-        `"${f.tipoComprobante}"`, `"${f.nroComprobante || ''}"`, formatDecimalCsv(f.montoTotal),
+        `"${f.tipoComprobante}"`, `"${f.nroComprobante || ''}"`,
+        formatDecimalCsv(neto),
+        formatDecimalCsv(iva),
+        formatDecimalCsv(f.montoTotal),
         `"${f.estadoPago}"`, `"${(f.notas || '').replace(/"/g, '""')}"`
       ];
     });
