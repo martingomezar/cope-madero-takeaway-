@@ -2052,6 +2052,8 @@
             const rawAddr = o.delivery.address;
             const rawApt = o.delivery.apartment || '';
             const rawCust = o.customer?.name || '';
+            const rawPhone = o.customer?.phone || '';
+            const rawOrderId = o.id || '';
             
             uberDispatchHtml = `
               <div class="kds-delivery-address-box">
@@ -2063,8 +2065,8 @@
                   ${escapeHtml(rawAddr)} ${rawApt ? `<span style="color:#cbd5e1; font-weight:600;">(${escapeHtml(rawApt)})</span>` : ''}
                 </div>
                 <div style="margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;">
-                  <button type="button" class="btn-uber-dispatch" onclick="window.copeDispatchUber('${escapeHtml(rawAddr)}', '${escapeHtml(rawApt)}', '${escapeHtml(rawCust)}')" title="Copiar dirección y pedir moto con origen Cope Madero">
-                    <span>🛵 Pedir Moto (Copia dirección)</span> ➔
+                  <button type="button" class="btn-uber-dispatch" onclick="window.copeDispatchUber('${escapeHtml(rawAddr)}', '${escapeHtml(rawApt)}', '${escapeHtml(rawCust)}', '${escapeHtml(rawOrderId)}', '${escapeHtml(rawPhone)}')" title="Pedir moto Uber para este pedido">
+                    <span>🛵 Pedir Moto</span> ➔
                   </button>
                   <button type="button" onclick="window.copeCopyAddress('${escapeHtml(rawAddr)}', '${escapeHtml(rawApt)}')" style="background:#1e293b; border:1px solid #475569; color:#cbd5e1; padding:6px 10px; border-radius:8px; font-size:11.5px; font-weight:700; cursor:pointer;" title="Copiar dirección al portapapeles">
                     📋 Copiar
@@ -2321,8 +2323,8 @@
         }
       }
 
-      // Despachar moto Uber Flash / Envíos: Copia dirección de entrega y abre Uber con origen Cope Madero y destino pre-cargado
-      window.copeDispatchUber = function(destAddress, apt, customerName) {
+      // Despachar moto Uber Flash / Envíos: Soporte híbrido (API directa en segundo plano + Fallback universal)
+      window.copeDispatchUber = async function(destAddress, apt, customerName, orderId, customerPhone) {
         let cleanStreet = (destAddress || '').trim();
         let cleanApt = (apt || '').trim();
         let clientName = (customerName || '').trim();
@@ -2334,7 +2336,11 @@
           const inputAddr = prompt('🛵 Pedir Moto Uber Flash / Envíos\n\nIngresá la dirección de destino del cliente:', defaultPrompt);
           if (!inputAddr || !inputAddr.trim()) return;
           cleanStreet = inputAddr.trim();
-          if (latestDelivery && !clientName) clientName = latestDelivery.customer?.name || '';
+          if (latestDelivery) {
+            if (!clientName) clientName = latestDelivery.customer?.name || '';
+            if (!orderId) orderId = latestDelivery.id || '';
+            if (!customerPhone) customerPhone = latestDelivery.customer?.phone || '';
+          }
         }
 
         let fullDest = cleanStreet;
@@ -2352,17 +2358,60 @@
           copyTextFallback(fullDest);
         }
 
-        // 2. Notificación visual flotante (Toast)
         showCajaToast(`
           <div style="display:flex; flex-direction:column; gap:4px; text-align:left;">
-            <div style="font-weight:800; color:#38bdf8; font-size:13px;">🛵 Abriendo Uber Envíos (Moto Flash)...</div>
+            <div style="font-weight:800; color:#38bdf8; font-size:13px;">🛵 Conectando con Uber...</div>
             <div style="font-size:12px; color:#f8fafc;">📍 <b>Origen:</b> Macacha Güemes 260, Puerto Madero</div>
             <div style="font-size:12px; color:#f8fafc;">🏁 <b>Destino:</b> ${escapeHtml(fullDest)}</div>
-            <div style="font-size:11px; color:#94a3b8; margin-top:2px;">📋 Dirección copiada al portapapeles. Confirmá "Flash / Envío" con tu cuenta de Uber.</div>
           </div>
         `);
 
-        // 3. Parámetros estándar oficiales de Uber Universal Deep Link
+        // 2. Intentar despacho directo vía Uber Direct API (/api/dispatch-uber)
+        try {
+          const apiRes = await fetch('/api/dispatch-uber', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              orderId,
+              customerName: clientName,
+              customerPhone,
+              deliveryAddress: cleanStreet,
+              deliveryApartment: cleanApt
+            })
+          });
+
+          const resData = await apiRes.json();
+
+          if (resData.ok && resData.mode === 'API_DIRECT') {
+            showCajaToast(`
+              <div style="display:flex; flex-direction:column; gap:4px; text-align:left;">
+                <div style="font-weight:800; color:#4ade80; font-size:13px;">✅ ¡Moto Pedida con Éxito por API!</div>
+                <div style="font-size:12px; color:#f8fafc;">Envío #${escapeHtml(resData.deliveryId || '')} · Estado: <b>${escapeHtml(resData.status || 'Asignado')}</b></div>
+                ${resData.trackingUrl ? `<a href="${resData.trackingUrl}" target="_blank" style="color:#38bdf8; font-weight:700; text-decoration:underline;">Ver seguimiento en vivo de la moto ➔</a>` : ''}
+              </div>
+            `);
+            return;
+          }
+
+          // Si falta configurar claves de API de Uber en Vercel, usar apertura universal
+          const targetUrl = resData.fallbackUniversalUrl || generateClientUberUrl(fullDest, clientName);
+          showCajaToast(`
+            <div style="display:flex; flex-direction:column; gap:4px; text-align:left;">
+              <div style="font-weight:800; color:#38bdf8; font-size:13px;">🛵 Abriendo Uber Envíos (Moto Flash)...</div>
+              <div style="font-size:12px; color:#f8fafc;">📍 <b>Origen:</b> Macacha Güemes 260 · 🏁 <b>Destino:</b> ${escapeHtml(fullDest)}</div>
+              <div style="font-size:11px; color:#94a3b8; margin-top:2px;">📋 Dirección copiada al portapapeles. Confirmá "Flash / Envío" con tu cuenta de Uber.</div>
+            </div>
+          `);
+          window.open(targetUrl, '_blank', 'noopener,noreferrer');
+
+        } catch (e) {
+          console.warn('[Dispatch Uber Notice]', e);
+          const fallbackUrl = generateClientUberUrl(fullDest, clientName);
+          window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
+        }
+      };
+
+      function generateClientUberUrl(fullDest, clientName) {
         const originAddr = 'Macacha Güemes 260, Puerto Madero, CABA';
         const originName = 'Cope Burgers Puerto Madero';
         const originLat = -34.604912;
@@ -2380,18 +2429,15 @@
           'dropoff[formatted_address]': fullDest
         });
 
-        const uberUrl = `https://m.uber.com/ul/?${pParams.toString()}`;
-
-        // 4. Abrir en nueva ventana / pestaña
-        window.open(uberUrl, '_blank', 'noopener,noreferrer');
-      };
+        return `https://m.uber.com/ul/?${pParams.toString()}`;
+      }
 
       // Copiar solo dirección al portapapeles
       window.copeCopyAddress = function(destAddress, apt) {
         let fullDest = (destAddress || '').trim();
         if (apt && apt.trim()) fullDest += ' (' + apt.trim() + ')';
-        if (!fullDest.toLowerCase().includes('caba') && !fullDest.toLowerCase().includes('buenos aires')) {
-          fullDest += ', Puerto Madero, CABA';
+        if (!fullDest.toLowerCase().includes('caba') && !fullDest.toLowerCase().includes('buenos aires') && !fullDest.toLowerCase().includes('capital federal')) {
+          fullDest += ', CABA, Argentina';
         }
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(fullDest).then(() => {
@@ -2627,8 +2673,8 @@
                   ${isDelivery && p.delivery_address ? `
                     <div style="margin-top:6px; font-size:12px; color:#cbd5e1; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                       <span>📍 <b>${escapeHtml(p.delivery_address)}</b> ${p.delivery_apartment ? `(${escapeHtml(p.delivery_apartment)})` : ''}</span>
-                      <button type="button" class="btn-uber-dispatch" onclick="window.copeDispatchUber('${escapeHtml(p.delivery_address)}', '${escapeHtml(p.delivery_apartment || '')}', '${escapeHtml(p.payer_name || '')}')" title="Copiar dirección y pedir moto">
-                        <span>🛵 Pedir Moto (Copia dirección)</span> ➔
+                      <button type="button" class="btn-uber-dispatch" onclick="window.copeDispatchUber('${escapeHtml(p.delivery_address)}', '${escapeHtml(p.delivery_apartment || '')}', '${escapeHtml(p.payer_name || '')}', '${escapeHtml(p.order_id || '')}', '${escapeHtml(p.payer_phone || '')}')" title="Pedir moto Uber para este pedido">
+                        <span>🛵 Pedir Moto</span> ➔
                       </button>
                     </div>
                   ` : ''}
