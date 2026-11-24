@@ -904,15 +904,19 @@
       flashInput(els.facturaNumero);
     }
 
-    // Discriminación de montos fiscales
+    // Discriminación de montos fiscales (Lectura literal)
     let neto = parseFloat(data.montoNeto) || 0;
     let iva = parseFloat(data.montoIva) || 0;
     let total = parseFloat(data.montoTotal) || 0;
-    const alicuota = data.alicuotaIva != null ? String(data.alicuotaIva) : '21';
+    const alicuota = data.alicuotaIva != null ? String(data.alicuotaIva) : (iva > 0 ? '21' : '0');
 
-    if (total > 0 && neto === 0) {
+    // Salvaguarda: si el modelo confundió el Total de la factura con el Neto (neto >= total y hay IVA)
+    if (iva > 0 && total > 0 && neto >= total) {
+      neto = Math.round((total - iva) * 100) / 100;
+    } else if (total > 0 && neto === 0) {
       if (data.tipoComprobante === 'Factura A') {
-        neto = Math.round((total / 1.21) * 100) / 100;
+        const factor = (alicuota === '10.5') ? 1.105 : 1.21;
+        neto = Math.round((total / factor) * 100) / 100;
         iva = Math.round((total - neto) * 100) / 100;
       } else {
         neto = total;

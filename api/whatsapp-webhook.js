@@ -105,9 +105,25 @@ export default async function handler(req, res) {
 
       console.log('[WhatsApp] Factura interpretada por IA:', parsedData);
 
-      const montoTotal = Number(parsedData.montoTotal) || 0;
-      const montoIva = Number(parsedData.montoIva) || 0;
-      const montoNeto = Number(parsedData.montoNeto) || (montoIva > 0 ? montoTotal - montoIva : montoTotal);
+      const rawMontoTotal = Number(parsedData.montoTotal) || 0;
+      const rawMontoIva = Number(parsedData.montoIva) || 0;
+      let rawMontoNeto = Number(parsedData.montoNeto) || 0;
+
+      let montoTotal = rawMontoTotal;
+      let montoIva = rawMontoIva;
+      let montoNeto = rawMontoNeto;
+
+      if (parsedData.tipoComprobante === 'Factura C' || parsedData.tipoComprobante === 'Remito / Ticket X') {
+        montoIva = 0;
+        if (montoTotal > 0 && montoNeto === 0) montoNeto = montoTotal;
+        if (montoNeto > 0 && montoTotal === 0) montoTotal = montoNeto;
+      } else if (montoIva > 0) {
+        if (montoTotal > 0 && montoNeto >= montoTotal) {
+          montoNeto = Math.round((montoTotal - montoIva) * 100) / 100;
+        } else if (montoTotal === 0 && montoNeto > 0) {
+          montoTotal = Math.round((montoNeto + montoIva) * 100) / 100;
+        }
+      }
 
       // 4. GUARDAR EN GOOGLE SHEETS
       const nuevaFactura = {
@@ -208,9 +224,33 @@ async function parseInvoiceWithGemini(base64Data, mimeType, caption) {
   const cleanBase64 = base64Data.includes(';base64,') ? base64Data.split(';base64,')[1] : base64Data;
 
   const promptText = `
-Sos un auditor y contador gastronómico argentino experto para la hamburguesería Cope Burgers Puerto Madero.
-Tu tarea es examinar la foto de una factura de compra, ticket de controlador fiscal, o remito comercial argentino enviado por WhatsApp y extraer los datos en formato JSON estricto, DISCRIMINANDO NETO GRAVADO, IVA Y TOTAL BRUTO.
+Sos un auditor fiscal y contador gastronómico argentino experto para la hamburguesería Cope Burgers Puerto Madero.
+Tu tarea es examinar la foto de una factura de compra, ticket de controlador fiscal, o remito comercial argentino enviado por WhatsApp y LEER TEXTUALMENTE Y DISCRIMINAR los números fiscales reales.
 Texto o contexto que escribió el usuario: "${caption || ''}"
+
+¡REGLA SUPREMA: OCR ESTRICTO - PROHIBIDO CALCULAR O RE-CALCULAR MATEMÁTICAMENTE!:
+NO hagas cálculos matemáticos automáticos ni inventes sumas si los números ya están impresos en el comprobante.
+Debes LEER las cifras literales impresas en el documento.
+
+ESTRUCTURA DE COMPROBANTES ARGENTINOS (AFIP / TICKETS):
+Al pie del comprobante figuran casillas claramente separadas:
+1. "Importe Neto Gravado" (o "Subtotal", o "Conceptos No Gravados / Exentos"):
+   -> Asignar a "montoNeto".
+   -> ATENCIÓN: Es el importe SIN IVA. NUNCA pongas aquí el "Importe Total" de la factura.
+   -> Si la factura tiene "Conceptos No Gravados" u "Operaciones Exentas", súmalos al neto o pon el subtotal previo a impuestos.
+   -> Si es Factura C o Monotributo (donde NO se discrimina IVA), aquí va el mismo valor que el Total impreso.
+
+2. "IVA 21%", "IVA 10.5%", "IVA 27%":
+   -> Asignar a "montoIva".
+   -> Lee la cifra real impresa en la casilla de IVA del comprobante. NO la calcules multiplicando por 0.21.
+   -> Asignar a "alicuotaIva" el porcentaje (21, 10.5, 27 o 0).
+   -> Si es Factura C, ticket sin IVA discriminado o monotributo, "montoIva" = 0 y "alicuotaIva" = 0.
+
+3. "Importe Total" (o "Total $", "Total a Pagar"):
+   -> Asignar a "montoTotal".
+   -> ¡ADVERTENCIA CRÍTICA!: Este es el TOTAL FINAL DE LA FACTURA que se paga al proveedor.
+   -> ¡BAJO NINGUNA CIRCUNSTANCIA LE SUMES EL IVA ENCIMA AL IMPORTE TOTAL! El Importe Total YA incluye el IVA y cualquier otro concepto.
+   -> El valor de "montoTotal" NUNCA puede ser mayor al número que está impreso como "Importe Total" en el comprobante.
 
 Categorías exactas:
 - "carne" (Carne, medallones, roast beef, tapa, vacío, panceta, pollo)
@@ -220,12 +260,6 @@ Categorías exactas:
 - "packaging" (Cajas de burger, bolsas kraft, papel antigrasa, servilletas, vasos, stickers)
 - "servicios" (Alquiler en Dique 4, expensas, luz Edenor, gas, reparaciones, mantenimiento)
 - "sueldos" (Sueldos, adelantos, propinas, varios)
-
-Reglas de montos:
-- "montoNeto": Subtotal neto gravado sin IVA. Si es Factura C o monotributo donde no hay IVA, montoNeto es igual al montoTotal.
-- "alicuotaIva": Porcentaje de IVA principal (21, 10.5, 27 o 0).
-- "montoIva": Monto de IVA discriminado. Si es Factura C o exento poner 0.
-- "montoTotal": Total final a pagar (montoNeto + montoIva = montoTotal).
 
 Respondé ÚNICAMENTE un objeto JSON con este formato:
 {

@@ -93,26 +93,46 @@ export default async function handler(req, res) {
     const cleanBase64 = imageBase64.includes(';base64,') ? imageBase64.split(';base64,')[1] : imageBase64;
 
     const promptText = `
-Sos un auditor y contador gastronómico argentino experto para la hamburguesería Cope Burgers Puerto Madero.
-Tu tarea es examinar la foto o documento PDF de una factura electrónica de compra (AFIP Factura A, B o C), ticket térmico de controlador fiscal, o remito comercial argentino, y extraer los datos fiscales y financieros exactos en formato JSON estricto, DISCRIMINANDO NETO GRAVADO, IVA Y TOTAL BRUTO.
+Sos un auditor fiscal y contador gastronómico argentino experto para la hamburguesería Cope Burgers Puerto Madero.
+Tu tarea es examinar la foto o documento PDF de un comprobante de compra comercial o fiscal argentino (AFIP Factura A, B o C, ticket fiscal térmico, o remito comercial), y LEER TEXTUALMENTE Y DISCRIMINAR los números fiscales reales.
 
-Reglas de extracción:
-1. "proveedor": Razón social o nombre de fantasía del emisor (ej: "Cervecería y Maltería Quilmes", "Frigorífico Morres", "Panificadora San Telmo"). Si no es legible, poné "Proveedor no identificado".
-2. "cuit": CUIT del emisor si figura (ej: "30-50024985-2").
-3. "fecha": Fecha de emisión en formato exacto "YYYY-MM-DD". Si el año es de 2 dígitos (ej: 26), asumí 2026. Si no figura, poné la fecha de hoy.
-4. "tipoComprobante": Debe ser exactamente uno de los siguientes:
+¡REGLA SUPREMA: OCR ESTRICTO - PROHIBIDO CALCULAR O RE-CALCULAR MATEMÁTICAMENTE!:
+NO hagas cálculos matemáticos automáticos ni inventes sumas si los números ya están impresos en el comprobante.
+Debes LEER las cifras literales impresas en el documento.
+
+ESTRUCTURA DE COMPROBANTES ARGENTINOS (AFIP / TICKETS):
+Al pie del comprobante figuran casillas claramente separadas:
+1. "Importe Neto Gravado" (o "Subtotal", o "Conceptos No Gravados / Exentos"):
+   -> Asignar a "montoNeto".
+   -> ATENCIÓN: Es el importe SIN IVA. NUNCA pongas aquí el "Importe Total" de la factura.
+   -> Si la factura tiene "Conceptos No Gravados" u "Operaciones Exentas", súmalos al neto o pon el subtotal previo a impuestos.
+   -> Si es Factura C o Monotributo (donde NO se discrimina IVA), aquí va el mismo valor que el Total impreso.
+
+2. "IVA 21%", "IVA 10.5%", "IVA 27%":
+   -> Asignar a "montoIva".
+   -> Lee la cifra real impresa en la casilla de IVA del comprobante. NO la calcules multiplicando por 0.21.
+   -> Asignar a "alicuotaIva" el porcentaje (21, 10.5, 27 o 0).
+   -> Si es Factura C, ticket sin IVA discriminado o monotributo, "montoIva" = 0 y "alicuotaIva" = 0.
+
+3. "Importe Total" (o "Total $", "Total a Pagar"):
+   -> Asignar a "montoTotal".
+   -> ¡ADVERTENCIA CRÍTICA!: Este es el TOTAL FINAL DE LA FACTURA que se paga al proveedor.
+   -> ¡BAJO NINGUNA CIRCUNSTANCIA LE SUMES EL IVA ENCIMA AL IMPORTE TOTAL! El Importe Total YA incluye el IVA y cualquier otro concepto.
+   -> El valor de "montoTotal" NUNCA puede ser mayor al número que está impreso como "Importe Total" en el comprobante.
+
+Reglas adicionales:
+- "proveedor": Razón social o nombre de fantasía del emisor (ej: "Frigorífico Morres", "Cervecería Quilmes", "Panificadora San Telmo"). Si no es legible: "Proveedor no identificado".
+- "cuit": CUIT del emisor si figura (ej: "30-50024985-2").
+- "fecha": Fecha de emisión en formato exacto "YYYY-MM-DD". Si el año es de 2 dígitos (ej: 26), asumí 2026. Si no figura, poné la fecha de hoy.
+- "tipoComprobante": Exactamente uno de los siguientes:
    - "Factura A" (si tiene letra A en el encabezado)
    - "Factura B" (si tiene letra B)
-   - "Factura C" (si tiene letra C)
+   - "Factura C" (si tiene letra C o monotributo)
    - "Remito / Ticket X" (tickets fiscales sin letra o remitos X)
-5. "nroComprobante": Punto de venta y número con guión (ej: "0005-00123456").
-6. "montoNeto": Subtotal o Importe Neto Gravado (sin IVA). En Factura A, buscar el campo "Subtotal", "Neto Gravado" o "Importe Neto". Si es Factura C o Monotributo donde el IVA no aplica, montoNeto es igual al montoTotal.
-7. "alicuotaIva": Alícuota porcentual principal de IVA (número: 21, 10.5, 27 o 0). En Factura C es 0.
-8. "montoIva": Monto del IVA liquidado discriminado (ej: 21000). Si es Factura C, ticket sin discriminar o monotributo, poner 0.
-9. "montoTotal": Monto final Total Bruto a pagar con decimales como número puro (ej: 121000.00). Debe cumplirse: montoNeto + montoIva = montoTotal (o aproximado si hay otros tributos menores).
-10. "categoria": Asigná la categoría que mejor describa los productos o servicios facturados (ej: "carne", "panaderia", "papas", "bebidas", "packaging", "servicios", "sueldos", "marketing", "impuestos", "limpieza", etc.).
-11. "notas": Breve resumen de los ítems principales facturados (ej: "60 kg Roast Beef, 40 kg Tapa de Asado").
-12. "confianza": "alta", "media" o "baja".
+- "nroComprobante": Punto de venta y número con guión (ej: "0005-00123456").
+- "categoria": Asigná la categoría que mejor describa los productos o servicios: "carne", "panaderia", "papas", "bebidas", "packaging", "servicios", "sueldos", "marketing", "impuestos", "limpieza", etc.
+- "notas": Breve resumen de los ítems principales facturados (ej: "60 kg Roast Beef, 40 kg Tapa de Asado").
+- "confianza": "alta", "media" o "baja".
 
 Respondé ÚNICAMENTE un objeto JSON válido, sin bloques markdown ni texto extra:
 {
@@ -172,6 +192,34 @@ Respondé ÚNICAMENTE un objeto JSON válido, sin bloques markdown ni texto extr
 
     // Parsear JSON devuelto por la IA
     const parsedData = extractJsonFromText(textOutput);
+
+    // Sanitización y corrección de coherencia contable (Lectura literal)
+    let montoTotal = parseFloat(parsedData.montoTotal) || 0;
+    let montoNeto = parseFloat(parsedData.montoNeto) || 0;
+    let montoIva = parseFloat(parsedData.montoIva) || 0;
+    let alicuotaIva = parsedData.alicuotaIva != null ? parseFloat(parsedData.alicuotaIva) : (montoIva > 0 ? 21 : 0);
+
+    // En Factura C o Remitos / Monotributo, nunca hay IVA discriminado
+    if (parsedData.tipoComprobante === 'Factura C' || parsedData.tipoComprobante === 'Remito / Ticket X') {
+      montoIva = 0;
+      alicuotaIva = 0;
+      if (montoTotal > 0 && montoNeto === 0) montoNeto = montoTotal;
+      if (montoNeto > 0 && montoTotal === 0) montoTotal = montoNeto;
+    } else if (montoIva > 0) {
+      // En Factura A / B con IVA discriminado:
+      // Si la IA erróneamente tomó el Importe Total y lo puso en montoNeto (montoNeto >= montoTotal):
+      if (montoTotal > 0 && montoNeto >= montoTotal) {
+        // Corregir: el montoTotal es el total real del comprobante, y el neto es (total - IVA)
+        montoNeto = Math.round((montoTotal - montoIva) * 100) / 100;
+      } else if (montoTotal === 0 && montoNeto > 0) {
+        montoTotal = Math.round((montoNeto + montoIva) * 100) / 100;
+      }
+    }
+
+    parsedData.montoNeto = montoNeto;
+    parsedData.montoIva = montoIva;
+    parsedData.montoTotal = montoTotal;
+    parsedData.alicuotaIva = alicuotaIva;
 
     return res.status(200).json({
       ok: true,
