@@ -2321,79 +2321,68 @@
         }
       }
 
-      // Despachar moto Uber Flash: Copia dirección de entrega y abre Uber en Envíos con remitente Cope Madero
+      // Despachar moto Uber Flash / Envíos: Copia dirección de entrega y abre Uber con origen Cope Madero y destino pre-cargado
       window.copeDispatchUber = function(destAddress, apt, customerName) {
-        let fullDest = '';
-        let cleanStreet = '';
+        let cleanStreet = (destAddress || '').trim();
         let cleanApt = (apt || '').trim();
-        if (destAddress) {
-          cleanStreet = destAddress.trim();
-          fullDest = cleanStreet;
-          if (cleanApt) fullDest += ' (' + cleanApt + ')';
-          if (!fullDest.toLowerCase().includes('caba') && !fullDest.toLowerCase().includes('buenos aires')) {
-            fullDest += ', Puerto Madero, CABA';
-          }
+        let clientName = (customerName || '').trim();
+
+        // Si no se pasó dirección (ej: clic desde el botón rápido de la barra superior)
+        if (!cleanStreet) {
+          const latestDelivery = (allOrders || []).find(o => o.order_type === 'delivery' && o.delivery && o.delivery.address);
+          const defaultPrompt = latestDelivery ? `${latestDelivery.delivery.address}${latestDelivery.delivery.apartment ? ' (' + latestDelivery.delivery.apartment + ')' : ''}` : '';
+          const inputAddr = prompt('🛵 Pedir Moto Uber Flash / Envíos\n\nIngresá la dirección de destino del cliente:', defaultPrompt);
+          if (!inputAddr || !inputAddr.trim()) return;
+          cleanStreet = inputAddr.trim();
+          if (latestDelivery && !clientName) clientName = latestDelivery.customer?.name || '';
         }
 
-        // 1. Copiar dirección al portapapeles
-        if (fullDest) {
-          if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(fullDest).then(() => {
-              showCajaToast('📋 <b>Dirección de entrega copiada:</b><br/>' + escapeHtml(fullDest) + '<br/><span style="color:#38bdf8; font-size:12px;">(Pega con Ctrl+V si la app te lo pide)</span><br/>🛵 <i>Abriendo Envíos en Moto (Remitente: Cope Puerto Madero)...</i>');
-            }).catch(() => {
-              copyTextFallback(fullDest);
-              showCajaToast('📋 <b>Dirección copiada:</b><br/>' + escapeHtml(fullDest) + '<br/>🛵 <i>Abriendo Envíos en Moto...</i>');
-            });
-          } else {
-            copyTextFallback(fullDest);
-            showCajaToast('📋 <b>Dirección copiada:</b><br/>' + escapeHtml(fullDest) + '<br/>🛵 <i>Abriendo Envíos en Moto...</i>');
-          }
+        let fullDest = cleanStreet;
+        if (cleanApt && !fullDest.includes(cleanApt)) {
+          fullDest += ' (' + cleanApt + ')';
+        }
+        if (!fullDest.toLowerCase().includes('caba') && !fullDest.toLowerCase().includes('buenos aires') && !fullDest.toLowerCase().includes('capital federal')) {
+          fullDest += ', CABA, Argentina';
+        }
+
+        // 1. Copiar dirección de destino al portapapeles
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(fullDest).catch(() => copyTextFallback(fullDest));
         } else {
-          showCajaToast('🛵 <i>Abriendo Envíos en Moto (Remitente: Cope Puerto Madero)...</i>');
+          copyTextFallback(fullDest);
         }
 
-        // 2. Construir URL directa a la pestaña ENVÍOS (/go/connect/home) con remitente fijo en Cope Madero
+        // 2. Notificación visual flotante (Toast)
+        showCajaToast(`
+          <div style="display:flex; flex-direction:column; gap:4px; text-align:left;">
+            <div style="font-weight:800; color:#38bdf8; font-size:13px;">🛵 Abriendo Uber Envíos (Moto Flash)...</div>
+            <div style="font-size:12px; color:#f8fafc;">📍 <b>Origen:</b> Macacha Güemes 260, Puerto Madero</div>
+            <div style="font-size:12px; color:#f8fafc;">🏁 <b>Destino:</b> ${escapeHtml(fullDest)}</div>
+            <div style="font-size:11px; color:#94a3b8; margin-top:2px;">📋 Dirección copiada al portapapeles. Confirmá "Flash / Envío" con tu cuenta de Uber.</div>
+          </div>
+        `);
+
+        // 3. Parámetros estándar oficiales de Uber Universal Deep Link
         const originAddr = 'Macacha Güemes 260, Puerto Madero, CABA';
         const originName = 'Cope Burgers Puerto Madero';
-        const originLat = -34.6049;
-        const originLng = -58.3647;
+        const originLat = -34.604912;
+        const originLng = -58.364747;
 
-        // Estructura JSON requerida por el motor React de Uber (/go/connect/home)
-        const pickupObj = {
-          addressLine1: 'Macacha Güemes 260',
-          addressLine2: 'Puerto Madero, CABA',
-          id: 'cope-burgers-puerto-madero',
-          name: originName,
-          latitude: originLat,
-          longitude: originLng,
-          provider: 'uber_places',
-          source: 'SEARCH'
-        };
-        const pickupJsonEncoded = encodeURIComponent(JSON.stringify(pickupObj));
-        const originFormatted = encodeURIComponent(originAddr);
-        const originNameEncoded = encodeURIComponent(originName);
+        const pParams = new URLSearchParams({
+          action: 'setPickup',
+          'pickup[latitude]': originLat,
+          'pickup[longitude]': originLng,
+          'pickup[nickname]': originName,
+          'pickup[formatted_address]': originAddr,
+          'dropoff[latitude]': -34.6080,
+          'dropoff[longitude]': -58.3680,
+          'dropoff[nickname]': clientName || 'Destino Cliente',
+          'dropoff[formatted_address]': fullDest
+        });
 
-        let dropParams = '';
-        if (fullDest) {
-          const dropObj = {
-            addressLine1: cleanStreet || fullDest,
-            addressLine2: cleanApt ? `${cleanApt}, Puerto Madero, CABA` : 'Puerto Madero, CABA',
-            name: customerName || 'Cliente',
-            latitude: -34.6080,
-            longitude: -58.3630,
-            provider: 'uber_places',
-            source: 'SEARCH'
-          };
-          const dropJsonEncoded = encodeURIComponent(JSON.stringify(dropObj));
-          const destTextEncoded = encodeURIComponent(fullDest);
+        const uberUrl = `https://m.uber.com/ul/?${pParams.toString()}`;
 
-          dropParams = `&drop%5B0%5D=${dropJsonEncoded}&destinationAddressName=${destTextEncoded}&destinationLat=-34.6080&destinationLng=-58.3630`;
-        }
-
-        // URL limpia a la pestaña Envíos (/go/connect/home) sin action=setPickup (que redirigía a Viajes) ni colisiones de parámetros
-        let uberUrl = `https://m.uber.com/go/connect/home?pickup=${pickupJsonEncoded}&pickupAddressName=${originNameEncoded}&pickupLat=${originLat}&pickupLng=${originLng}${dropParams}`;
-
-        // 3. Abrir en nueva ventana / pestaña
+        // 4. Abrir en nueva ventana / pestaña
         window.open(uberUrl, '_blank', 'noopener,noreferrer');
       };
 

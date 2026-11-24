@@ -168,10 +168,19 @@ export default async function handler(req, res) {
       provider: 'uber_places',
       source: 'SEARCH'
     };
-    const pickupJson = encodeURIComponent(JSON.stringify(pickupObj));
-    const dropJson = encodeURIComponent(JSON.stringify(dropObj));
+    const pParams = new URLSearchParams({
+      action: 'setPickup',
+      'pickup[latitude]': STORE_ORIGIN.lat,
+      'pickup[longitude]': STORE_ORIGIN.lng,
+      'pickup[nickname]': STORE_ORIGIN.name,
+      'pickup[formatted_address]': STORE_ORIGIN.address,
+      'dropoff[latitude]': -34.6080,
+      'dropoff[longitude]': -58.3680,
+      'dropoff[nickname]': 'Cliente',
+      'dropoff[formatted_address]': `${cleanAddress}, CABA, Argentina`
+    });
 
-    const uberWebUrl = `https://m.uber.com/go/connect/home?pickup=${pickupJson}&pickupAddressName=${encodeURIComponent(STORE_ORIGIN.name)}&pickupLat=${STORE_ORIGIN.lat}&pickupLng=${STORE_ORIGIN.lng}&drop%5B0%5D=${dropJson}&destinationAddressName=${dropoffFormatted}&destinationLat=-34.6080&destinationLng=-58.3630`;
+    const uberWebUrl = `https://m.uber.com/ul/?${pParams.toString()}`;
     const uberPackageDeeplink = uberWebUrl;
 
     return res.status(200).json({
