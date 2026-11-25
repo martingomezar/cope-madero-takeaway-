@@ -9,7 +9,8 @@ window.COPE_I18N = (function () {
   const TRANSLATIONS = {
     es: {
       // Header y Metas
-      badge_takeaway: 'Take Away & Delivery',
+      badge_takeaway: 'Take Away · ¡Pronto Delivery!',
+      takeaway_notice_html: 'Podés pedir para retirar en nuestro local. <strong>¡Pronto sumaremos delivery!</strong>',
       slogan: 'El Auténtico Estilo Americano',
       status_open: 'Abierto · Retiro en 20 min',
       status_closed: 'Cerrado ahora',
@@ -127,7 +128,8 @@ window.COPE_I18N = (function () {
 
     en: {
       // Header & Meta
-      badge_takeaway: 'Take Away & Delivery',
+      badge_takeaway: 'Take Away · Delivery Soon!',
+      takeaway_notice_html: 'You can order for pick-up at our store. <strong>Delivery coming soon!</strong>',
       slogan: 'The Authentic American Style',
       status_open: 'Open · Ready in 20 min',
       status_closed: 'Closed now',
@@ -245,7 +247,8 @@ window.COPE_I18N = (function () {
 
     pt: {
       // Header & Meta
-      badge_takeaway: 'Take Away & Delivery',
+      badge_takeaway: 'Take Away · Em Breve Delivery!',
+      takeaway_notice_html: 'Você pode pedir para retirar no local. <strong>Em breve delivery!</strong>',
       slogan: 'O Autêntico Estilo Americano',
       status_open: 'Aberto · Pronto em 20 min',
       status_closed: 'Fechado agora',

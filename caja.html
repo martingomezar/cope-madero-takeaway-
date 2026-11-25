@@ -2351,6 +2351,8 @@
           fullDest += ', CABA, Argentina';
         }
 
+        const cleanSearchDest = cleanStreet.replace(/\(.*?\)/g, '').trim();
+
         // 1. Copiar dirección de destino al portapapeles y notificar a la extensión
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(fullDest).catch(() => copyTextFallback(fullDest));
@@ -2362,7 +2364,9 @@
           orderId: orderId || '',
           customerName: clientName || '',
           customerPhone: customerPhone || '',
-          destination: fullDest
+          destination: fullDest,
+          cleanDestination: cleanSearchDest,
+          apartment: cleanApt || ''
         };
 
         // Notificar a la extensión Cope Delivery Agent (si está instalada en Chrome)

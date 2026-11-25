@@ -267,6 +267,41 @@ body.modal-open {
   animation: pulse-dot 2s infinite ease-in-out;
 }
 
+/* Banner Destacado Take Away y Próximo Delivery */
+.takeaway-notice-banner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 6px 14px;
+  background: rgba(0, 71, 187, 0.05);
+  border: 1px solid rgba(0, 71, 187, 0.16);
+  border-radius: var(--radius-full);
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
+  max-width: 95%;
+  box-shadow: 0 1px 4px rgba(0, 71, 187, 0.04);
+  transition: all 0.2s ease;
+}
+
+.takeaway-notice-banner .notice-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.takeaway-notice-banner .notice-text {
+  color: #1e293b;
+}
+
+.takeaway-notice-banner strong {
+  color: #0047bb;
+  font-weight: 800;
+}
+
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.55; transform: scale(0.85); }

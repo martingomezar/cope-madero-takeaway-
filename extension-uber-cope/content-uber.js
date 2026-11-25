@@ -3,8 +3,25 @@
 (function () {
   console.log('🍔 [Cope Delivery Agent] Inicializando en Uber...');
 
-  const STORE_ORIGIN_ADDRESS = 'Macacha Güemes 260, Puerto Madero, CABA';
+  const STORE_ORIGIN_ADDRESS = 'Macacha Güemes 260, Puerto Madero';
   let activeDispatchData = null;
+
+  // Limpiar dirección para que el buscador de Uber (Places) no falle por notas de depto o piso
+  function cleanAddressForSearch(addr) {
+    if (!addr) return '';
+    let clean = addr
+      .replace(/\(.*?\)/g, '') // Quitar (4° B, Dique 2), notas entre paréntesis
+      .replace(/\b(piso|depto|departamento|dpto|timbre|torre|oficina|of\.)\s*[\w\d\s°º-]+/gi, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    // Limpiar comas duplicadas o al final
+    clean = clean.replace(/,\s*,/g, ', ').replace(/,\s*$/, '').trim();
+    // Asegurar contexto de zona para geocodificación precisa
+    if (!clean.toLowerCase().includes('caba') && !clean.toLowerCase().includes('buenos aires') && !clean.toLowerCase().includes('capital federal') && !clean.toLowerCase().includes('madero')) {
+      clean += ', Puerto Madero, CABA';
+    }
+    return clean;
+  }
 
   // 1. Obtener datos del despacho (desde Storage o URL Hash)
   function getDispatchData(callback) {
@@ -23,11 +40,11 @@
     if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
       chrome.runtime.sendMessage({ type: 'COPE_GET_ACTIVE_DISPATCH' }, (res) => {
         if (res && res.data) {
-          if (Date.now() - (res.data.timestamp || 0) < 15 * 60 * 1000) {
+          if (Date.now() - (res.data.timestamp || 0) < 20 * 60 * 1000) {
             activeDispatchData = res.data;
             callback(res.data);
           } else {
-            console.log('🍔 [Cope Delivery Agent] El pedido en memoria ya expiró (> 15 min).');
+            console.log('🍔 [Cope Delivery Agent] El pedido en memoria ya expiró (> 20 min).');
           }
         }
       });
@@ -41,14 +58,19 @@
 
     injectHud(data);
     setupFocusAutoFill(data);
+
+    // Dar tiempo a Uber para renderizar su UI antes de iniciar el flujo
     setTimeout(() => {
       runAutomatedWorkflow(data);
-    }, 700);
+    }, 1000);
   });
 
   // 3. Crear HUD Flotante de Cope
   function injectHud(data) {
     if (document.getElementById('cope-uber-hud')) return;
+
+    const cleanDest = cleanAddressForSearch(data.cleanDestination || data.destination);
+    const fullDest = data.destination;
 
     const hud = document.createElement('div');
     hud.id = 'cope-uber-hud';
@@ -68,13 +90,15 @@
 
         <div class="cope-hud-field">
           <span class="label">Destino del Cliente</span>
-          <span class="val highlight">${escapeHtml(data.destination)}</span>
+          <span class="val highlight">${escapeHtml(fullDest)}</span>
+          <span style="font-size:11px; color:#94a3b8; margin-top:2px;">Búsqueda GPS: <i>${escapeHtml(cleanDest)}</i></span>
         </div>
 
         ${data.customerName ? `
         <div class="cope-hud-field">
           <span class="label">Cliente / Comanda</span>
           <span class="val">${escapeHtml(data.customerName)} ${data.orderId ? `(#${data.orderId})` : ''}</span>
+          ${data.customerPhone ? `<span style="font-size:11px; color:#cbd5e1;">📞 ${escapeHtml(data.customerPhone)}</span>` : ''}
         </div>` : ''}
 
         <div id="copeAutoFillStatus" class="cope-hud-status">
@@ -82,26 +106,34 @@
           <span id="copeStatusText">Iniciando carga de direcciones...</span>
         </div>
 
-        <button type="button" id="btnCopeCopyAgain" class="btn-cope-copy" style="background:#0284c7; color:#ffffff; font-weight:800; padding:10px; font-size:12.5px;">
-          📋 COPIAR DIRECCIÓN (Pegar con Ctrl + V)
+        <!-- Botón principal de carga -->
+        <button type="button" id="btnCopeAutoFill" class="btn-cope-copy" style="background:#0284c7; color:#ffffff; font-weight:800; padding:10px; font-size:12px; border:none; box-shadow:0 2px 8px rgba(2,132,199,0.4);">
+          🚀 REINTENTAR CARGA AUTOMÁTICA
         </button>
 
+        <!-- Botones de ayuda directa 1-clic -->
         <div class="cope-hud-actions" style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
-          <button type="button" id="btnCopeFillAddresses" class="btn-cope-copy">
-            🚀 Reintentar Auto
+          <button type="button" id="btnCopePasteDropoff" class="btn-cope-copy" style="color:#38bdf8;">
+            👉 Pegar Destino
           </button>
-          <button type="button" id="btnCopeForceMoto" class="btn-cope-copy" style="color:#4ade80;">
-            🛵 Clic en Moto
+          <button type="button" id="btnCopePastePickup" class="btn-cope-copy" style="color:#e2e8f0;">
+            👉 Pegar Local
           </button>
-          <button type="button" id="btnCopeSearch" class="btn-cope-copy">
+          <button type="button" id="btnCopeCopyClean" class="btn-cope-copy" style="color:#a5f3fc;">
+            📋 Copiar Destino
+          </button>
+          <button type="button" id="btnCopeCopyApt" class="btn-cope-copy" style="color:#fde047;">
+            🏢 Copiar Depto/Piso
+          </button>
+          <button type="button" id="btnCopeSearch" class="btn-cope-copy" style="color:#cbd5e1;">
             🔍 Clic en Buscar
           </button>
-          <button type="button" id="btnCopeSwitchEnvios" class="btn-cope-copy" style="color:#f59e0b;">
-            📦 Pestaña Envíos
+          <button type="button" id="btnCopeForceMoto" class="btn-cope-copy" style="color:#4ade80; font-weight:800;">
+            🛵 Clic en Moto
           </button>
         </div>
 
-        <div class="cope-hud-cta">
+        <div class="cope-hud-cta" id="copeHudCta">
           👉 Verificá que quede en <b>Moto</b> y tocá <b>Confirmar</b> en Uber
         </div>
       </div>
@@ -116,18 +148,43 @@
       }
     });
 
-    hud.querySelector('#btnCopeCopyAgain').addEventListener('click', () => {
-      navigator.clipboard.writeText(data.destination).then(() => {
-        setStatus('✅ ¡Copiada! Hacé clic en "Ubicación de destino" y presioná <b>Ctrl + V</b>.');
+    hud.querySelector('#btnCopeAutoFill').addEventListener('click', () => {
+      runAutomatedWorkflow(data);
+    });
+
+    hud.querySelector('#btnCopePasteDropoff').addEventListener('click', async () => {
+      setStatus('🏁 Pegando destino en Uber...');
+      const els = findLocationElements();
+      if (els.dropoffEl) {
+        await typeTextIntoInput(els.dropoffEl, cleanDest);
+        setStatus('✅ Destino cargado. Verificá la sugerencia.');
+      } else {
+        setStatus('⚠️ No se encontró el campo de destino. Tocá primero el campo en Uber.');
+      }
+    });
+
+    hud.querySelector('#btnCopePastePickup').addEventListener('click', async () => {
+      setStatus('📍 Pegando retiro (local) en Uber...');
+      const els = findLocationElements();
+      if (els.pickupEl) {
+        await typeTextIntoInput(els.pickupEl, STORE_ORIGIN_ADDRESS);
+        setStatus('✅ Punto de retiro cargado.');
+      } else {
+        setStatus('⚠️ No se encontró el campo de recogida.');
+      }
+    });
+
+    hud.querySelector('#btnCopeCopyClean').addEventListener('click', () => {
+      navigator.clipboard.writeText(cleanDest).then(() => {
+        setStatus('✅ ¡Dirección limpia copiada! Pegala en Destino con <b>Ctrl + V</b>.');
       });
     });
 
-    hud.querySelector('#btnCopeSwitchEnvios').addEventListener('click', () => {
-      switchEnviosTab();
-    });
-
-    hud.querySelector('#btnCopeFillAddresses').addEventListener('click', () => {
-      runAutomatedWorkflow(data);
+    hud.querySelector('#btnCopeCopyApt').addEventListener('click', () => {
+      const aptText = data.apartment || (fullDest.match(/\((.*?)\)/) ? fullDest.match(/\((.*?)\)/)[1] : fullDest);
+      navigator.clipboard.writeText(aptText).then(() => {
+        setStatus(`✅ Piso/Depto copiado: <b>${escapeHtml(aptText)}</b> (para notas del chofer).`);
+      });
     });
 
     hud.querySelector('#btnCopeSearch').addEventListener('click', () => {
@@ -146,101 +203,151 @@
 
   // 4. AUTO-RELLENO AL DETECTAR FOCO EN CUALQUIER INPUT DE UBER
   function setupFocusAutoFill(data) {
-    document.addEventListener('focusin', (e) => {
+    const cleanDest = cleanAddressForSearch(data.cleanDestination || data.destination);
+
+    document.addEventListener('focusin', async (e) => {
       if (!e.target || e.target.tagName !== 'INPUT' || e.target.closest('#cope-uber-hud')) return;
 
       const ph = (e.target.placeholder || '').toLowerCase();
       const aria = (e.target.getAttribute('aria-label') || '').toLowerCase();
 
       // Si es el campo de recogida
-      if (ph.includes('recogida') || ph.includes('origen') || aria.includes('recogida')) {
+      if (ph.includes('recogida') || ph.includes('origen') || aria.includes('recogida') || aria.includes('pickup')) {
         if (!e.target.value || e.target.value.length < 5) {
-          console.log('🍔 [Cope Delivery Agent] Foco en Recogida. Rellenando...');
-          setReactInputValue(e.target, STORE_ORIGIN_ADDRESS);
-          setTimeout(() => selectFirstAutocompleteOption(), 500);
+          console.log('🍔 [Cope Delivery Agent] Foco en Recogida detectado.');
+          await typeTextIntoInput(e.target, STORE_ORIGIN_ADDRESS);
         }
       }
 
       // Si es el campo de destino
-      if (ph.includes('destino') || ph.includes('dónde') || ph.includes('donde') || aria.includes('destino')) {
-        if (!e.target.value || e.target.value !== data.destination) {
-          console.log('🍔 [Cope Delivery Agent] Foco en Destino. Rellenando...');
-          setReactInputValue(e.target, data.destination);
-          setTimeout(() => selectFirstAutocompleteOption(), 500);
+      if (ph.includes('destino') || ph.includes('dónde') || ph.includes('donde') || aria.includes('destino') || aria.includes('dropoff') || aria.includes('destination')) {
+        if (!e.target.value || e.target.value.length < 5) {
+          console.log('🍔 [Cope Delivery Agent] Foco en Destino detectado.');
+          await typeTextIntoInput(e.target, cleanDest);
         }
       }
     }, true);
   }
 
-  // 5. FLUJO DE CARGA AUTOMATIZADO
+  // 5. FLUJO DE CARGA AUTOMATIZADO PRINCIPAL
   async function runAutomatedWorkflow(data) {
-    setStatus('📍 Buscando campos de Origen y Destino...');
+    const cleanDest = cleanAddressForSearch(data.cleanDestination || data.destination);
+    setStatus('📍 Localizando campos de dirección en Uber...');
 
     const els = findLocationElements();
 
-    // 1. Si encontramos el botón o campo de destino, hacerle clic para activarlo
+    // Paso 1: Rellenar y confirmar Destino del Cliente
     if (els.dropoffEl) {
-      setStatus('🏁 Activando campo de destino...');
-      triggerRealClick(els.dropoffEl);
-      await sleep(400);
+      setStatus(`🏁 Escribiendo destino: <b>${escapeHtml(cleanDest)}</b>...`);
+      await typeTextIntoInput(els.dropoffEl, cleanDest);
+      await sleep(600);
+      selectFirstAutocompleteOption();
+    } else {
+      console.warn('🍔 [Cope Delivery Agent] No se detectó campo dropoffEl en la primera pasada.');
+    }
 
-      const activeInput = findActiveOrAnyInput();
-      if (activeInput) {
-        setReactInputValue(activeInput, data.destination);
+    await sleep(800);
+
+    // Paso 2: Rellenar Punto de Recogida (Local Cope) si está vacío
+    const updatedEls = findLocationElements();
+    if (updatedEls.pickupEl) {
+      const val = updatedEls.pickupEl.value || updatedEls.pickupEl.innerText || '';
+      if (!val || val.length < 5) {
+        setStatus('📍 Escribiendo punto de retiro: <b>Macacha Güemes 260</b>...');
+        await typeTextIntoInput(updatedEls.pickupEl, STORE_ORIGIN_ADDRESS);
         await sleep(600);
         selectFirstAutocompleteOption();
       }
     }
 
-    await sleep(600);
+    await sleep(900);
 
-    // 2. Si encontramos el botón o campo de recogida
-    if (els.pickupEl) {
-      const pInput = els.pickupEl.tagName === 'INPUT' ? els.pickupEl : null;
-      if (!pInput || !pInput.value || pInput.value.length < 5) {
-        setStatus('📍 Activando campo de recogida...');
-        triggerRealClick(els.pickupEl);
-        await sleep(400);
-
-        const activeInput = findActiveOrAnyInput();
-        if (activeInput) {
-          setReactInputValue(activeInput, STORE_ORIGIN_ADDRESS);
-          await sleep(600);
-          selectFirstAutocompleteOption();
-        }
-      }
-    }
-
-    await sleep(800);
-
-    // 3. Hacer clic en "Buscar"
+    // Paso 3: Clic en Buscar para calcular tarifas
+    setStatus('🔍 Solicitando cálculo de tarifas...');
     clickSearchButton();
 
-    // 4. Monitorear para seleccionar Moto
+    // Paso 4: Monitorear y seleccionar opción Moto
     watchAndSelectMoto();
   }
 
-  function findActiveOrAnyInput() {
-    if (document.activeElement && document.activeElement.tagName === 'INPUT' && !document.activeElement.closest('#cope-uber-hud')) {
-      return document.activeElement;
+  // 6. ESCRITURA REAL EN INPUT CON EVENTOS NATIVOS
+  async function typeTextIntoInput(input, text) {
+    if (!input) return false;
+
+    // Si es un div o button que abre el input, hacerle clic
+    if (input.tagName !== 'INPUT') {
+      triggerRealClick(input);
+      await sleep(350);
+      const innerInput = document.activeElement && document.activeElement.tagName === 'INPUT' ? document.activeElement : input.querySelector('input');
+      if (innerInput) {
+        input = innerInput;
+      } else {
+        return false;
+      }
     }
-    const inputs = Array.from(document.querySelectorAll('input:not([type="hidden"])')).filter(i => !i.closest('#cope-uber-hud'));
-    return inputs.length > 0 ? inputs[inputs.length - 1] : null;
+
+    input.focus();
+    input.click();
+    await sleep(150);
+
+    // Método A: document.execCommand (simula pulsación nativa del teclado en el navegador)
+    let typed = false;
+    try {
+      input.select();
+      document.execCommand('selectAll', false, null);
+      document.execCommand('delete', false, null);
+      typed = document.execCommand('insertText', false, text);
+    } catch (e) {
+      typed = false;
+    }
+
+    // Método B: Setter de React si execCommand no cambió el valor
+    if (!typed || input.value !== text) {
+      try {
+        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+          window.HTMLInputElement.prototype,
+          'value'
+        ).set;
+        nativeInputValueSetter.call(input, text);
+      } catch (err) {
+        input.value = text;
+      }
+    }
+
+    // Disparar eventos de input y change para React y validaciones
+    input.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true, cancelable: true }));
+    await sleep(250);
+
+    // Disparar Flecha Abajo para desplegar el autocompletado
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', code: 'ArrowDown', keyCode: 40, which: 40, bubbles: true }));
+    input.dispatchEvent(new KeyboardEvent('keyup', { key: 'ArrowDown', code: 'ArrowDown', keyCode: 40, which: 40, bubbles: true }));
+    await sleep(400);
+
+    // Intentar seleccionar la sugerencia que aparece en el desplegable
+    const selected = selectFirstAutocompleteOption();
+    if (!selected) {
+      // Simular tecla Enter para forzar selección de la primera opción
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }));
+      input.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }));
+    }
+
+    return true;
   }
 
-  // 6. BUSCADOR INTELIGENTE DE ELEMENTOS DE UBICACIÓN
+  // 7. BUSCADOR INTELIGENTE DE ELEMENTOS DE UBICACIÓN
   function findLocationElements() {
     const allInputs = Array.from(document.querySelectorAll('input:not([type="hidden"])'))
       .filter(i => !i.closest('#cope-uber-hud'));
 
     const allInteractives = Array.from(document.querySelectorAll(
       'input, button, [role="button"], [role="combobox"], [data-testid*="input"], [data-testid*="location"], div[tabindex]'
-    )).filter(el => !el.closest('#cope-uber-hud'));
+    )).filter(el => !el.closest('#cope-uber-hud') && !el.closest('header') && !el.closest('nav'));
 
     let pickupEl = null;
     let dropoffEl = null;
 
-    // Buscar en inputs
+    // Buscar primero en inputs
     for (const inp of allInputs) {
       const ph = (inp.placeholder || '').toLowerCase();
       const aria = (inp.getAttribute('aria-label') || '').toLowerCase();
@@ -263,25 +370,25 @@
       }
     }
 
-    // Buscar en cajas interactivas con texto
+    // Si no se encontraron por placeholder, buscar por texto visible en contenedores interactivos
     if (!pickupEl || !dropoffEl) {
       for (const el of allInteractives) {
         const txt = (el.innerText || el.textContent || '').trim().toLowerCase();
         if (txt.length > 70) continue;
 
         if (!pickupEl && (txt.includes('ubicación de recogida') || txt === 'recogida' || txt.includes('punto de partida'))) {
-          pickupEl = el;
+          pickupEl = el.querySelector('input') || el;
         }
         if (!dropoffEl && (txt.includes('ubicación de destino') || txt === 'destino' || txt.includes('¿a dónde vas?') || txt.includes('a donde vas'))) {
-          dropoffEl = el;
+          dropoffEl = el.querySelector('input') || el;
         }
       }
     }
 
-    // Fallback: contenedor "Consigue un viaje"
+    // Fallback específico para la tarjeta "Consigue un viaje" (m.uber.com/go/home)
     if (!pickupEl || !dropoffEl) {
       const card = Array.from(document.querySelectorAll('div, section, form')).find(c => {
-        if (c.closest('#cope-uber-hud')) return false;
+        if (c.closest('#cope-uber-hud') || c.closest('header')) return false;
         const t = (c.innerText || '').toLowerCase();
         return t.includes('consigue un viaje') || t.includes('get a ride');
       });
@@ -291,12 +398,6 @@
         if (cardInputs.length >= 2) {
           if (!pickupEl) pickupEl = cardInputs[0];
           if (!dropoffEl) dropoffEl = cardInputs[1];
-        } else {
-          const clickables = Array.from(card.querySelectorAll('button, [role="button"], div[tabindex="0"]'));
-          if (clickables.length >= 2) {
-            if (!pickupEl) pickupEl = clickables[0];
-            if (!dropoffEl) dropoffEl = clickables[1];
-          }
         }
       }
     }
@@ -304,31 +405,10 @@
     return { pickupEl, dropoffEl };
   }
 
-  // 7. SETTER NATIVO DE REACT
-  function setReactInputValue(input, value) {
-    if (!input) return;
-    input.focus();
-
-    try {
-      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
-        window.HTMLInputElement.prototype,
-        'value'
-      ).set;
-      nativeInputValueSetter.call(input, value);
-    } catch (e) {
-      input.value = value;
-    }
-
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-    input.dispatchEvent(new Event('change', { bubbles: true }));
-    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
-    input.dispatchEvent(new KeyboardEvent('keyup', { key: 'ArrowDown', bubbles: true }));
-  }
-
   // 8. AUTOCOMPLETADO
   function selectFirstAutocompleteOption() {
     const options = Array.from(document.querySelectorAll(
-      '[role="option"], [data-testid*="location-item"], [data-tracking-name*="suggestion"], li[tabindex], [data-testid*="autocomplete"]'
+      '[role="option"], ul[role="listbox"] > li, [data-testid*="location-item"], [data-tracking-name*="suggestion"], li[tabindex], [data-testid*="autocomplete"], div[role="listbox"] div[role="button"]'
     )).filter(el => !el.closest('#cope-uber-hud'));
 
     if (options.length > 0) {
@@ -341,7 +421,7 @@
 
   // 9. BOTÓN BUSCAR
   function clickSearchButton() {
-    const buttons = Array.from(document.querySelectorAll('button')).filter(b => !b.closest('#cope-uber-hud'));
+    const buttons = Array.from(document.querySelectorAll('button')).filter(b => !b.closest('#cope-uber-hud') && !b.closest('header') && !b.closest('nav'));
     const searchBtn = buttons.find(b => {
       const t = (b.innerText || b.textContent || '').trim().toLowerCase();
       return t === 'buscar' || t.includes('buscar') || t.includes('search') || t.includes('ver precios') || t.includes('conseguir un viaje');
@@ -356,26 +436,10 @@
     return false;
   }
 
-  // 10. PESTAÑA ENVÍOS
-  function switchEnviosTab() {
-    const allTabs = Array.from(document.querySelectorAll('a, button, div[role="tab"]')).filter(el => !el.closest('#cope-uber-hud'));
-    const enviosTab = allTabs.find(el => {
-      const t = (el.innerText || el.textContent || '').trim().toLowerCase();
-      return t.includes('envío') || t.includes('envios') || t.includes('package');
-    });
-
-    if (enviosTab) {
-      triggerRealClick(enviosTab);
-      setStatus('📦 Cambiando a pestaña Envíos...');
-      return true;
-    }
-    return false;
-  }
-
-  // 11. MONITOREO DE MOTO
+  // 10. MONITOREO Y SELECCIÓN ESTRICTA DE MOTO
   function watchAndSelectMoto() {
     let attempts = 0;
-    const maxAttempts = 35;
+    const maxAttempts = 30;
 
     const motoInterval = setInterval(() => {
       attempts++;
@@ -390,61 +454,59 @@
           statusText.innerHTML = '👉 Tocá <b>Moto</b> en la lista de opciones de Uber.';
         }
       }
-    }, 600);
+    }, 700);
   }
 
   function findAndClickMoto() {
-    // A. Imagen de moto
+    // IMPORTANTE: Excluir explícitamente el header y barra superior para NO confundir con la pestaña "Envíos"
+    const headerEl = document.querySelector('header, nav, [role="navigation"]');
+
+    // A. Buscar imágenes de moto en los resultados de viaje
     const motoImages = Array.from(document.querySelectorAll('img')).filter((img) => {
       if (img.closest('#cope-uber-hud')) return false;
+      if (headerEl && headerEl.contains(img)) return false;
       const alt = (img.alt || '').toLowerCase();
       const src = (img.src || '').toLowerCase();
       return (
-        alt.includes('moto') || alt.includes('flash') ||
-        src.includes('moto') || src.includes('flash') ||
-        src.includes('motorcycle') || src.includes('two_wheeler')
+        alt.includes('moto') || alt.includes('motorcycle') || alt.includes('two_wheeler') ||
+        src.includes('moto') || src.includes('motorcycle') || src.includes('two_wheeler')
       );
     });
 
     for (const img of motoImages) {
-      const card = img.closest('[role="radio"], [role="button"], button, li, [data-testid], [tabindex]') || img.parentElement;
+      const card = img.closest('[role="radio"], [role="button"], button, li, [data-testid*="product"]') || img.parentElement;
       if (card && !card.closest('#cope-uber-hud') && card.offsetParent !== null) {
         console.log('🍔 [Cope Delivery Agent] Moto encontrada por imagen:', img.alt || img.src);
         triggerRealClick(card);
-        setStatus('🛵 <b>¡Moto seleccionada!</b> Revisá tarifa y confirmá.');
+        setStatus('🛵 <b>¡Moto seleccionada!</b> Revisá tarifa y confirmá en Uber.');
         return true;
       }
     }
 
-    // B. Texto de Moto
-    const allElements = Array.from(document.querySelectorAll(
-      '[role="radio"], [role="button"], button, li, div[data-testid*="product"], div[data-testid*="ride"], [data-tracking-name*="product"], div[tabindex]'
-    ));
-    const candidates = allElements.length > 0 ? allElements : Array.from(document.querySelectorAll('div, li, button'));
+    // B. Buscar tarjetas de producto en la lista de opciones
+    const productCards = Array.from(document.querySelectorAll(
+      '[role="radio"], [data-testid*="product"], [data-testid*="ride-option"], [data-tracking-name*="product"], li[role="button"], div[role="button"]'
+    )).filter(el => {
+      if (el.closest('#cope-uber-hud')) return false;
+      if (headerEl && headerEl.contains(el)) return false;
+      return true;
+    });
 
-    for (const el of candidates) {
-      if (el.closest('#cope-uber-hud')) continue;
+    for (const card of productCards) {
+      const text = (card.innerText || card.textContent || '').trim().toLowerCase();
+      if (!text || text.length > 120) continue;
 
-      const text = (el.innerText || el.textContent || '').trim().toLowerCase();
-      if (!text || text.length > 100) continue;
-
+      // Debe ser una opción de viaje con Moto (excluyendo UberX, Comfort, Black)
       const hasMoto = (
         text.includes('uber moto') ||
         text.includes('flash moto') ||
-        text.includes('uber flash') ||
-        text.includes('envío') ||
-        text.includes('envios') ||
-        /\bmoto\b/i.test(text) ||
-        /\bflash\b/i.test(text)
+        (text.includes('moto') && !text.includes('uberx') && !text.includes('comfort'))
       );
 
-      const isCarOnly = (text.includes('uberx') && !text.includes('moto')) || text.includes('comfort') || text.includes('black') || text.includes('uberxl');
-
-      if (hasMoto && !isCarOnly && el.offsetParent !== null) {
+      if (hasMoto && card.offsetParent !== null) {
         console.log('🍔 [Cope Delivery Agent] Opción Moto encontrada:', text);
-        const clickable = el.closest('[role="radio"], [role="button"], button, li') || el;
-        triggerRealClick(clickable);
-        setStatus('🛵 <b>¡Moto seleccionada!</b> Revisá tarifa y confirmá.');
+        triggerRealClick(card);
+        setStatus('🛵 <b>¡Moto seleccionada!</b> Revisá tarifa y confirmá en Uber.');
         return true;
       }
     }

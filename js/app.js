@@ -187,6 +187,9 @@
     const sloganEl = document.getElementById('i18nHeaderSlogan');
     if (sloganEl) sloganEl.textContent = t('slogan');
 
+    const takeawayNoticeEl = document.getElementById('takeawayNoticeText');
+    if (takeawayNoticeEl) takeawayNoticeEl.innerHTML = t('takeaway_notice_html');
+
     if (els.searchInput) els.searchInput.placeholder = t('search_placeholder');
     if (els.storeHoursText) els.storeHoursText.textContent = t('schedule_label');
 
