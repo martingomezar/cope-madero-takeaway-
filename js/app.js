@@ -312,7 +312,7 @@
     if (els.storeHoursText) els.storeHoursText.textContent = CFG.SCHEDULE.display;
 
     // Calcular si está abierto
-    const openH = (CFG.SCHEDULE && CFG.SCHEDULE.openHour) || 12;
+    const openH = (CFG.SCHEDULE && CFG.SCHEDULE.openHour) || 11;
     const closeH = (CFG.SCHEDULE && CFG.SCHEDULE.closeHour) || 23;
     const now = new Date();
     const curHour = now.getHours();
@@ -321,8 +321,8 @@
     if (els.storeStatusBadge) {
       els.storeStatusBadge.className = 'status-badge ' + (isOpen ? 'open' : 'closed');
       els.storeStatusText.textContent = isOpen
-        ? 'Abierto · Retiro en ' + CFG.PREP_MINUTES + ' min'
-        : 'Cerrado · Abre ' + openH + ':00 hs';
+        ? (window.COPE_I18N ? window.COPE_I18N.t('status_open') : 'Abierto · Retiro en ' + CFG.PREP_MINUTES + ' min')
+        : (window.COPE_I18N ? window.COPE_I18N.t('status_closed') : 'Cerrado') + ' · Abre ' + openH + ':00 hs';
     }
   }
 
@@ -637,6 +637,18 @@
       if (els.modalAddCartPrice) {
         els.modalAddCartPrice.style.display = 'none';
       }
+    } else {
+      if (els.btnModalAddCart) {
+        els.btnModalAddCart.disabled = false;
+        els.btnModalAddCart.style.opacity = '1';
+        els.btnModalAddCart.style.cursor = 'pointer';
+      }
+      if (els.btnModalAddCartLabel) {
+        els.btnModalAddCartLabel.textContent = window.COPE_I18N ? window.COPE_I18N.t('modal_btn_add') : 'Agregar al pedido';
+      }
+      if (els.modalAddCartPrice) {
+        els.modalAddCartPrice.style.display = 'inline';
+      }
     }
 
     els.productModalBackdrop.classList.remove('hidden');
@@ -703,6 +715,9 @@
       if (els.bottomCartCount) els.bottomCartCount.style.display = 'none';
       if (els.bottomCartTotal) els.bottomCartTotal.style.display = 'none';
     } else if (count > 0) {
+      if (els.bottomCartCount) els.bottomCartCount.style.display = '';
+      if (els.bottomCartTotal) els.bottomCartTotal.style.display = '';
+      if (els.bottomCartLabel) els.bottomCartLabel.textContent = 'Ver Pedido';
       els.bottomCartCount.textContent = count === 1 ? '1 ítem' : count + ' ítems';
       els.bottomCartTotal.textContent = formatMoney(total);
       els.bottomCartBar.classList.remove('hidden');

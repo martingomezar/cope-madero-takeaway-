@@ -10,7 +10,7 @@ window.COPE_CONFIG = {
   ADDRESS: 'Macacha Güemes 260',
   CITY: 'Puerto Madero, CABA',
   // Control de pedidos online (true = habilitado, false = solo carta digital / próximamente)
-  ENABLE_ORDERING: false,
+  ENABLE_ORDERING: true,
 
   // Redes Sociales y Ubicación
   INSTAGRAM_URL: 'https://www.instagram.com/cope_burgers/',
@@ -24,11 +24,11 @@ window.COPE_CONFIG = {
 
   // Horarios de atención para Take Away
   SCHEDULE: {
-    openHour: 12,
+    openHour: 11,
     openMinute: 0,
     closeHour: 23,
-    closeMinute: 0,
-    display: 'Lunes a Domingos de 12:00 a 23:00 hs'
+    closeMinute: 30,
+    display: 'Lunes a Domingos de 11:00 a 23:30 hs'
   },
 
   // Tiempo estimado de preparación base
