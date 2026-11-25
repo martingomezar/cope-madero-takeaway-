@@ -226,8 +226,6 @@ function generateUberUniversalUrl(fullDest, customerName) {
     'pickup[longitude]': STORE_ORIGIN.lng,
     'pickup[nickname]': STORE_ORIGIN.name,
     'pickup[formatted_address]': STORE_ORIGIN.address,
-    'dropoff[latitude]': -34.6080,
-    'dropoff[longitude]': -58.3680,
     'dropoff[nickname]': customerName || 'Destino Cliente',
     'dropoff[formatted_address]': fullDest
   });
