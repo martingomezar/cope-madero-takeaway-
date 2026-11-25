@@ -2,10 +2,10 @@
 
 #cope-fudo-hud {
   position: fixed;
-  top: 18px;
-  right: 18px;
+  bottom: 18px;
+  left: 18px;
   z-index: 2147483647;
-  width: 380px;
+  width: 360px;
   max-width: calc(100vw - 36px);
   background: #0b1329;
   color: #f8fafc;
@@ -38,6 +38,8 @@
   font-size: 13.5px;
   color: #ffffff;
   border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  cursor: move;
+  user-select: none;
 }
 
 .cope-fudo-header .cope-title {

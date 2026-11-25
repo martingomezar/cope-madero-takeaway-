@@ -165,6 +165,33 @@
 
     document.body.appendChild(hud);
 
+    // Hacer el HUD arrastrable desde la barra superior
+    const headerEl = hud.querySelector('.cope-fudo-header');
+    if (headerEl) {
+      let isDragging = false;
+      let startX = 0, startY = 0, origLeft = 0, origTop = 0;
+      headerEl.addEventListener('mousedown', (e) => {
+        if (e.target.closest('button')) return;
+        isDragging = true;
+        const rect = hud.getBoundingClientRect();
+        hud.style.bottom = 'auto';
+        hud.style.right = 'auto';
+        hud.style.left = rect.left + 'px';
+        hud.style.top = rect.top + 'px';
+        startX = e.clientX;
+        startY = e.clientY;
+        origLeft = rect.left;
+        origTop = rect.top;
+        e.preventDefault();
+      });
+      window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        hud.style.left = Math.max(0, Math.min(window.innerWidth - 100, origLeft + (e.clientX - startX))) + 'px';
+        hud.style.top = Math.max(0, Math.min(window.innerHeight - 60, origTop + (e.clientY - startY))) + 'px';
+      });
+      window.addEventListener('mouseup', () => { isDragging = false; });
+    }
+
     // Eventos del HUD
     hud.querySelector('.cope-fudo-close').addEventListener('click', () => {
       hud.remove();
@@ -542,8 +569,12 @@
     if (!searchInput) return false;
 
     const exactFudoName = item.fudoName || cleanProductNameForFudo(item.name);
+    const noDotsName = exactFudoName.replace(/\.+$/g, '').trim();
     const searchVariants = [exactFudoName];
-    const words = normalizeText(exactFudoName).split(' ').filter(w => w.length > 2);
+    if (noDotsName && noDotsName !== exactFudoName) {
+      searchVariants.push(noDotsName);
+    }
+    const words = normalizeText(noDotsName).split(' ').filter(w => w.length > 2);
     if (words.length > 1) {
       searchVariants.push(words.slice(0, 2).join(' '));
     }
@@ -551,8 +582,9 @@
     let targetEl = null;
 
     for (const query of searchVariants) {
-      await typeTextIntoInput(searchInput, query);
-      await sleep(550);
+      // Limpiar input previo para forzar nuevo ciclo de búsqueda en AngularJS
+      await clearAndTypeInput(searchInput, query);
+      await sleep(650);
 
       targetEl = findMatchingProductElement(exactFudoName) || findMatchingProductElement(query);
       if (targetEl) break;
@@ -560,12 +592,15 @@
 
     if (targetEl) {
       console.log('🍔 [Cope POS Agent] Producto encontrado en Fudo, haciendo clic:', targetEl.innerText);
-      triggerRealClick(targetEl);
       const qty = Number(item.quantity || 1);
+      triggerRealClick(targetEl);
       for (let q = 1; q < qty; q++) {
-        await sleep(350);
-        const nextEl = findMatchingProductElement(exactFudoName) || targetEl;
-        triggerRealClick(nextEl);
+        await sleep(450);
+        // En Fudo v2, volver a buscar en el dropdown para sumar otra unidad si se cerró
+        await clearAndTypeInput(searchInput, noDotsName || exactFudoName);
+        await sleep(550);
+        const nextEl = findMatchingProductElement(exactFudoName) || findMatchingProductElement(noDotsName);
+        if (nextEl) triggerRealClick(nextEl);
       }
       return true;
     }
@@ -582,16 +617,36 @@
     return false;
   }
 
+  async function clearAndTypeInput(input, text) {
+    if (!input) return;
+    input.focus();
+    input.click();
+    await sleep(60);
+    try {
+      const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set;
+      if (setter) setter.call(input, '');
+      else input.value = '';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      await sleep(80);
+    } catch (e) {}
+    await typeTextIntoInput(input, text);
+    try {
+      input.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+    } catch (e) {}
+  }
+
   function findMatchingProductElement(query) {
-    const normQuery = normalizeText(query);
+    const normQuery = normalizeText(query).replace(/\.+$/g, '').trim();
     if (!normQuery) return null;
     const queryWords = normQuery.split(' ').filter(Boolean);
 
     const candidates = Array.from(document.querySelectorAll(
-      '[role="option"], [role="menuitem"], [role="button"], .dropdown-item, .autocomplete-item, [data-testid*="product"], .product-item, .product, .item, .grid-item, button, li, tr, td, a, div, span'
+      '[role="option"], .dropdown-menu li a, .dropdown-menu li, ul[class*="typeahead"] li, ul[class*="autocomplete"] li, .dropdown-item, .autocomplete-item, [data-testid*="product"], .product-item, .product, .item, li, a, button, div, span'
     )).filter(el => {
       if (el.closest('#cope-fudo-hud') || el.closest('header') || el.closest('nav')) return false;
       if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') return false;
+      // Evitar hacer clic en ítems ya agregados dentro de la tabla de ventas o totales
+      if (el.closest('table') && !el.closest('.dropdown-menu')) return false;
       return isElementVisible(el);
     });
 
@@ -599,18 +654,19 @@
     const matches = candidates.filter(el => {
       const txt = normalizeText(el.innerText || el.textContent);
       if (!txt || txt.length > 120) return false;
-      // Evitar coincidir con el propio texto si es un contenedor gigante
       if (el.querySelectorAll('div, li, tr').length > 6) return false;
       return txt.includes(normQuery) || queryWords.every(w => txt.includes(w));
     });
 
     if (matches.length === 0) return null;
 
-    // Preferir botones/opciones de lista/filas o el elemento más específico (menor longitud de texto)
+    // Priorizar fuertemente opciones dentro de listas desplegables / autocompletado
     matches.sort((a, b) => {
-      const aScore = (a.matches('[role="option"], li, button, a, .dropdown-item, .product-item') ? 0 : 50) + (a.innerText || '').length;
-      const bScore = (b.matches('[role="option"], li, button, a, .dropdown-item, .product-item') ? 0 : 50) + (b.innerText || '').length;
-      return aScore - bScore;
+      const aInDropdown = a.closest('.dropdown-menu, [role="listbox"], ul[class*="typeahead"], ul[class*="autocomplete"]') ? 0 : 100;
+      const bInDropdown = b.closest('.dropdown-menu, [role="listbox"], ul[class*="typeahead"], ul[class*="autocomplete"]') ? 0 : 100;
+      const aTag = a.matches('[role="option"], li, a, button, .dropdown-item, .product-item') ? 0 : 40;
+      const bTag = b.matches('[role="option"], li, a, button, .dropdown-item, .product-item') ? 0 : 40;
+      return (aInDropdown + aTag + (a.innerText || '').length) - (bInDropdown + bTag + (b.innerText || '').length);
     });
 
     return matches[0];
@@ -634,17 +690,21 @@
     const inputs = Array.from(document.querySelectorAll('input:not([type="hidden"])'))
       .filter(i => i !== excludeEl && !i.closest('#cope-fudo-hud') && !i.closest('header') && !i.closest('nav') && isElementVisible(i));
 
-    // Prioridad 1: Input explícito de agregar/buscar producto
+    // Prioridad 1: Input explícito de agregar/buscar producto en panel derecho
     const productInput = inputs.find(i => {
+      const rect = i.getBoundingClientRect();
+      if (rect.left < window.innerWidth * 0.45) return false;
       const ph = normalizeText(i.placeholder);
       const aria = normalizeText(i.getAttribute('aria-label'));
       const ngModel = normalizeText(i.getAttribute('ng-model') || i.getAttribute('formcontrolname'));
       return (
+        ph.includes('busca') ||
         ph.includes('producto') ||
         ph.includes('agregar') ||
         ph.includes('anadir') ||
         ph.includes('codigo') ||
         ph.includes('articulo') ||
+        aria.includes('busca') ||
         aria.includes('producto') ||
         ngModel.includes('product') ||
         ngModel.includes('addition')
