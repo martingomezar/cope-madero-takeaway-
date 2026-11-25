@@ -1,0 +1,249 @@
+/* overlay-fudo.css — HUD Flotante de Cope en Fudo POS (app.fu.do) */
+
+#cope-fudo-hud {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 2147483647;
+  width: 380px;
+  max-width: calc(100vw - 36px);
+  background: #0b1329;
+  color: #f8fafc;
+  border: 2px solid #0047bb;
+  border-radius: 18px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 71, 187, 0.35);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  overflow: hidden;
+  animation: cope-fudo-slide 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes cope-fudo-slide {
+  from {
+    transform: translateY(-25px) scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.cope-fudo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #0047bb 0%, #1e40af 100%);
+  padding: 11px 16px;
+  font-weight: 800;
+  font-size: 13.5px;
+  color: #ffffff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.cope-fudo-header .cope-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.cope-fudo-close {
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0.8;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.cope-fudo-close:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.cope-fudo-body {
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  font-size: 12.5px;
+  max-height: 82vh;
+  overflow-y: auto;
+}
+
+.cope-fudo-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  width: fit-content;
+}
+
+.cope-fudo-tag.takeaway {
+  background: rgba(0, 71, 187, 0.25);
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  color: #38bdf8;
+}
+
+.cope-fudo-tag.delivery {
+  background: rgba(22, 101, 52, 0.25);
+  border: 1px solid rgba(74, 222, 128, 0.5);
+  color: #4ade80;
+}
+
+.cope-fudo-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cope-fudo-field .label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cope-fudo-field .val {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.cope-fudo-field .val.highlight {
+  color: #fde047;
+}
+
+/* Lista de productos para la comanda */
+.cope-fudo-items-box {
+  background: #141f36;
+  border: 1px solid #1e2e4e;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cope-fudo-item-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding-bottom: 6px;
+}
+
+.cope-fudo-item-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.cope-fudo-item-qty {
+  font-size: 13px;
+  font-weight: 800;
+  color: #38bdf8;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+.cope-fudo-item-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex-grow: 1;
+}
+
+.cope-fudo-item-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.cope-fudo-item-meta {
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.3;
+}
+
+.cope-fudo-item-meta strong {
+  color: #f59e0b;
+}
+
+.cope-fudo-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #e0f2fe;
+}
+
+.btn-fudo-primary {
+  background: linear-gradient(135deg, #0047bb 0%, #2563eb 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 71, 187, 0.4);
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-fudo-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 71, 187, 0.55);
+}
+
+.cope-fudo-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.btn-fudo-tool {
+  background: #1e293b;
+  color: #94a3b8;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-weight: 700;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.btn-fudo-tool:hover {
+  background: #334155;
+  color: #ffffff;
+}
+
+.cope-fudo-cta {
+  background: #15803d;
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+}
