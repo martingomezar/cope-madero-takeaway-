@@ -579,10 +579,10 @@
         pushProduct('Extra Carne.', qty);
       }
       if (it.hasExtraCheddar) {
-        pushProduct('Extra...', qty, 'Extra Cheddar');
+        pushProduct('Extra...', qty, 'Cheddar');
       }
       if (it.hasExtraBacon) {
-        pushProduct('Extra...', qty, 'Extra Bacon');
+        pushProduct('Extra...', qty, 'Bacon');
       }
     }
 
@@ -620,17 +620,14 @@
       console.log('🍔 [Cope POS Agent] Producto encontrado en Fudo, haciendo clic:', targetEl.innerText);
       const qty = Number(item.quantity || 1);
       triggerRealClick(targetEl);
-      for (let q = 1; q < qty; q++) {
-        await sleep(450);
-        // En Fudo v2, volver a buscar en el dropdown para sumar otra unidad si se cerró
-        await clearAndTypeInput(searchInput, noDotsName || exactFudoName);
-        await sleep(550);
-        const nextEl = findMatchingProductElement(exactFudoName) || findMatchingProductElement(noDotsName);
-        if (nextEl) triggerRealClick(nextEl);
-      }
+      await sleep(350);
+
+      // Asegurar cantidad y precio en 0 en el renglón recién agregado de ADICIONAR
+      await configureLastAddedRowInFudo(qty, searchInput);
+
       if (item.itemComment) {
-        await sleep(250);
-        await attachItemCommentInFudo(item.itemComment, searchInput);
+        await sleep(200);
+        await attachItemCommentInFudo(item.itemComment, searchInput, exactFudoName);
       }
       return true;
     }
@@ -647,26 +644,95 @@
     return false;
   }
 
-  // Agregar comentario al último ítem agregado en ADICIONAR (ej: Extra Cheddar, Extra Bacon, Sin salsa)
-  async function attachItemCommentInFudo(commentText, searchInput) {
+  // Obtener renglones amarillos de ADICIONAR en el panel derecho
+  function getAdicionarRows(searchInput) {
+    const rightInputs = Array.from(document.querySelectorAll('input:not([type="hidden"])'))
+      .filter(i => i !== searchInput && !i.closest('#cope-fudo-hud') && !i.closest('header') && !i.closest('nav') && isElementVisible(i))
+      .filter(i => i.getBoundingClientRect().left > window.innerWidth * 0.45);
+
+    const rows = [];
+    const seen = new Set();
+    for (const inp of rightInputs) {
+      // Subir hasta el contenedor del renglón que contiene los 2 inputs (cantidad y precio)
+      let row = inp.parentElement;
+      for (let d = 0; d < 5 && row && row !== document.body; d++) {
+        const rowInputs = Array.from(row.querySelectorAll('input:not([type="hidden"])')).filter(isElementVisible);
+        if (rowInputs.length >= 2 && !rowInputs.includes(searchInput)) {
+          if (!seen.has(row)) {
+            seen.add(row);
+            rows.push(row);
+          }
+          break;
+        }
+        row = row.parentElement;
+      }
+    }
+    return rows;
+  }
+
+  // Configurar cantidad y poner precio en $0 en el último renglón agregado
+  async function configureLastAddedRowInFudo(qty, searchInput) {
+    try {
+      const rows = getAdicionarRows(searchInput);
+      if (rows.length === 0) return;
+      const lastRow = rows[rows.length - 1];
+      const rowInputs = Array.from(lastRow.querySelectorAll('input:not([type="hidden"])')).filter(isElementVisible);
+      if (rowInputs.length >= 2) {
+        const qtyInput = rowInputs[0];
+        const priceInput = rowInputs[rowInputs.length - 1];
+        if (!qtyInput.value || Number(qtyInput.value) !== qty) {
+          await typeTextIntoInput(qtyInput, String(qty));
+          await sleep(80);
+        }
+        await typeTextIntoInput(priceInput, '0');
+        await sleep(80);
+      }
+    } catch (e) {
+      console.warn('🍔 [Cope POS Agent] Aviso configurando cantidad/precio $0:', e);
+    }
+  }
+
+  // Agregar comentario al último ítem agregado en ADICIONAR (tocando el globo 💬 antes de ✕)
+  async function attachItemCommentInFudo(commentText, searchInput, productLabel) {
     if (!commentText) return false;
     try {
-      const commentBtns = Array.from(document.querySelectorAll(
-        '[ng-click*="comment" i], [title*="comentar" i], [aria-label*="comentar" i], [class*="comment" i], button, a, i, span'
-      )).filter(el => {
-        if (el.closest('#cope-fudo-hud') || el.closest('header') || el.closest('nav')) return false;
-        if (!isElementVisible(el)) return false;
-        const rect = el.getBoundingClientRect();
-        if (rect.left < window.innerWidth * 0.45) return false;
-        const ngClick = normalizeText(el.getAttribute('ng-click') || '');
-        const title = normalizeText(el.getAttribute('title') || el.getAttribute('aria-label') || '');
-        const cls = normalizeText(typeof el.className === 'string' ? el.className : '');
-        return ngClick.includes('comment') || title.includes('comentar') || title.includes('nota') || cls.includes('comment');
-      });
+      const rows = getAdicionarRows(searchInput);
+      let targetRow = rows.length > 0 ? rows[rows.length - 1] : null;
+      if (productLabel && rows.length > 1) {
+        const normLbl = normalizeText(productLabel).replace(/\.+$/g, '');
+        const matching = rows.filter(r => normalizeText(r.innerText || r.textContent).includes(normLbl));
+        if (matching.length > 0) targetRow = matching[matching.length - 1];
+      }
 
-      if (commentBtns.length === 0) return false;
-      // El ítem recién agregado suele ser el último (o el primero según orden de Fudo; en ADICIONAR es el último renglón amarillo)
-      const targetBtn = commentBtns[commentBtns.length - 1];
+      let targetBtn = null;
+      if (targetRow) {
+        // 1. Buscar por atributo de comentario dentro del renglón
+        const clickables = Array.from(targetRow.querySelectorAll('a, button, i, span, [role="button"]'))
+          .filter(el => isElementVisible(el));
+        targetBtn = clickables.find(el => {
+          const ngClick = normalizeText(el.getAttribute('ng-click') || '');
+          const title = normalizeText(el.getAttribute('title') || el.getAttribute('aria-label') || '');
+          const cls = normalizeText(typeof el.className === 'string' ? el.className : '');
+          return ngClick.includes('comment') || title.includes('comentar') || title.includes('nota') || cls.includes('comment');
+        });
+
+        // 2. Fallback por posición en Fudo v2: el globo está justo antes del botón ✕ (último ícono de la fila)
+        if (!targetBtn) {
+          const rowRect = targetRow.getBoundingClientRect();
+          const rightIcons = clickables.filter(el => {
+            const r = el.getBoundingClientRect();
+            const txt = (el.innerText || '').trim();
+            return r.left > rowRect.left + rowRect.width * 0.65 && txt !== '+' && txt !== '-';
+          });
+          if (rightIcons.length >= 2) {
+            // Ordenar de izquierda a derecha y tomar el anteúltimo (globo 💬 antes de ✕)
+            rightIcons.sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left);
+            targetBtn = rightIcons[rightIcons.length - 2];
+          }
+        }
+      }
+
+      if (!targetBtn) return false;
       triggerRealClick(targetBtn);
       await sleep(300);
 
@@ -913,6 +979,49 @@
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
   }
+
+  // 9. AUTO-SELECCIONAR FORMA DE PAGO DEL CLIENTE AL ABRIR "CERRAR PEDIDO"
+  function trySelectPaymentMethodInFudo(paymentMethodText) {
+    if (!paymentMethodText) return false;
+    const normPay = normalizeText(paymentMethodText);
+    const keywords = [];
+    if (normPay.includes('pix')) keywords.push('pix', 'transferencia');
+    else if (normPay.includes('mercado') || normPay.includes('mp') || normPay.includes('online')) keywords.push('mercado pago', 'mercadopago', 'mp', 'online', 'qr');
+    else if (normPay.includes('debito')) keywords.push('debito');
+    else if (normPay.includes('credito') || normPay.includes('tarjeta')) keywords.push('credito', 'tarjeta');
+    else if (normPay.includes('transfer')) keywords.push('transferencia');
+    else if (normPay.includes('efectivo') || normPay.includes('cash')) keywords.push('efectivo');
+    else keywords.push(normPay);
+
+    const selects = Array.from(document.querySelectorAll('select'))
+      .filter(s => !s.closest('#cope-fudo-hud') && !s.closest('header') && !s.closest('nav') && isElementVisible(s))
+      .filter(s => s.getBoundingClientRect().left > window.innerWidth * 0.45);
+
+    for (const sel of selects) {
+      const opts = Array.from(sel.options || []);
+      const match = opts.find(opt => {
+        const t = normalizeText(opt.textContent || opt.label);
+        return keywords.some(k => t.includes(k));
+      });
+      if (match) {
+        sel.value = match.value;
+        sel.dispatchEvent(new Event('change', { bubbles: true }));
+        console.log('🍔 [Cope POS Agent] Forma de pago seleccionada en Fudo:', match.textContent);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  document.addEventListener('click', (e) => {
+    const btn = e.target && e.target.closest ? e.target.closest('button, a, [role="button"]') : null;
+    if (!btn || btn.closest('#cope-fudo-hud')) return;
+    const txt = normalizeText(btn.innerText || btn.textContent);
+    if (activeOrder && (txt.includes('cerrar pedido') || txt.includes('cerrar mesa') || txt === 'cobrar' || txt.includes('agregar pago'))) {
+      setTimeout(() => trySelectPaymentMethodInFudo(activeOrder.paymentMethod), 450);
+      setTimeout(() => trySelectPaymentMethodInFudo(activeOrder.paymentMethod), 1000);
+    }
+  }, true);
 
   // Iniciar al cargar
   window.addEventListener('DOMContentLoaded', checkActiveFudoOrder);
