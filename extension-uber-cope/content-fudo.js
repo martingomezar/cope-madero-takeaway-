@@ -676,7 +676,8 @@
       const rows = getAdicionarRows(searchInput);
       if (rows.length === 0) return;
       const lastRow = rows[rows.length - 1];
-      const rowInputs = Array.from(lastRow.querySelectorAll('input:not([type="hidden"])')).filter(isElementVisible);
+      const rowInputs = Array.from(lastRow.querySelectorAll('input:not([type="hidden"])'))
+        .filter(i => isElementVisible(i) && !normalizeText(i.placeholder).includes('comentar') && !normalizeText(i.placeholder).includes('nota'));
       if (rowInputs.length >= 2) {
         const qtyInput = rowInputs[0];
         const priceInput = rowInputs[rowInputs.length - 1];
@@ -736,17 +737,19 @@
       triggerRealClick(targetBtn);
       await sleep(300);
 
-      // Buscar el input/textarea que se abrió para escribir el comentario del ítem
-      const commentInputs = Array.from(document.querySelectorAll('input:not([type="hidden"]), textarea'))
-        .filter(i => i !== searchInput && !i.closest('#cope-fudo-hud') && !i.closest('header') && !i.closest('nav') && isElementVisible(i))
-        .filter(i => {
-          const ph = normalizeText(i.placeholder);
-          const ngModel = normalizeText(i.getAttribute('ng-model') || '');
-          const type = normalizeText(i.type);
-          return i.tagName === 'TEXTAREA' || ph.includes('comentar') || ph.includes('nota') || ngModel.includes('comment') || type === 'text';
-        });
+      // Buscar el input/textarea que se abrió para escribir el comentario del ítem ("Agrega un comentario aquí...")
+      const allRightInputs = Array.from(document.querySelectorAll('input:not([type="hidden"]), textarea'))
+        .filter(i => i !== searchInput && !i.closest('#cope-fudo-hud') && !i.closest('header') && !i.closest('nav') && isElementVisible(i));
 
-      const targetInput = commentInputs[commentInputs.length - 1];
+      const strictCommentInputs = allRightInputs.filter(i => {
+        const ph = normalizeText(i.placeholder);
+        const ngModel = normalizeText(i.getAttribute('ng-model') || '');
+        return ph.includes('comentar') || ph.includes('nota') || ph.includes('observ') || ngModel.includes('comment') || i.tagName === 'TEXTAREA';
+      });
+
+      const targetInput =
+        (document.activeElement && strictCommentInputs.includes(document.activeElement) ? document.activeElement : null) ||
+        strictCommentInputs[strictCommentInputs.length - 1];
       if (targetInput) {
         await typeTextIntoInput(targetInput, commentText);
         await sleep(120);
