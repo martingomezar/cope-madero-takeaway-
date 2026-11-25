@@ -19,33 +19,62 @@ function injectAgentStatus() {
   document.body.appendChild(badge);
 }
 
+function notifyNeedReload() {
+  if (document.getElementById('cope-reload-warning')) return;
+  const div = document.createElement('div');
+  div.id = 'cope-reload-warning';
+  div.innerHTML = `
+    <div style="position:fixed; top:20px; left:50%; transform:translateX(-50%); z-index:9999999; background:#0284c7; color:#ffffff; padding:10px 20px; border-radius:30px; font-weight:800; font-size:13px; box-shadow:0 8px 30px rgba(0,0,0,0.5); display:flex; align-items:center; gap:10px; font-family:system-ui,sans-serif;">
+      <span>🔄</span>
+      <span>Extensión actualizada en Chrome. <b>Presioná F5</b> para reconectar.</span>
+      <button type="button" onclick="window.location.reload()" style="background:#ffffff; color:#0284c7; border:none; padding:4px 12px; border-radius:20px; font-weight:900; cursor:pointer;">Refrescar F5</button>
+    </div>
+  `;
+  document.body.appendChild(div);
+}
+
+function safeSendMessage(payload, callback) {
+  try {
+    if (typeof chrome === 'undefined' || !chrome.runtime || !chrome.runtime.id) {
+      notifyNeedReload();
+      return;
+    }
+    chrome.runtime.sendMessage(payload, (res) => {
+      if (chrome.runtime.lastError) {
+        console.warn('🍔 [Cope Agent] Mensaje notice:', chrome.runtime.lastError.message);
+      }
+      if (callback) callback(res);
+    });
+  } catch (err) {
+    if (err && err.message && err.message.includes('Extension context invalidated')) {
+      notifyNeedReload();
+    } else {
+      console.warn('🍔 [Cope Agent] SendMessage error:', err);
+    }
+  }
+}
+
 // Escuchar eventos de despacho y comanda originados en caja.html
 window.addEventListener('message', (event) => {
   if (!event.data) return;
 
   // 1. Despacho a Uber
   if (event.data.type === 'COPE_DISPATCH_TO_UBER_EXT') {
-    const payload = event.data.payload;
-    if (chrome && chrome.runtime && chrome.runtime.sendMessage) {
-      chrome.runtime.sendMessage({
-        type: 'COPE_PREPARE_UBER_DISPATCH',
-        payload: payload
-      }, (res) => {
-        console.log('🍔 [Cope Agent] Pedido guardado para Uber:', res);
-      });
-    }
+    safeSendMessage({
+      type: 'COPE_PREPARE_UBER_DISPATCH',
+      payload: event.data.payload
+    }, (res) => {
+      console.log('🍔 [Cope Agent] Pedido guardado para Uber:', res);
+    });
   }
 
   // 2. Comanda a Fudo POS
   if (event.data.type === 'COPE_DISPATCH_TO_FUDO_EXT') {
-    const payload = event.data.payload;
-    if (chrome && chrome.runtime && chrome.runtime.sendMessage) {
-      chrome.runtime.sendMessage({
-        type: 'COPE_PREPARE_FUDO_ORDER',
-        payload: payload
-      }, (res) => {
-        console.log('🍔 [Cope Agent] Pedido enviado a Fudo POS:', res);
-      });
-    }
+    safeSendMessage({
+      type: 'COPE_PREPARE_FUDO_ORDER',
+      payload: event.data.payload
+    }, (res) => {
+      console.log('🍔 [Cope Agent] Pedido enviado a Fudo POS:', res);
+    });
   }
 });

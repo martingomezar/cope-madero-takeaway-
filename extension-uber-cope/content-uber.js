@@ -37,17 +37,22 @@
       }
     }
 
-    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
-      chrome.runtime.sendMessage({ type: 'COPE_GET_ACTIVE_DISPATCH' }, (res) => {
-        if (res && res.data) {
-          if (Date.now() - (res.data.timestamp || 0) < 20 * 60 * 1000) {
-            activeDispatchData = res.data;
-            callback(res.data);
-          } else {
-            console.log('🍔 [Cope Delivery Agent] El pedido en memoria ya expiró (> 20 min).');
+    try {
+      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id && chrome.runtime.sendMessage) {
+        chrome.runtime.sendMessage({ type: 'COPE_GET_ACTIVE_DISPATCH' }, (res) => {
+          if (chrome.runtime.lastError) return;
+          if (res && res.data) {
+            if (Date.now() - (res.data.timestamp || 0) < 20 * 60 * 1000) {
+              activeDispatchData = res.data;
+              callback(res.data);
+            } else {
+              console.log('🍔 [Cope Delivery Agent] El pedido en memoria ya expiró (> 20 min).');
+            }
           }
-        }
-      });
+        });
+      }
+    } catch (e) {
+      console.warn('🍔 [Cope Agent] Extension context notice:', e);
     }
   }
 

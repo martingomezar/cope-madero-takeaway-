@@ -7,18 +7,23 @@
 
   // 1. Obtener comanda activa desde chrome.storage
   function checkActiveFudoOrder() {
-    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
-      chrome.runtime.sendMessage({ type: 'COPE_GET_FUDO_ORDER' }, (res) => {
-        if (res && res.data) {
-          // Expirar a los 30 min
-          if (Date.now() - (res.data.timestamp || 0) < 30 * 60 * 1000) {
-            activeOrder = res.data;
-            injectFudoHud(activeOrder);
-          } else {
-            console.log('🍔 [Cope POS Agent] Comanda expirada (> 30 min).');
+    try {
+      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id && chrome.runtime.sendMessage) {
+        chrome.runtime.sendMessage({ type: 'COPE_GET_FUDO_ORDER' }, (res) => {
+          if (chrome.runtime.lastError) return;
+          if (res && res.data) {
+            // Expirar a los 30 min
+            if (Date.now() - (res.data.timestamp || 0) < 30 * 60 * 1000) {
+              activeOrder = res.data;
+              injectFudoHud(activeOrder);
+            } else {
+              console.log('🍔 [Cope POS Agent] Comanda expirada (> 30 min).');
+            }
           }
-        }
-      });
+        });
+      }
+    } catch (e) {
+      console.warn('🍔 [Cope Agent] Fudo context notice:', e);
     }
   }
 
