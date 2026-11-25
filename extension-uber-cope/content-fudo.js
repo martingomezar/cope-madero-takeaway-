@@ -329,8 +329,7 @@
         t === 'guardar' ||
         t === 'abrir' ||
         t === 'aceptar' ||
-        t === 'continuar' ||
-        t === 'confirmar'
+        t === 'continuar'
       );
     }) || null;
   }
@@ -732,30 +731,26 @@
       .trim();
   }
 
-  // 8. ESCRIBIR EN INPUT CON EVENTOS NATIVOS
+  // 8. ESCRIBIR EN INPUT CON EVENTOS NATIVOS (sin execCommand global que pueda borrar otro campo)
   async function typeTextIntoInput(input, text) {
     if (!input) return;
     input.focus();
-    input.click();
-    await sleep(100);
+    await sleep(60);
 
     try {
-      input.select();
-      document.execCommand('selectAll', false, null);
-      document.execCommand('delete', false, null);
-      document.execCommand('insertText', false, text);
-    } catch (e) {
-      try {
-        const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set;
-        if (setter) setter.call(input, text);
-        else input.value = text;
-      } catch (err) {
-        input.value = text;
-      }
+      const proto = input.tagName === 'TEXTAREA'
+        ? window.HTMLTextAreaElement.prototype
+        : window.HTMLInputElement.prototype;
+      const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
+      if (setter) setter.call(input, text);
+      else input.value = text;
+    } catch (err) {
+      input.value = text;
     }
 
     input.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
     input.dispatchEvent(new Event('change', { bubbles: true, cancelable: true }));
+    input.dispatchEvent(new KeyboardEvent('keyup', { key: 'a', bubbles: true }));
   }
 
   function triggerRealClick(target) {
