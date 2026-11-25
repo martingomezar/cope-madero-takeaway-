@@ -5,7 +5,6 @@
 
   // 1. Obtener datos del despacho (desde Storage o URL Hash)
   function getDispatchData(callback) {
-    // Primero revisar URL Hash
     if (window.location.hash && window.location.hash.includes('cope_delivery=')) {
       try {
         const rawJson = decodeURIComponent(window.location.hash.split('cope_delivery=')[1]);
@@ -17,11 +16,9 @@
       }
     }
 
-    // Segundo: consultar al storage de la extensión
     if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
       chrome.runtime.sendMessage({ type: 'COPE_GET_ACTIVE_DISPATCH' }, (res) => {
         if (res && res.data) {
-          // Solo usar si tiene menos de 10 minutos
           if (Date.now() - (res.data.timestamp || 0) < 10 * 60 * 1000) {
             callback(res.data);
           } else {
@@ -82,20 +79,19 @@
           <button type="button" id="btnCopeCopyAgain" class="btn-cope-copy">
             📋 Copiar Dirección
           </button>
-          <button type="button" id="btnCopeSelectMoto" class="btn-cope-copy">
-            🛵 Forzar Moto
+          <button type="button" id="btnCopeForceMoto" class="btn-cope-copy">
+            🎯 Clic en Moto
           </button>
         </div>
 
         <div class="cope-hud-cta">
-          👉 Revisá que esté en <b>Moto</b> y tocá <b>Confirmar</b> en Uber
+          👉 Verificá que quede en <b>Moto</b> y tocá <b>Confirmar</b> en Uber
         </div>
       </div>
     `;
 
     document.body.appendChild(hud);
 
-    // Eventos del HUD
     hud.querySelector('.cope-hud-close').addEventListener('click', () => {
       hud.remove();
       if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
@@ -110,12 +106,16 @@
       });
     });
 
-    hud.querySelector('#btnCopeSelectMoto').addEventListener('click', () => {
-      findAndClickMoto();
+    hud.querySelector('#btnCopeForceMoto').addEventListener('click', () => {
+      const ok = findAndClickMoto();
+      const status = document.getElementById('copeStatusText');
+      if (!ok && status) {
+        status.innerHTML = '⚠️ No se encontró la opción de Moto aún. Esperando que cargue...';
+      }
     });
   }
 
-  // 4. Lógica de Autocompletado en Uber
+  // 4. Lógica de Autocompletado de Dirección en Uber
   function attemptAutoFill(data) {
     const statusText = document.getElementById('copeStatusText');
     let attempts = 0;
@@ -123,23 +123,21 @@
 
     const interval = setInterval(() => {
       attempts++;
-
       const destinationInput = findDestinationInput();
 
       if (destinationInput) {
         clearInterval(interval);
-        if (statusText) statusText.textContent = '✅ Destino cargado. Seleccionando dirección...';
+        if (statusText) statusText.textContent = '✅ Destino cargado. Seleccionando sugerencia...';
 
         fillInput(destinationInput, data.destination);
 
         setTimeout(() => {
           selectFirstAutocompleteOption();
           watchAndSelectMoto();
-        }, 800);
+        }, 900);
 
       } else if (attempts >= maxAttempts) {
         clearInterval(interval);
-        // Si no hay input pero ya hay opciones de viaje en pantalla (porque abrió con link universal)
         watchAndSelectMoto();
       }
     }, 600);
@@ -148,6 +146,8 @@
   function findDestinationInput() {
     const inputs = Array.from(document.querySelectorAll('input'));
     for (const inp of inputs) {
+      if (inp.closest('#cope-uber-hud')) continue;
+
       const ph = (inp.placeholder || '').toLowerCase();
       const aria = (inp.getAttribute('aria-label') || '').toLowerCase();
       const name = (inp.name || '').toLowerCase();
@@ -167,6 +167,7 @@
 
     const searchBoxes = document.querySelectorAll('form, [role="search"], [data-tracking-name*="search"]');
     for (const box of searchBoxes) {
+      if (box.closest('#cope-uber-hud')) continue;
       const boxInputs = box.querySelectorAll('input[type="text"], input:not([type])');
       if (boxInputs.length >= 2) {
         return boxInputs[boxInputs.length - 1];
@@ -185,12 +186,13 @@
   }
 
   function selectFirstAutocompleteOption() {
-    const options = document.querySelectorAll(
+    const options = Array.from(document.querySelectorAll(
       '[role="option"], [data-testid*="location-item"], [data-tracking-name*="suggestion"], li[tabindex]'
-    );
+    )).filter(el => !el.closest('#cope-uber-hud'));
+
     if (options.length > 0) {
       console.log('🍔 [Cope Delivery Agent] Seleccionando primera opción de dirección...');
-      options[0].click();
+      triggerRealClick(options[0]);
       const statusText = document.getElementById('copeStatusText');
       if (statusText) statusText.textContent = '✅ Dirección fijada. Buscando Moto...';
       watchAndSelectMoto();
@@ -200,7 +202,7 @@
   // 5. SELECCIÓN AUTOMÁTICA DE "MOTO" / "FLASH" EN LA LISTA DE VIAJES DE UBER
   function watchAndSelectMoto() {
     let attempts = 0;
-    const maxAttempts = 25;
+    const maxAttempts = 30;
 
     const motoInterval = setInterval(() => {
       attempts++;
@@ -211,39 +213,105 @@
       } else if (attempts >= maxAttempts) {
         clearInterval(motoInterval);
         const statusText = document.getElementById('copeStatusText');
-        if (statusText) {
+        if (statusText && !statusText.innerHTML.includes('¡Moto seleccionada!')) {
           statusText.innerHTML = '👉 Tocá <b>Moto</b> en la lista de opciones de Uber.';
         }
       }
     }, 600);
   }
 
+  function triggerRealClick(target) {
+    if (!target) return;
+    try {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } catch (e) {}
+
+    const rect = target.getBoundingClientRect();
+    const clientX = rect.left + (rect.width > 0 ? rect.width / 2 : 10);
+    const clientY = rect.top + (rect.height > 0 ? rect.height / 2 : 10);
+
+    const eventInit = {
+      bubbles: true,
+      cancelable: true,
+      view: window,
+      clientX,
+      clientY
+    };
+
+    target.dispatchEvent(new PointerEvent('pointerdown', eventInit));
+    target.dispatchEvent(new MouseEvent('mousedown', eventInit));
+    target.dispatchEvent(new PointerEvent('pointerup', eventInit));
+    target.dispatchEvent(new MouseEvent('mouseup', eventInit));
+    target.dispatchEvent(new MouseEvent('click', eventInit));
+
+    if (typeof target.click === 'function') {
+      target.click();
+    }
+  }
+
   function findAndClickMoto() {
     const statusText = document.getElementById('copeStatusText');
 
-    // Buscar entre botones, radios y elementos con texto
-    const elements = Array.from(document.querySelectorAll('div, button, li, [role="button"], [role="radio"]'));
+    // A. Buscar primero por icono/imagen de Moto dentro de la web de Uber
+    const motoImages = Array.from(document.querySelectorAll('img')).filter((img) => {
+      if (img.closest('#cope-uber-hud')) return false; // NUNCA dentro de nuestro HUD
+      const alt = (img.alt || '').toLowerCase();
+      const src = (img.src || '').toLowerCase();
+      return (
+        alt.includes('moto') || alt.includes('flash') ||
+        src.includes('moto') || src.includes('flash') ||
+        src.includes('motorcycle') || src.includes('two_wheeler')
+      );
+    });
 
-    for (const el of elements) {
+    for (const img of motoImages) {
+      const card = img.closest('[role="radio"], [role="button"], button, li, [data-testid], [tabindex]') || img.parentElement;
+      if (card && !card.closest('#cope-uber-hud') && card.offsetParent !== null) {
+        console.log('🍔 [Cope Delivery Agent] Moto encontrada por imagen:', img.alt || img.src);
+        triggerRealClick(card);
+        if (statusText) statusText.innerHTML = '🛵 <b>¡Moto seleccionada!</b> Revisá tarifa y confirmá.';
+        return true;
+      }
+    }
+
+    // B. Buscar por textos que contengan "moto" o "flash", EXCLUYENDO rigurosamente nuestro HUD
+    const allElements = Array.from(document.querySelectorAll(
+      '[role="radio"], [role="button"], button, li, div[data-testid*="product"], div[data-testid*="ride"], [data-tracking-name*="product"], div[tabindex]'
+    ));
+
+    const candidates = allElements.length > 0 ? allElements : Array.from(document.querySelectorAll('div, li, button'));
+
+    for (const el of candidates) {
+      if (el.closest('#cope-uber-hud')) continue; // EXCLUIR NUESTRO HUD
+
       const text = (el.innerText || el.textContent || '').trim().toLowerCase();
-      
-      // Filtrar elementos muy largos
-      if (text.length > 90) continue;
+      if (!text || text.length > 100) continue;
 
-      const hasMoto = text.includes('moto') || text.includes('flash') || text.includes('envío') || text.includes('envios');
-      const notCar = !text.includes('comfort') && !text.includes('black') && !text.includes('xl');
+      const hasMoto = (
+        text.includes('uber moto') ||
+        text.includes('flash moto') ||
+        text.includes('uber flash') ||
+        text.includes('envío') ||
+        text.includes('envios') ||
+        /\bmoto\b/i.test(text) ||
+        /\bflash\b/i.test(text)
+      );
 
-      if (hasMoto && notCar && el.offsetParent !== null) {
-        console.log('🍔 [Cope Delivery Agent] Opción Moto/Flash encontrada:', text);
-        const clickable = el.closest('button, [role="button"], [role="radio"], li') || el;
-        clickable.click();
+      // Descartar si solo es auto (Comfort, Black, XL) o si es UberX puro sin Moto
+      const isCarOnly = (text.includes('uberx') && !text.includes('moto')) || text.includes('comfort') || text.includes('black') || text.includes('uberxl');
+
+      if (hasMoto && !isCarOnly && el.offsetParent !== null) {
+        console.log('🍔 [Cope Delivery Agent] Opción Moto/Flash encontrada en Uber:', text);
+        const clickable = el.closest('[role="radio"], [role="button"], button, li') || el;
+        triggerRealClick(clickable);
 
         if (statusText) {
-          statusText.innerHTML = '🛵 <b>¡Moto seleccionada!</b> Revisá el valor y tocá Confirmar.';
+          statusText.innerHTML = '🛵 <b>¡Moto seleccionada!</b> Revisá tarifa y confirmá.';
         }
         return true;
       }
     }
+
     return false;
   }
 

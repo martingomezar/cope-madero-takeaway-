@@ -2407,7 +2407,7 @@
           }
 
           // Si falta configurar claves de API de Uber en Vercel, usar apertura universal
-          const targetUrl = resData.fallbackUniversalUrl || generateClientUberUrl(fullDest, clientName);
+          const targetUrl = resData.fallbackUniversalUrl || generateClientUberUrl(fullDest, clientName, orderId);
           showCajaToast(`
             <div style="display:flex; flex-direction:column; gap:4px; text-align:left;">
               <div style="font-weight:800; color:#38bdf8; font-size:13px;">🛵 Abriendo Uber Envíos (Moto Flash)...</div>
@@ -2419,12 +2419,12 @@
 
         } catch (e) {
           console.warn('[Dispatch Uber Notice]', e);
-          const fallbackUrl = generateClientUberUrl(fullDest, clientName);
+          const fallbackUrl = generateClientUberUrl(fullDest, clientName, orderId);
           window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
         }
       };
 
-      function generateClientUberUrl(fullDest, clientName) {
+      function generateClientUberUrl(fullDest, clientName, orderId) {
         const originAddr = 'Macacha Güemes 260, Puerto Madero, CABA';
         const originName = 'Cope Burgers Puerto Madero';
         const originLat = -34.604912;
