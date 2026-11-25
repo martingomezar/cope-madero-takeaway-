@@ -2351,12 +2351,25 @@
           fullDest += ', CABA, Argentina';
         }
 
-        // 1. Copiar dirección de destino al portapapeles
+        // 1. Copiar dirección de destino al portapapeles y notificar a la extensión
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(fullDest).catch(() => copyTextFallback(fullDest));
         } else {
           copyTextFallback(fullDest);
         }
+
+        const dispatchPayload = {
+          orderId: orderId || '',
+          customerName: clientName || '',
+          customerPhone: customerPhone || '',
+          destination: fullDest
+        };
+
+        // Notificar a la extensión Cope Delivery Agent (si está instalada en Chrome)
+        window.postMessage({
+          type: 'COPE_DISPATCH_TO_UBER_EXT',
+          payload: dispatchPayload
+        }, '*');
 
         showCajaToast(`
           <div style="display:flex; flex-direction:column; gap:4px; text-align:left;">
@@ -2427,7 +2440,13 @@
           'dropoff[formatted_address]': fullDest
         });
 
-        return `https://m.uber.com/ul/?${pParams.toString()}`;
+        const encodedData = encodeURIComponent(JSON.stringify({
+          destination: fullDest,
+          customerName: clientName || '',
+          orderId: orderId || ''
+        }));
+
+        return `https://m.uber.com/ul/?${pParams.toString()}#cope_delivery=${encodedData}`;
       }
 
       // Copiar solo dirección al portapapeles

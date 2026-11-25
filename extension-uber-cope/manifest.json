@@ -1,0 +1,39 @@
+{
+  "manifest_version": 3,
+  "name": "Cope Delivery Agent - Uber Auto-Loader",
+  "version": "1.0.0",
+  "description": "Agente automatizado para precargar pedidos de delivery de Cope Burgers en Uber con 1 solo clic.",
+  "icons": {
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://cope-madero-takeaway.vercel.app/*",
+    "http://localhost:*/*",
+    "https://*.uber.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://cope-madero-takeaway.vercel.app/caja*",
+        "http://localhost:*/caja*"
+      ],
+      "js": ["content-caja.js"],
+      "run_at": "document_end"
+    },
+    {
+      "matches": [
+        "https://*.uber.com/*"
+      ],
+      "js": ["content-uber.js"],
+      "css": ["overlay.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}
