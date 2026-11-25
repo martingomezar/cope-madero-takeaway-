@@ -97,7 +97,7 @@ def generate_landscape_pc_display():
     notice_x, notice_y = 90, 520
     draw.rounded_rectangle((notice_x, notice_y, notice_x + 850, notice_y + 60), radius=14, fill=(15, 23, 42, 255), outline=(255, 184, 0, 255), width=2)
     f_notice = get_font(FONT_BOLD, 22)
-    draw.text((notice_x + 24, notice_y + 16), "Pedí y retirá en 20 min  ·  ¡Pronto sumaremos delivery!", fill=(255, 255, 255, 255), font=f_notice)
+    draw.text((notice_x + 24, notice_y + 16), "¡Retirá en menos de 15 minutos!  ·  ¡Pronto sumaremos delivery!", fill=(255, 255, 255, 255), font=f_notice)
 
     # 7. Módulo Multilenguaje con Banderas
     lang_x, lang_y = 90, 620
@@ -273,7 +273,7 @@ def generate_portrait_stand_display():
     draw.text(((w - (b2[2] - b2[0])) // 2, 485), t2, fill=(56, 189, 248, 255), font=f_title2)
 
     # Píldora de aviso
-    p_txt = "Pedí y retirá en 20 min  ·  ¡Pronto sumaremos delivery!"
+    p_txt = "¡Retirá en menos de 15 minutos!  ·  ¡Pronto sumaremos delivery!"
     f_p = get_font(FONT_BOLD, 22)
     bp = draw.textbbox((0, 0), p_txt, font=f_p)
     pw = bp[2] - bp[0] + 50

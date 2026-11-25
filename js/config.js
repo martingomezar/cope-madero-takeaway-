@@ -32,7 +32,7 @@ window.COPE_CONFIG = {
   },
 
   // Tiempo estimado de preparación base
-  PREP_MINUTES: 20,
+  PREP_MINUTES: 15,
 
   // Métodos de pago disponibles
   PAYMENT_METHODS: [

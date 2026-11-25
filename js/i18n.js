@@ -12,7 +12,7 @@ window.COPE_I18N = (function () {
       badge_takeaway: 'Take Away · ¡Pronto Delivery!',
       takeaway_notice_html: 'Podés pedir para retirar en nuestro local. <strong>¡Pronto sumaremos delivery!</strong>',
       slogan: 'El Auténtico Estilo Americano',
-      status_open: 'Abierto · Retiro en 20 min',
+      status_open: 'Abierto · Retiro en 15 min',
       status_closed: 'Cerrado ahora',
       schedule_label: 'Lunes a Domingos de 12:00 a 23:00 hs',
       
@@ -96,7 +96,7 @@ window.COPE_I18N = (function () {
       field_phone_placeholder: 'Ej: 11 2345-6789',
       
       pickup_time_label: '¿Cuándo querés retirar tu pedido? *',
-      pickup_time_asap: '🔥 Lo antes posible (~20 min)',
+      pickup_time_asap: '🔥 Lo antes posible (~15 min)',
       pickup_time_sched: '⏰ Programar horario hoy',
       pickup_time_select: 'Seleccioná la hora exacta de retiro:',
 
@@ -131,7 +131,7 @@ window.COPE_I18N = (function () {
       badge_takeaway: 'Take Away · Delivery Soon!',
       takeaway_notice_html: 'You can order for pick-up at our store. <strong>Delivery coming soon!</strong>',
       slogan: 'The Authentic American Style',
-      status_open: 'Open · Ready in 20 min',
+      status_open: 'Open · Ready in 15 min',
       status_closed: 'Closed now',
       schedule_label: 'Monday to Sunday from 12:00 PM to 11:00 PM',
 
@@ -215,7 +215,7 @@ window.COPE_I18N = (function () {
       field_phone_placeholder: 'E.g.: +54 9 11 2345-6789',
 
       pickup_time_label: 'When do you want to pick up your order? *',
-      pickup_time_asap: '🔥 As soon as possible (~20 min)',
+      pickup_time_asap: '🔥 As soon as possible (~15 min)',
       pickup_time_sched: '⏰ Schedule pickup time today',
       pickup_time_select: 'Select exact pickup hour:',
 
@@ -250,7 +250,7 @@ window.COPE_I18N = (function () {
       badge_takeaway: 'Take Away · Em Breve Delivery!',
       takeaway_notice_html: 'Você pode pedir para retirar no local. <strong>Em breve delivery!</strong>',
       slogan: 'O Autêntico Estilo Americano',
-      status_open: 'Aberto · Pronto em 20 min',
+      status_open: 'Aberto · Pronto em 15 min',
       status_closed: 'Fechado agora',
       schedule_label: 'Segunda a Domingo das 12:00 às 23:00 hs',
 
@@ -334,7 +334,7 @@ window.COPE_I18N = (function () {
       field_phone_placeholder: 'Ex: +54 9 11 2345-6789',
 
       pickup_time_label: 'Quando deseja retirar seu pedido? *',
-      pickup_time_asap: '🔥 O mais rápido possível (~20 min)',
+      pickup_time_asap: '🔥 O mais rápido possível (~15 min)',
       pickup_time_sched: '⏰ Agendar horário hoje',
       pickup_time_select: 'Selecione o horário exato de retirada:',
 
