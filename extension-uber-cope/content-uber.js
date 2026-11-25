@@ -39,6 +39,7 @@
 
     injectHud(data);
     attemptAutoFill(data);
+    watchAndSelectMoto();
   });
 
   // 3. Crear HUD Flotante de Cope
@@ -81,13 +82,13 @@
           <button type="button" id="btnCopeCopyAgain" class="btn-cope-copy">
             📋 Copiar Dirección
           </button>
-          <button type="button" id="btnCopePasteAgain" class="btn-cope-copy">
-            🎯 Cargar de Nuevo
+          <button type="button" id="btnCopeSelectMoto" class="btn-cope-copy">
+            🛵 Forzar Moto
           </button>
         </div>
 
         <div class="cope-hud-cta">
-          👉 Seleccioná "Flash / Moto" y tocá <b>Confirmar</b> en Uber
+          👉 Revisá que esté en <b>Moto</b> y tocá <b>Confirmar</b> en Uber
         </div>
       </div>
     `;
@@ -109,8 +110,8 @@
       });
     });
 
-    hud.querySelector('#btnCopePasteAgain').addEventListener('click', () => {
-      attemptAutoFill(data);
+    hud.querySelector('#btnCopeSelectMoto').addEventListener('click', () => {
+      findAndClickMoto();
     });
   }
 
@@ -123,31 +124,28 @@
     const interval = setInterval(() => {
       attempts++;
 
-      // Buscar inputs de destino en Uber
       const destinationInput = findDestinationInput();
 
       if (destinationInput) {
         clearInterval(interval);
-        if (statusText) statusText.textContent = '✅ Destino cargado. Verificando opciones...';
+        if (statusText) statusText.textContent = '✅ Destino cargado. Seleccionando dirección...';
 
         fillInput(destinationInput, data.destination);
 
-        // Intentar seleccionar la primera sugerencia luego de 800ms
         setTimeout(() => {
           selectFirstAutocompleteOption();
+          watchAndSelectMoto();
         }, 800);
 
       } else if (attempts >= maxAttempts) {
         clearInterval(interval);
-        if (statusText) {
-          statusText.innerHTML = '⚠️ Hacé clic en "¿A dónde vas?" o pegá con <b>Ctrl + V</b>.';
-        }
+        // Si no hay input pero ya hay opciones de viaje en pantalla (porque abrió con link universal)
+        watchAndSelectMoto();
       }
     }, 600);
   }
 
   function findDestinationInput() {
-    // 1. Por placeholder común
     const inputs = Array.from(document.querySelectorAll('input'));
     for (const inp of inputs) {
       const ph = (inp.placeholder || '').toLowerCase();
@@ -161,19 +159,17 @@
         aria.includes('destino') || aria.includes('destination') ||
         name.includes('dropoff') || id.includes('dropoff')
       ) {
-        // Evitar el de origen/pickup
         if (!ph.includes('origen') && !ph.includes('pickup') && !aria.includes('pickup')) {
           return inp;
         }
       }
     }
 
-    // 2. Por último input de tipo search/text en el contenedor de búsqueda
     const searchBoxes = document.querySelectorAll('form, [role="search"], [data-tracking-name*="search"]');
     for (const box of searchBoxes) {
       const boxInputs = box.querySelectorAll('input[type="text"], input:not([type])');
       if (boxInputs.length >= 2) {
-        return boxInputs[boxInputs.length - 1]; // El segundo suele ser destino
+        return boxInputs[boxInputs.length - 1];
       }
     }
 
@@ -183,15 +179,12 @@
   function fillInput(el, text) {
     el.focus();
     el.value = text;
-
-    // Disparar eventos nativos de React / Uber
     el.dispatchEvent(new Event('input', { bubbles: true }));
     el.dispatchEvent(new Event('change', { bubbles: true }));
     el.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
   }
 
   function selectFirstAutocompleteOption() {
-    // Buscar opciones desplegadas
     const options = document.querySelectorAll(
       '[role="option"], [data-testid*="location-item"], [data-tracking-name*="suggestion"], li[tabindex]'
     );
@@ -199,8 +192,59 @@
       console.log('🍔 [Cope Delivery Agent] Seleccionando primera opción de dirección...');
       options[0].click();
       const statusText = document.getElementById('copeStatusText');
-      if (statusText) statusText.textContent = '✅ Dirección fijada en el mapa.';
+      if (statusText) statusText.textContent = '✅ Dirección fijada. Buscando Moto...';
+      watchAndSelectMoto();
     }
+  }
+
+  // 5. SELECCIÓN AUTOMÁTICA DE "MOTO" / "FLASH" EN LA LISTA DE VIAJES DE UBER
+  function watchAndSelectMoto() {
+    let attempts = 0;
+    const maxAttempts = 25;
+
+    const motoInterval = setInterval(() => {
+      attempts++;
+      const clicked = findAndClickMoto();
+
+      if (clicked) {
+        clearInterval(motoInterval);
+      } else if (attempts >= maxAttempts) {
+        clearInterval(motoInterval);
+        const statusText = document.getElementById('copeStatusText');
+        if (statusText) {
+          statusText.innerHTML = '👉 Tocá <b>Moto</b> en la lista de opciones de Uber.';
+        }
+      }
+    }, 600);
+  }
+
+  function findAndClickMoto() {
+    const statusText = document.getElementById('copeStatusText');
+
+    // Buscar entre botones, radios y elementos con texto
+    const elements = Array.from(document.querySelectorAll('div, button, li, [role="button"], [role="radio"]'));
+
+    for (const el of elements) {
+      const text = (el.innerText || el.textContent || '').trim().toLowerCase();
+      
+      // Filtrar elementos muy largos
+      if (text.length > 90) continue;
+
+      const hasMoto = text.includes('moto') || text.includes('flash') || text.includes('envío') || text.includes('envios');
+      const notCar = !text.includes('comfort') && !text.includes('black') && !text.includes('xl');
+
+      if (hasMoto && notCar && el.offsetParent !== null) {
+        console.log('🍔 [Cope Delivery Agent] Opción Moto/Flash encontrada:', text);
+        const clickable = el.closest('button, [role="button"], [role="radio"], li') || el;
+        clickable.click();
+
+        if (statusText) {
+          statusText.innerHTML = '🛵 <b>¡Moto seleccionada!</b> Revisá el valor y tocá Confirmar.';
+        }
+        return true;
+      }
+    }
+    return false;
   }
 
   function escapeHtml(str) {
