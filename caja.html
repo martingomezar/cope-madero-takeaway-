@@ -2406,8 +2406,8 @@
             return;
           }
 
-          // Si falta configurar claves de API de Uber en Vercel, usar apertura universal
-          const targetUrl = resData.fallbackUniversalUrl || generateClientUberUrl(fullDest, clientName, orderId);
+          // Si falta configurar claves de API de Uber en Vercel, usar apertura universal con geocodificación
+          const targetUrl = resData.fallbackUniversalUrl || (await generateClientUberUrl(fullDest, clientName, orderId));
           showCajaToast(`
             <div style="display:flex; flex-direction:column; gap:4px; text-align:left;">
               <div style="font-weight:800; color:#38bdf8; font-size:13px;">🛵 Abriendo Uber Envíos (Moto Flash)...</div>
@@ -2419,23 +2419,48 @@
 
         } catch (e) {
           console.warn('[Dispatch Uber Notice]', e);
-          const fallbackUrl = generateClientUberUrl(fullDest, clientName, orderId);
+          const fallbackUrl = await generateClientUberUrl(fullDest, clientName, orderId);
           window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
         }
       };
 
-      function generateClientUberUrl(fullDest, clientName, orderId) {
+      async function getCoordsForAddress(address) {
+        try {
+          const clean = (address || '').replace(/\(.*?\)/g, '').replace(/piso.*?$/i, '').trim();
+          const q = encodeURIComponent(clean + ', CABA, Argentina');
+          const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${q}`, {
+            headers: { 'Accept': 'application/json' }
+          });
+          const list = await resp.json();
+          if (list && list.length > 0) {
+            return {
+              lat: parseFloat(list[0].lat),
+              lng: parseFloat(list[0].lon)
+            };
+          }
+        } catch (e) {
+          console.warn('Geocoding notice:', e);
+        }
+        return { lat: -34.6115, lng: -58.3625 };
+      }
+
+      async function generateClientUberUrl(fullDest, clientName, orderId) {
         const originAddr = 'Macacha Güemes 260, Puerto Madero, CABA';
         const originName = 'Cope Burgers Puerto Madero';
         const originLat = -34.604912;
         const originLng = -58.364747;
 
+        const destCoords = await getCoordsForAddress(fullDest);
+
         const pParams = new URLSearchParams({
+          client_id: 'lYJ2knAGOu5T4_uWbOnWZyATmvwIbheV',
           action: 'setPickup',
           'pickup[latitude]': originLat,
           'pickup[longitude]': originLng,
           'pickup[nickname]': originName,
           'pickup[formatted_address]': originAddr,
+          'dropoff[latitude]': destCoords.lat,
+          'dropoff[longitude]': destCoords.lng,
           'dropoff[nickname]': clientName || 'Destino Cliente',
           'dropoff[formatted_address]': fullDest
         });
