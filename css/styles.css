@@ -2249,9 +2249,9 @@ button:disabled,
 
 .promo-spotlight-visual {
   position: relative;
-  width: 135px;
-  min-width: 135px;
-  background: #f8fafc;
+  width: 175px;
+  min-width: 175px;
+  background: #f9f7fa;
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -2261,12 +2261,14 @@ button:disabled,
 .promo-spotlight-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  padding: 4px;
+  background: #f9f7fa;
   transition: transform 0.3s ease;
 }
 
 .promo-spotlight-card:hover .promo-spotlight-img {
-  transform: scale(1.08);
+  transform: scale(1.06);
 }
 
 .promo-save-pill {
@@ -2298,6 +2300,12 @@ button:disabled,
   box-shadow: 0 14px 28px rgba(0, 71, 187, 0.18);
 }
 
+.product-card.is-promo-card .card-img {
+  object-fit: contain;
+  background: #f9f7fa;
+  padding: 8px;
+}
+
 .product-card.is-promo-card .card-badge {
   background: linear-gradient(135deg, #0047BB 0%, #002D62 100%);
   color: #ffffff;
@@ -2322,8 +2330,8 @@ button:disabled,
     border-radius: 16px;
   }
   .promo-spotlight-visual {
-    width: 110px;
-    min-width: 110px;
+    width: 135px;
+    min-width: 135px;
   }
   .promo-spotlight-content {
     padding: 12px 14px;
