@@ -335,12 +335,12 @@ window.COPE_I18N = (function () {
       en: {
         name: 'Lunch Promo: Cheeseburger + Fries',
         description: 'Single Cheese Burger (110g beef) with melted American cheddar on potato bun + generous portion of golden crispy Cope fries. Dine-in or Take Away only (Mon to Fri 12:00 to 18:00).',
-        badge: '⚡ Lunch Deal · Mon-Fri 12-18h · Dine-in / Take Away · $11,900'
+        badge: '⚡ Lunch Deal · Mon-Fri 12-18h · Dine-in / Take Away · $10,900'
       },
       pt: {
         name: 'Promo Almoço: Cheeseburger + Batatas',
         description: 'Cheese Burger Simples (110g) com cheddar americano derretido no pão de batata + porção de batatas fritas crocantes Cope. Exclusivo para consumo no local ou Take Away (Seg a Sex das 12h às 18h).',
-        badge: '⚡ Promo Almoço · Seg-Sex 12-18h · Local / Take Away · $11.900'
+        badge: '⚡ Promo Almoço · Seg-Sex 12-18h · Local / Take Away · $10.900'
       }
     },
     'promo-after-office-cervezas-papas': {

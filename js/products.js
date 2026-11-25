@@ -31,10 +31,10 @@ window.COPE_PRODUCTS = [
     name: 'Promo Almuerzo: Cheeseburger + Papas',
     category: 'promos',
     description: 'Cheese Burger Simple (110g de carne vacuna seleccionada) con cheddar americano fundido y mayo de la casa en pan de papa tostado con manteca + Porción de Papas Fritas Cope doradas y crujientes. 📍 Exclusivo para consumo en el local o retiro por Take Away (Lunes a Viernes de 12:00 a 18:00 hs).',
-    badge: '⚡ Promo Lu a Vi · 12 a 18 hs · Local o Take Away · $11.900',
+    badge: '⚡ Promo Lu a Vi · 12 a 18 hs · Local o Take Away · $10.900',
     scheduleBadge: 'Lu a Vi · 12 a 18 hs · Local / Take Away',
     image: 'img/promo-cheeseburger-papas.jpeg',
-    price: 11900,
+    price: 10900,
     isPromo: true,
     promoSchedule: {
       days: [1, 2, 3, 4, 5],
@@ -66,11 +66,7 @@ window.COPE_PRODUCTS = [
       startHour: 18,
       endHour: 20,
       label: 'Lunes a Viernes de 18 a 20 hs (Local o Take Away)'
-    },
-    canAddExtraCheddar: true,
-    extraCheddarPrice: 2000,
-    canAddExtraBacon: true,
-    extraBaconPrice: 2000
+    }
   },
 
   // =========================================================================
