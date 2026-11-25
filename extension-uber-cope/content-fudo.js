@@ -228,16 +228,40 @@
 
     // 1. Asegurar pestaña Mostrador y abrir "+ Nuevo pedido"
     await openMostradorAndNewOrder(order);
-    await sleep(600);
+    await sleep(800);
 
-    // 2. Cargar cliente si hay campo de cliente
-    if (order.customerName) {
-      setFudoStatus(`👤 Asignando cliente: <b>${escapeHtml(order.customerName)}</b>...`);
-      setCustomerInFudo(order.customerName);
-      await sleep(350);
+    // 2. Cargar cliente con formato "<Nombre> - Pedido Cope"
+    const baseCustomer = (order.customerName || 'Cliente Online').trim();
+    const fudoCustomerLabel = baseCustomer.toLowerCase().includes('pedido cope')
+      ? baseCustomer
+      : `${baseCustomer} - Pedido Cope`;
+
+    setFudoStatus(`👤 Asignando cliente: <b>${escapeHtml(fudoCustomerLabel)}</b>...`);
+    const custInput = await setCustomerInFudo(fudoCustomerLabel);
+    await setCommentInFudo(order);
+    await sleep(400);
+
+    // 3. Si el buscador de productos aún no está visible, Fudo pide confirmar/crear el pedido primero ("Guardar" / "Crear")
+    let searchInput = findFudoSearchInput(custInput);
+    if (!searchInput) {
+      const created = await clickCreateOrderConfirmButton();
+      if (created) {
+        setFudoStatus('📝 Pedido creado en Fudo, abriendo carga de productos...');
+        await sleep(900);
+      }
+      // Esperar hasta 2.5s a que aparezca el buscador de productos
+      for (let attempt = 0; attempt < 5 && !searchInput; attempt++) {
+        searchInput = findFudoSearchInput(custInput);
+        if (!searchInput) await sleep(500);
+      }
     }
 
-    // 3. Cargar cada producto en la orden
+    if (!searchInput) {
+      setFudoStatus(`⚠️ Se abrió el pedido para <b>${escapeHtml(fudoCustomerLabel)}</b>, pero no se encontró el buscador de productos.`);
+      return;
+    }
+
+    // 4. Cargar cada producto en la orden
     const items = order.items || [];
     let addedCount = 0;
     const notFound = [];
@@ -245,13 +269,13 @@
     for (let i = 0; i < items.length; i++) {
       const it = items[i];
       setFudoStatus(`🔍 Agregando (${i + 1}/${items.length}): <b>${escapeHtml(it.name)}</b>...`);
-      const added = await addProductToFudo(it);
+      const added = await addProductToFudo(it, custInput);
       if (added) {
         addedCount++;
         await sleep(500);
       } else {
         notFound.push(it.name);
-        console.warn('No se pudo autoseleccionar el ítem:', it.name);
+        console.warn('No se pudo autoseleleccionar el ítem:', it.name);
       }
     }
 
@@ -260,8 +284,35 @@
     } else if (addedCount > 0) {
       setFudoStatus(`⚠️ Cargados ${addedCount}/${items.length}. Faltó: <b>${escapeHtml(notFound.join(', '))}</b>`);
     } else {
-      setFudoStatus(`⚠️ Se buscó en Fudo pero no se pudo hacer clic en los ítems. Revisá si el pedido está abierto.`);
+      setFudoStatus(`⚠️ Cliente cargado, pero no coincidieron los ítems en Fudo. Usá "Buscar Primer Ítem" o copialos.`);
     }
+  }
+
+  // Click en botón Guardar / Crear si "+ Nuevo pedido" abrió el formulario inicial
+  async function clickCreateOrderConfirmButton() {
+    const btns = Array.from(document.querySelectorAll('button, input[type="submit"], a[role="button"], [role="button"]'))
+      .filter(el => !el.closest('#cope-fudo-hud') && !el.closest('header') && !el.closest('nav') && isElementVisible(el));
+
+    const confirmBtn = btns.find(el => {
+      const t = normalizeText(el.innerText || el.textContent || el.value);
+      if (!t || t.length > 35) return false;
+      return (
+        t === 'guardar' ||
+        t === 'crear' ||
+        t === 'crear pedido' ||
+        t === 'abrir' ||
+        t === 'aceptar' ||
+        t === 'continuar' ||
+        t === 'confirmar'
+      );
+    });
+
+    if (confirmBtn) {
+      console.log('🍔 [Cope POS Agent] Haciendo clic en confirmar/guardar nuevo pedido:', confirmBtn.innerText || confirmBtn.value);
+      triggerRealClick(confirmBtn);
+      return true;
+    }
+    return false;
   }
 
   // 5. ACCESO A MOSTRADOR Y "+ NUEVO PEDIDO"
@@ -313,27 +364,64 @@
     openMostradorAndNewOrder(activeOrder);
   }
 
-  // 6. ASIGNAR CLIENTE EN FUDO
-  function setCustomerInFudo(customerName) {
-    const inputs = Array.from(document.querySelectorAll('input:not([type="hidden"])'))
-      .filter(i => !i.closest('#cope-fudo-hud') && isElementVisible(i));
-    const custInput = inputs.find(i => {
+  // 6. ASIGNAR CLIENTE Y COMENTARIO EN FUDO
+  function findFieldByLabels(keywords) {
+    const inputs = Array.from(document.querySelectorAll('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), textarea'))
+      .filter(i => !i.closest('#cope-fudo-hud') && !i.closest('header') && !i.closest('nav') && isElementVisible(i));
+
+    return inputs.find(i => {
       const ph = normalizeText(i.placeholder);
       const aria = normalizeText(i.getAttribute('aria-label'));
       const name = normalizeText(i.name);
-      return ph.includes('cliente') || aria.includes('cliente') || name.includes('customer') || name.includes('client');
-    });
+      const id = normalizeText(i.id);
+      const ngModel = normalizeText(i.getAttribute('ng-model') || i.getAttribute('formcontrolname'));
 
+      if (keywords.some(k => ph.includes(k) || aria.includes(k) || name.includes(k) || id.includes(k) || ngModel.includes(k))) {
+        return true;
+      }
+
+      // Buscar label cercano o contenedor inmediato con texto
+      const container = i.closest('label, .form-group, .field, .input-group, mat-form-field, div');
+      if (container) {
+        const labelEl = container.querySelector('label, .label, span');
+        const labelTxt = normalizeText(labelEl ? (labelEl.innerText || labelEl.textContent) : '');
+        if (labelTxt && labelTxt.length < 40 && keywords.some(k => labelTxt.includes(k))) {
+          return true;
+        }
+      }
+      return false;
+    });
+  }
+
+  async function setCustomerInFudo(customerLabel) {
+    const custInput = findFieldByLabels(['cliente', 'customer', 'client', 'guest', 'nombre']);
     if (custInput) {
-      typeTextIntoInput(custInput, customerName);
-      return true;
+      console.log('🍔 [Cope POS Agent] Campo cliente encontrado:', custInput);
+      await typeTextIntoInput(custInput, customerLabel);
+      return custInput;
     }
-    return false;
+    console.warn('🍔 [Cope POS Agent] No se encontró campo Cliente en Fudo.');
+    return null;
+  }
+
+  async function setCommentInFudo(order) {
+    if (!order) return false;
+    const commentInput = findFieldByLabels(['comentario', 'observacion', 'nota', 'comment', 'note']);
+    if (!commentInput) return false;
+    const parts = [`Pedido Cope #${order.orderId || ''}`];
+    if (order.orderType === 'delivery' && order.destination) {
+      parts.push(`Delivery: ${order.destination}`);
+    } else {
+      parts.push('Take Away');
+    }
+    if (order.customerPhone) parts.push(`Tel: ${order.customerPhone}`);
+    await typeTextIntoInput(commentInput, parts.join(' | '));
+    return true;
   }
 
   // 7. AGREGAR PRODUCTO EN FUDO
-  async function addProductToFudo(item) {
-    const searchInput = findFudoSearchInput();
+  async function addProductToFudo(item, excludeEl) {
+    const searchInput = findFudoSearchInput(excludeEl);
     if (!searchInput) return false;
 
     const cleanSearchName = cleanProductNameForFudo(item.name);
@@ -423,24 +511,34 @@
     }
   }
 
-  function findFudoSearchInput() {
+  function findFudoSearchInput(excludeEl) {
     const inputs = Array.from(document.querySelectorAll('input:not([type="hidden"])'))
-      .filter(i => !i.closest('#cope-fudo-hud') && isElementVisible(i));
+      .filter(i => i !== excludeEl && !i.closest('#cope-fudo-hud') && isElementVisible(i));
 
     // Prioridad 1: Input explícito de agregar/buscar producto
     const productInput = inputs.find(i => {
       const ph = normalizeText(i.placeholder);
       const aria = normalizeText(i.getAttribute('aria-label'));
-      return ph.includes('producto') || ph.includes('agregar') || ph.includes('codigo') || aria.includes('producto');
+      const ngModel = normalizeText(i.getAttribute('ng-model') || i.getAttribute('formcontrolname'));
+      return (
+        ph.includes('producto') ||
+        ph.includes('agregar') ||
+        ph.includes('anadir') ||
+        ph.includes('codigo') ||
+        ph.includes('articulo') ||
+        aria.includes('producto') ||
+        ngModel.includes('product')
+      );
     });
     if (productInput) return productInput;
 
-    // Prioridad 2: Buscador fuera de header/nav
+    // Prioridad 2: Buscador fuera de header/nav que no sea campo de cliente
     return inputs.find(i => {
       if (i.closest('header') || i.closest('nav')) return false;
       const ph = normalizeText(i.placeholder);
       const aria = normalizeText(i.getAttribute('aria-label'));
       const type = normalizeText(i.type);
+      if (ph.includes('cliente') || aria.includes('cliente')) return false;
       return ph.includes('buscar') || aria.includes('buscar') || type === 'search';
     });
   }
