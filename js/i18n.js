@@ -334,25 +334,25 @@ window.COPE_I18N = (function () {
     'promo-almuerzo-cheeseburger-papas': {
       en: {
         name: 'Lunch Promo: Cheeseburger + Fries',
-        description: 'Single Cheese Burger (110g beef) with melted American cheddar on potato bun + generous portion of golden crispy Cope fries. Valid Mon to Fri 12:00 to 18:00.',
-        badge: '⚡ Lunch Deal · Mon-Fri 12-18h · $11,900'
+        description: 'Single Cheese Burger (110g beef) with melted American cheddar on potato bun + generous portion of golden crispy Cope fries. Dine-in or Take Away only (Mon to Fri 12:00 to 18:00).',
+        badge: '⚡ Lunch Deal · Mon-Fri 12-18h · Dine-in / Take Away · $11,900'
       },
       pt: {
         name: 'Promo Almoço: Cheeseburger + Batatas',
-        description: 'Cheese Burger Simples (110g) com cheddar americano derretido no pão de batata + porção de batatas fritas crocantes Cope. Válido Seg a Sex das 12h às 18h.',
-        badge: '⚡ Promo Almoço · Seg-Sex 12-18h · $11.900'
+        description: 'Cheese Burger Simples (110g) com cheddar americano derretido no pão de batata + porção de batatas fritas crocantes Cope. Exclusivo para consumo no local ou Take Away (Seg a Sex das 12h às 18h).',
+        badge: '⚡ Promo Almoço · Seg-Sex 12-18h · Local / Take Away · $11.900'
       }
     },
     'promo-after-office-cervezas-papas': {
       en: {
         name: 'After Office Promo: 2 Beers + Fries',
-        description: '2 Chilled Quilmes beers + generous portion of golden crispy Cope fries for sharing. Valid Mon to Fri 18:00 to 20:00.',
-        badge: '🍻 After Office · Mon-Fri 18-20h · $10,000'
+        description: '2 Chilled Quilmes beers + generous portion of golden crispy Cope fries for sharing. Dine-in or Take Away only (Mon to Fri 18:00 to 20:00).',
+        badge: '🍻 After Office · Mon-Fri 18-20h · Dine-in / Take Away · $10,000'
       },
       pt: {
         name: 'Promo After Office: 2 Cervejas + Batatas',
-        description: '2 Cervejas Quilmes geladas + porção de batatas fritas crocantes Cope para compartilhar. Válido Seg a Sex das 18h às 20h.',
-        badge: '🍻 After Office · Seg-Sex 18-20h · $10.000'
+        description: '2 Cervejas Quilmes geladas + porção de batatas fritas crocantes Cope para compartilhar. Exclusivo para consumo no local ou Take Away (Seg a Sex das 18h às 20h).',
+        badge: '🍻 After Office · Seg-Sex 18-20h · Local / Take Away · $10.000'
       }
     },
     'simple-cheese-burger': {

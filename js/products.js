@@ -30,9 +30,9 @@ window.COPE_PRODUCTS = [
     id: 'promo-almuerzo-cheeseburger-papas',
     name: 'Promo Almuerzo: Cheeseburger + Papas',
     category: 'promos',
-    description: 'Cheese Burger Simple (110g de carne vacuna seleccionada) con cheddar americano fundido y mayo de la casa en pan de papa tostado con manteca + Porción de Papas Fritas Cope doradas y crujientes. Válido Lunes a Viernes de 12:00 a 18:00 hs.',
-    badge: '⚡ Promo Lu a Vi · 12 a 18 hs · $11.900',
-    scheduleBadge: 'Lu a Vi · 12 a 18 hs',
+    description: 'Cheese Burger Simple (110g de carne vacuna seleccionada) con cheddar americano fundido y mayo de la casa en pan de papa tostado con manteca + Porción de Papas Fritas Cope doradas y crujientes. 📍 Exclusivo para consumo en el local o retiro por Take Away (Lunes a Viernes de 12:00 a 18:00 hs).',
+    badge: '⚡ Promo Lu a Vi · 12 a 18 hs · Local o Take Away · $11.900',
+    scheduleBadge: 'Lu a Vi · 12 a 18 hs · Local / Take Away',
     image: 'img/promo-cheeseburger-papas.jpeg',
     price: 11900,
     isPromo: true,
@@ -40,7 +40,7 @@ window.COPE_PRODUCTS = [
       days: [1, 2, 3, 4, 5],
       startHour: 12,
       endHour: 18,
-      label: 'Lunes a Viernes de 12 a 18 hs'
+      label: 'Lunes a Viernes de 12 a 18 hs (Local o Take Away)'
     },
     canAddExtraMeat: true,
     extraMeatPrice: 4000,
@@ -55,9 +55,9 @@ window.COPE_PRODUCTS = [
     id: 'promo-after-office-cervezas-papas',
     name: 'Promo After Office: 2 Cervezas + Papas Fritas',
     category: 'promos',
-    description: '2 Cervezas Quilmes heladas (tirada/lata) bien refrescantes + Porción de Papas Fritas Cope doradas al estilo americano con sal marina para compartir. Válido Lunes a Viernes de 18:00 a 20:00 hs.',
-    badge: '🍻 After Office · Lu a Vi 18 a 20 hs · $10.000',
-    scheduleBadge: 'Lu a Vi · 18 a 20 hs',
+    description: '2 Cervezas Quilmes heladas (tirada/lata) bien refrescantes + Porción de Papas Fritas Cope doradas al estilo americano con sal marina para compartir. 📍 Exclusivo para consumo en el local o retiro por Take Away (Lunes a Viernes de 18:00 a 20:00 hs).',
+    badge: '🍻 After Office · Lu a Vi 18 a 20 hs · Local o Take Away · $10.000',
+    scheduleBadge: 'Lu a Vi · 18 a 20 hs · Local / Take Away',
     image: 'img/promo-cervezas-papas.jpeg',
     price: 10000,
     isPromo: true,
@@ -65,7 +65,7 @@ window.COPE_PRODUCTS = [
       days: [1, 2, 3, 4, 5],
       startHour: 18,
       endHour: 20,
-      label: 'Lunes a Viernes de 18 a 20 hs'
+      label: 'Lunes a Viernes de 18 a 20 hs (Local o Take Away)'
     },
     canAddExtraCheddar: true,
     extraCheddarPrice: 2000,
