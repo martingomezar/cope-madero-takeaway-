@@ -36,15 +36,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     chrome.storage.local.set({ activeCopeFudoOrder: dataWithTimestamp }, () => {
       // Buscar si ya hay una pestaña de Fudo abierta para activarla
       chrome.tabs.query({ url: ['https://*.fu.do/*', 'https://app.fu.do/*'] }, (tabs) => {
-        if (tabs && tabs.length > 0) {
+        const hasFudoTab = !!(tabs && tabs.length > 0);
+        if (hasFudoTab) {
           chrome.tabs.update(tabs[0].id, { active: true });
           chrome.tabs.sendMessage(tabs[0].id, {
             type: 'COPE_NEW_FUDO_ORDER_ALERT',
             data: dataWithTimestamp
+          }, () => {
+            if (chrome.runtime.lastError) {
+              console.warn('🍔 [Cope Agent] Aviso enviando a pestaña Fudo:', chrome.runtime.lastError.message);
+            }
           });
         }
+        sendResponse({ status: 'STORED', fudoTabFound: hasFudoTab, data: dataWithTimestamp });
       });
-      sendResponse({ status: 'STORED', data: dataWithTimestamp });
     });
     return true;
   }

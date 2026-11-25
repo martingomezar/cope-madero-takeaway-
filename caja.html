@@ -1544,6 +1544,11 @@
         <span id="soundOrdersLabel">Pedidos ON</span>
       </button>
 
+      <button id="btnToggleAutoFudo" type="button" class="btn-toggle-sound" title="Enviar automáticamente nuevos pedidos a Fudo POS (ON/OFF)">
+        <span id="autoFudoIcon">⚡</span>
+        <span id="autoFudoLabel">Auto Fudo ON</span>
+      </button>
+
       <button type="button" onclick="window.copeDispatchFudo()" class="btn-quick-fudo" style="display:inline-flex; align-items:center; gap:6px; background:#0047bb; color:#ffffff; border:1px solid #38bdf8; padding:7px 12px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer;" title="Cargar último pedido en Fudo POS (Comanda cocina)">
         <span>🧾 Cargar en Fudo</span>
       </button>
@@ -1771,6 +1776,8 @@
       let allPaymentsMap = new Map();
       let cachedPayments = [];
       let cachedOrders = [];
+      let autoFudoEnabled = localStorage.getItem('cope_auto_fudo') !== 'false';
+      let autoDispatchedFudoIds = new Set();
       let lastRenderedFingerprint = '';
       let isFetching = false;
       let activeMainTab = 'kds';
@@ -1818,6 +1825,9 @@
         btnToggleSoundOrders: document.getElementById('btnToggleSoundOrders'),
         soundOrdersIcon: document.getElementById('soundOrdersIcon'),
         soundOrdersLabel: document.getElementById('soundOrdersLabel'),
+        btnToggleAutoFudo: document.getElementById('btnToggleAutoFudo'),
+        autoFudoIcon: document.getElementById('autoFudoIcon'),
+        autoFudoLabel: document.getElementById('autoFudoLabel'),
         btnTestAlert: document.getElementById('btnTestAlert'),
         btnTestDelivery: document.getElementById('btnTestDelivery'),
         btnLockTerminal: document.getElementById('btnLockTerminal'),
@@ -2331,13 +2341,29 @@
       }
 
       // Enviar comanda virtual a Fudo POS
-      window.copeDispatchFudo = function(orderId) {
+      window.copeDispatchFudo = function(orderId, autoLoad = true) {
         let order = null;
         if (orderId) {
-          order = (allOrders || []).find(o => String(o.order_id || o.id) === String(orderId));
+          order = (cachedOrders || []).find(o => String(o.order_id || o.id) === String(orderId));
         }
-        if (!order && allOrders && allOrders.length > 0) {
-          order = allOrders[0];
+        if (!order && orderId) {
+          const payMatch = (cachedPayments || []).find(p => String(p.order_id || p.id) === String(orderId));
+          if (payMatch) {
+            order = {
+              id: payMatch.order_id || payMatch.id,
+              payer_name: payMatch.payer_name || 'Cliente Online',
+              payer_phone: payMatch.payer_phone || '',
+              order_type: payMatch.order_type || 'takeaway',
+              delivery_address: payMatch.delivery_address || '',
+              delivery_apartment: payMatch.delivery_apartment || '',
+              amount: payMatch.amount || 0,
+              payment_method: payMatch.payment_method || 'Mercado Pago Online',
+              items: payMatch.cart_items || payMatch.items || (payMatch.description ? [{ name: payMatch.description, quantity: 1 }] : [])
+            };
+          }
+        }
+        if (!order && cachedOrders && cachedOrders.length > 0) {
+          order = cachedOrders[0];
         }
 
         if (!order) {
@@ -2345,15 +2371,23 @@
           return;
         }
 
+        const resolvedOrderId = order.order_id || order.id || '';
+        if (resolvedOrderId) {
+          autoDispatchedFudoIds.add(String(resolvedOrderId));
+        }
+
         const rawItems = order.cart_items || order.items || [];
+        const destAddress = order.delivery?.address || order.delivery_address || '';
+        const destApt = order.delivery?.apartment || order.delivery_apartment || '';
         const payload = {
-          orderId: order.order_id || order.id || '',
+          orderId: resolvedOrderId,
           customerName: order.payer_name || order.customer?.name || 'Cliente Online',
           customerPhone: order.payer_phone || order.customer?.phone || '',
-          orderType: order.order_type || (order.delivery_address ? 'delivery' : 'takeaway'),
-          destination: order.delivery_address ? (order.delivery_address + (order.delivery_apartment ? ' (' + order.delivery_apartment + ')' : '')) : '',
+          orderType: order.order_type || (destAddress ? 'delivery' : 'takeaway'),
+          destination: destAddress ? (destAddress + (destApt ? ' (' + destApt + ')' : '')) : '',
           total: order.amount || order.total || 0,
           paymentMethod: order.payment_method || 'Mercado Pago Online',
+          autoLoad: autoLoad !== false,
           items: rawItems.map(it => ({
             name: it.name || it.title || 'Producto',
             quantity: Number(it.quantity) || 1,
@@ -2363,7 +2397,7 @@
             hasExtraMeat: !!it.hasExtraMeat,
             hasExtraCheddar: !!it.hasExtraCheddar,
             hasExtraBacon: !!it.hasExtraBacon,
-            selectedDrink: it.selectedDrink || '',
+            selectedDrink: it.selectedDrink || it.drinkChoice || '',
             notes: it.notes || ''
           }))
         };
@@ -2376,9 +2410,9 @@
 
         showCajaToast(`
           <div style="display:flex; flex-direction:column; gap:4px; text-align:left;">
-            <div style="font-weight:800; color:#38bdf8; font-size:13px;">🧾 Comanda lista para Fudo POS</div>
+            <div style="font-weight:800; color:#38bdf8; font-size:13px;">🧾 Comanda enviada a Fudo POS</div>
             <div style="font-size:12px; color:#f8fafc;">Cliente: <b>${escapeHtml(payload.customerName)}</b> · #${escapeHtml(payload.orderId)}</div>
-            <div style="font-size:11px; color:#94a3b8;">Abrí la pestaña de Fudo para cargar e imprimir.</div>
+            <div style="font-size:11px; color:#94a3b8;">Cargando automáticamente en la pestaña de Fudo...</div>
           </div>
         `);
       };
@@ -2391,7 +2425,7 @@
 
         // Si no se pasó dirección (ej: clic desde el botón rápido de la barra superior)
         if (!cleanStreet) {
-          const latestDelivery = (allOrders || []).find(o => o.order_type === 'delivery' && o.delivery && o.delivery.address);
+          const latestDelivery = (cachedOrders || []).find(o => o.order_type === 'delivery' && o.delivery && o.delivery.address);
           const defaultPrompt = latestDelivery ? `${latestDelivery.delivery.address}${latestDelivery.delivery.apartment ? ' (' + latestDelivery.delivery.apartment + ')' : ''}` : '';
           const inputAddr = prompt('🛵 Pedir Moto Uber Flash / Envíos\n\nIngresá la dirección de destino del cliente:', defaultPrompt);
           if (!inputAddr || !inputAddr.trim()) return;
@@ -2845,19 +2879,27 @@
           // Procesar Comandas KDS
           if (ordersData && ordersData.orders) {
             const incomingOrders = ordersData.orders;
-            
-            // Sonar campana de cocina ante comanda nueva
+            cachedOrders = incomingOrders;
+
+            // Sonar campana de cocina y despachar automáticamente a Fudo ante comanda nueva
             if (!isFirstLoad) {
+              let bellPlayed = false;
               for (const ord of incomingOrders) {
+                const ordKey = String(ord.order_id || ord.id || '');
                 if (!knownOrderIds.has(ord.id) && ord.kitchen_status !== 'entregado') {
-                  playKitchenBell();
-                  break;
+                  if (!bellPlayed) {
+                    playKitchenBell();
+                    bellPlayed = true;
+                  }
+                  if (autoFudoEnabled && ordKey && !autoDispatchedFudoIds.has(ordKey)) {
+                    autoDispatchedFudoIds.add(ordKey);
+                    window.copeDispatchFudo(ordKey, true);
+                  }
                 }
               }
             }
 
             incomingOrders.forEach(ord => knownOrderIds.add(ord.id));
-            cachedOrders = incomingOrders;
             renderKds();
           }
 
@@ -3071,6 +3113,23 @@
         });
       }
 
+      function updateAutoFudoButtonUi() {
+        if (!els.btnToggleAutoFudo) return;
+        els.btnToggleAutoFudo.classList.toggle('is-off', !autoFudoEnabled);
+        els.autoFudoIcon.textContent = autoFudoEnabled ? '⚡' : '⏸️';
+        els.autoFudoLabel.textContent = autoFudoEnabled ? 'Auto Fudo ON' : 'Auto Fudo OFF';
+      }
+      updateAutoFudoButtonUi();
+
+      if (els.btnToggleAutoFudo) {
+        els.btnToggleAutoFudo.addEventListener('click', () => {
+          autoFudoEnabled = !autoFudoEnabled;
+          try { localStorage.setItem('cope_auto_fudo', autoFudoEnabled); } catch (e) {}
+          updateAutoFudoButtonUi();
+          showCajaToast(autoFudoEnabled ? '⚡ Envío automático a Fudo POS <b>ACTIVADO</b>' : '⏸️ Envío automático a Fudo POS <b>PAUSADO</b>');
+        });
+      }
+
       if (els.btnToggleSoundOrders) {
         els.btnToggleSoundOrders.addEventListener('click', () => {
           soundOrdersEnabled = !soundOrdersEnabled;
@@ -3152,6 +3211,9 @@
           knownOrderIds.add(fakeDeliveryOrder.id);
           playKitchenBell();
           renderKds();
+          if (autoFudoEnabled) {
+            window.copeDispatchFudo(fakeDeliveryOrder.id, true);
+          }
 
           // También agregar a pagos MP
           const fakePayment = {

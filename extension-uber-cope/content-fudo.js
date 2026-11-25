@@ -4,6 +4,26 @@
   console.log('🍔 [Cope POS Agent] Inicializando en Fudo POS (app.fu.do)...');
 
   let activeOrder = null;
+  let lastAutoLoadedKey = '';
+
+  function getOrderKey(order) {
+    if (!order) return '';
+    return `${order.orderId || ''}_${order.timestamp || ''}`;
+  }
+
+  function triggerAutoLoadIfNeeded(order) {
+    if (!order || order.autoLoad === false) return;
+    const key = getOrderKey(order);
+    if (!key || lastAutoLoadedKey === key) return;
+    try {
+      if (sessionStorage.getItem('cope_fudo_loaded_' + key)) return;
+      sessionStorage.setItem('cope_fudo_loaded_' + key, '1');
+    } catch (e) {}
+    lastAutoLoadedKey = key;
+    setTimeout(() => {
+      runFudoAutoLoad(order);
+    }, 450);
+  }
 
   // 1. Obtener comanda activa desde chrome.storage
   function checkActiveFudoOrder() {
@@ -12,10 +32,14 @@
         chrome.runtime.sendMessage({ type: 'COPE_GET_FUDO_ORDER' }, (res) => {
           if (chrome.runtime.lastError) return;
           if (res && res.data) {
+            const ageMs = Date.now() - (res.data.timestamp || 0);
             // Expirar a los 30 min
-            if (Date.now() - (res.data.timestamp || 0) < 30 * 60 * 1000) {
+            if (ageMs < 30 * 60 * 1000) {
               activeOrder = res.data;
               injectFudoHud(activeOrder);
+              if (ageMs < 2 * 60 * 1000) {
+                triggerAutoLoadIfNeeded(activeOrder);
+              }
             } else {
               console.log('🍔 [Cope POS Agent] Comanda expirada (> 30 min).');
             }
@@ -27,7 +51,7 @@
     }
   }
 
-  // 2. Escuchar mensajes en tiempo real desde la extensión (cuando se hace clic en Caja)
+  // 2. Escuchar mensajes en tiempo real desde la extensión (cuando entra un pedido o se hace clic en Caja)
   if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (message.type === 'COPE_NEW_FUDO_ORDER_ALERT' && message.data) {
@@ -35,6 +59,8 @@
         activeOrder = message.data;
         injectFudoHud(activeOrder);
         playAlertSound();
+        triggerAutoLoadIfNeeded(activeOrder);
+        if (sendResponse) sendResponse({ status: 'RECEIVED' });
       }
     });
   }
