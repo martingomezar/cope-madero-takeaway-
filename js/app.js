@@ -339,6 +339,10 @@
     const desc = (prod.description || '').toLowerCase();
     const name = (prod.name || '').toLowerCase();
 
+    if (prod.isPromo && prod.scheduleBadge) {
+      tags.push({ label: `⏰ ${prod.scheduleBadge}`, type: 'promo' });
+    }
+
     if (prod.category === 'simples') {
       tags.push({ label: '🥩 110g Carne', type: 'meat' });
     } else if (prod.category === 'dobles') {
@@ -372,9 +376,11 @@
 
     let filtered = PRODUCTS.slice();
 
-    // Filtro por categoría (soporte para categoría veggie)
+    // Filtro por categoría (soporte para categoría veggie y promos)
     if (currentCategory === 'veggie') {
       filtered = filtered.filter((p) => p.hasVeggieOption);
+    } else if (currentCategory === 'promos') {
+      filtered = filtered.filter((p) => p.category === 'promos' || p.isPromo);
     } else if (currentCategory !== 'todas') {
       filtered = filtered.filter((p) => p.category === currentCategory);
     }
@@ -429,7 +435,7 @@
         : (window.COPE_I18N ? `+ ${window.COPE_I18N.t('btn_add')}` : '+ Agregar');
 
       return `
-        <article class="product-card" data-product-id="${origProd.id}">
+        <article class="product-card ${origProd.isPromo ? 'is-promo-card' : ''}" data-product-id="${origProd.id}">
           <div class="card-image-wrap">
             <img src="${prod.image}" alt="${prod.name}" class="card-img" loading="lazy" />
             ${badgeHtml}
@@ -1517,6 +1523,12 @@
         else if (!els.cartDrawerBackdrop.classList.contains('hidden')) closeCartDrawer();
       }
     });
+
+    // Acceso rápido público a abrir modal de producto desde banners destacados
+    window.copeQuickOpenProduct = function(productId) {
+      const prod = PRODUCTS.find((x) => x.id === productId);
+      if (prod) openProductModal(prod);
+    };
   }
 
   document.addEventListener('DOMContentLoaded', init);

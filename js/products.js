@@ -13,6 +13,7 @@ const DRINKS_OPTIONS = [
 
 window.COPE_CATEGORIES = [
   { id: 'todas', label: 'Todo el Menú', icon: '✨' },
+  { id: 'promos', label: 'Promociones 🔥', icon: '⚡' },
   { id: 'simples', label: 'Burgers Simples', icon: '🍔' },
   { id: 'dobles', label: 'Burgers Dobles', icon: '🍔🍔' },
   { id: 'combos', label: 'Combos con Bebida', icon: '🍟🥤' },
@@ -22,6 +23,56 @@ window.COPE_CATEGORIES = [
 ];
 
 window.COPE_PRODUCTS = [
+  // =========================================================================
+  // 0. PROMOCIONES DESTACADAS (Lo primero que se ve en el menú)
+  // =========================================================================
+  {
+    id: 'promo-almuerzo-cheeseburger-papas',
+    name: 'Promo Almuerzo: Cheeseburger + Papas',
+    category: 'promos',
+    description: 'Cheese Burger Simple (110g de carne vacuna seleccionada) con cheddar americano fundido y mayo de la casa en pan de papa tostado con manteca + Porción de Papas Fritas Cope doradas y crujientes. Válido Lunes a Viernes de 12:00 a 18:00 hs.',
+    badge: '⚡ Promo Lu a Vi · 12 a 18 hs · $11.900',
+    scheduleBadge: 'Lu a Vi · 12 a 18 hs',
+    image: 'img/promo-cheeseburger-papas.jpeg',
+    price: 11900,
+    isPromo: true,
+    promoSchedule: {
+      days: [1, 2, 3, 4, 5],
+      startHour: 12,
+      endHour: 18,
+      label: 'Lunes a Viernes de 12 a 18 hs'
+    },
+    canAddExtraMeat: true,
+    extraMeatPrice: 4000,
+    canAddExtraCheddar: true,
+    extraCheddarPrice: 2000,
+    canAddExtraBacon: true,
+    extraBaconPrice: 2000,
+    hasVeggieOption: true,
+    veggieNote: 'Opción con Not Burger y pan 100% vegano'
+  },
+  {
+    id: 'promo-after-office-cervezas-papas',
+    name: 'Promo After Office: 2 Cervezas + Papas Fritas',
+    category: 'promos',
+    description: '2 Cervezas Quilmes heladas (tirada/lata) bien refrescantes + Porción de Papas Fritas Cope doradas al estilo americano con sal marina para compartir. Válido Lunes a Viernes de 18:00 a 20:00 hs.',
+    badge: '🍻 After Office · Lu a Vi 18 a 20 hs · $10.000',
+    scheduleBadge: 'Lu a Vi · 18 a 20 hs',
+    image: 'img/promo-cervezas-papas.jpeg',
+    price: 10000,
+    isPromo: true,
+    promoSchedule: {
+      days: [1, 2, 3, 4, 5],
+      startHour: 18,
+      endHour: 20,
+      label: 'Lunes a Viernes de 18 a 20 hs'
+    },
+    canAddExtraCheddar: true,
+    extraCheddarPrice: 2000,
+    canAddExtraBacon: true,
+    extraBaconPrice: 2000
+  },
+
   // =========================================================================
   // 1. HAMBURGUESAS SIMPLES (1 Medallón 110g)
   // =========================================================================

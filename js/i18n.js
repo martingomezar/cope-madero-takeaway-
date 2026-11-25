@@ -22,6 +22,7 @@ window.COPE_I18N = (function () {
 
       // Categorías
       cat_todas: 'Todo el Menú',
+      cat_promos: 'Promociones 🔥',
       cat_simples: 'Burgers Simples',
       cat_dobles: 'Burgers Dobles',
       cat_combos: 'Combos con Bebida',
@@ -128,6 +129,7 @@ window.COPE_I18N = (function () {
 
       // Categories
       cat_todas: 'All Menu',
+      cat_promos: 'Special Deals 🔥',
       cat_simples: 'Single Burgers',
       cat_dobles: 'Double Burgers',
       cat_combos: 'Combos with Drink',
@@ -234,6 +236,7 @@ window.COPE_I18N = (function () {
 
       // Categories
       cat_todas: 'Todo o Cardápio',
+      cat_promos: 'Promoções 🔥',
       cat_simples: 'Hambúrgueres Simples',
       cat_dobles: 'Hambúrgueres Duplos',
       cat_combos: 'Combos com Bebida',
@@ -328,6 +331,30 @@ window.COPE_I18N = (function () {
 
   // Traducción de Productos
   const PRODUCT_TRANSLATIONS = {
+    'promo-almuerzo-cheeseburger-papas': {
+      en: {
+        name: 'Lunch Promo: Cheeseburger + Fries',
+        description: 'Single Cheese Burger (110g beef) with melted American cheddar on potato bun + generous portion of golden crispy Cope fries. Valid Mon to Fri 12:00 to 18:00.',
+        badge: '⚡ Lunch Deal · Mon-Fri 12-18h · $11,900'
+      },
+      pt: {
+        name: 'Promo Almoço: Cheeseburger + Batatas',
+        description: 'Cheese Burger Simples (110g) com cheddar americano derretido no pão de batata + porção de batatas fritas crocantes Cope. Válido Seg a Sex das 12h às 18h.',
+        badge: '⚡ Promo Almoço · Seg-Sex 12-18h · $11.900'
+      }
+    },
+    'promo-after-office-cervezas-papas': {
+      en: {
+        name: 'After Office Promo: 2 Beers + Fries',
+        description: '2 Chilled Quilmes beers + generous portion of golden crispy Cope fries for sharing. Valid Mon to Fri 18:00 to 20:00.',
+        badge: '🍻 After Office · Mon-Fri 18-20h · $10,000'
+      },
+      pt: {
+        name: 'Promo After Office: 2 Cervejas + Batatas',
+        description: '2 Cervejas Quilmes geladas + porção de batatas fritas crocantes Cope para compartilhar. Válido Seg a Sex das 18h às 20h.',
+        badge: '🍻 After Office · Seg-Sex 18-20h · $10.000'
+      }
+    },
     'simple-cheese-burger': {
       en: {
         name: 'Single Cheese Burger',

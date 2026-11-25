@@ -114,6 +114,60 @@
        CONTENIDO PRINCIPAL: GRILLA DE PRODUCTOS
        ======================================================================= -->
   <main class="main-content">
+    <!-- =======================================================================
+         PROMOCIONES DESTACADAS VIGENTES (Lo primero que se ve)
+         ======================================================================= -->
+    <section class="promos-spotlight-bar" aria-label="Promociones destacadas">
+      <!-- Promo 1: Almuerzo Cheeseburger + Papas -->
+      <article class="promo-spotlight-card lunch-promo" onclick="window.copeQuickOpenProduct('promo-almuerzo-cheeseburger-papas')">
+        <div class="promo-spotlight-content">
+          <div class="promo-badge-pill">
+            <span class="promo-live-dot"></span>
+            <span>PROMO ALMUERZO · LU A VI 12 A 18 HS</span>
+          </div>
+          <h2 class="promo-spotlight-title">Cheeseburger + Papas Fritas</h2>
+          <p class="promo-spotlight-desc">Burger simple 110g con cheddar americano fundido + Porción de Papas Fritas crujientes</p>
+          <div class="promo-spotlight-footer">
+            <div class="promo-price-block">
+              <span class="promo-price-current">$11.900</span>
+              <span class="promo-price-regular">$13.000</span>
+            </div>
+            <button type="button" class="btn-promo-action" onclick="event.stopPropagation(); window.copeQuickOpenProduct('promo-almuerzo-cheeseburger-papas');">
+              Pedir Promo ➔
+            </button>
+          </div>
+        </div>
+        <div class="promo-spotlight-visual">
+          <img src="./img/promo-cheeseburger-papas.jpeg" alt="Promo Cheeseburger + Papas Fritas Cope" class="promo-spotlight-img" />
+          <span class="promo-save-pill">Ahorrás $1.100</span>
+        </div>
+      </article>
+
+      <!-- Promo 2: After Office 2 Cervezas + Papas -->
+      <article class="promo-spotlight-card after-office-promo" onclick="window.copeQuickOpenProduct('promo-after-office-cervezas-papas')">
+        <div class="promo-spotlight-content">
+          <div class="promo-badge-pill after-office">
+            <span class="promo-live-dot beer"></span>
+            <span>AFTER OFFICE · LU A VI 18 A 20 HS</span>
+          </div>
+          <h2 class="promo-spotlight-title">2 Cervezas + Papas Fritas</h2>
+          <p class="promo-spotlight-desc">2 Cervezas Quilmes heladas (tirada/lata) + Porción de Papas Fritas Cope para compartir</p>
+          <div class="promo-spotlight-footer">
+            <div class="promo-price-block">
+              <span class="promo-price-current">$10.000</span>
+            </div>
+            <button type="button" class="btn-promo-action after-office" onclick="event.stopPropagation(); window.copeQuickOpenProduct('promo-after-office-cervezas-papas');">
+              Pedir Promo ➔
+            </button>
+          </div>
+        </div>
+        <div class="promo-spotlight-visual">
+          <img src="./img/promo-cervezas-papas.jpeg" alt="Promo 2 Cervezas + Papas Fritas Cope" class="promo-spotlight-img" />
+          <span class="promo-save-pill beer">🍻 2 Cervezas + Papas</span>
+        </div>
+      </article>
+    </section>
+
     <div id="productsGrid" class="products-grid">
       <!-- Tarjetas de menú renderizadas por app.js -->
     </div>
