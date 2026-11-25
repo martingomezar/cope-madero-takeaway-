@@ -670,7 +670,7 @@
     return rows;
   }
 
-  // Configurar cantidad y poner precio en $0 en el último renglón agregado
+  // Configurar cantidad en el último renglón agregado (sin pisar el precio real de Fudo)
   async function configureLastAddedRowInFudo(qty, searchInput) {
     try {
       const rows = getAdicionarRows(searchInput);
@@ -678,18 +678,15 @@
       const lastRow = rows[rows.length - 1];
       const rowInputs = Array.from(lastRow.querySelectorAll('input:not([type="hidden"])'))
         .filter(i => isElementVisible(i) && !normalizeText(i.placeholder).includes('comentar') && !normalizeText(i.placeholder).includes('nota'));
-      if (rowInputs.length >= 2) {
+      if (rowInputs.length >= 1) {
         const qtyInput = rowInputs[0];
-        const priceInput = rowInputs[rowInputs.length - 1];
         if (!qtyInput.value || Number(qtyInput.value) !== qty) {
           await typeTextIntoInput(qtyInput, String(qty));
           await sleep(80);
         }
-        await typeTextIntoInput(priceInput, '0');
-        await sleep(80);
       }
     } catch (e) {
-      console.warn('🍔 [Cope POS Agent] Aviso configurando cantidad/precio $0:', e);
+      console.warn('🍔 [Cope POS Agent] Aviso configurando cantidad:', e);
     }
   }
 
@@ -735,23 +732,47 @@
 
       if (!targetBtn) return false;
       triggerRealClick(targetBtn);
-      await sleep(300);
 
-      // Buscar el input/textarea que se abrió para escribir el comentario del ítem ("Agrega un comentario aquí...")
-      const allRightInputs = Array.from(document.querySelectorAll('input:not([type="hidden"]), textarea'))
-        .filter(i => i !== searchInput && !i.closest('#cope-fudo-hud') && !i.closest('header') && !i.closest('nav') && isElementVisible(i));
+      // Esperar hasta 1s a que abra y enfoque el campo "Agrega un comentario aquí..."
+      let targetInput = null;
+      for (let attempt = 0; attempt < 5 && !targetInput; attempt++) {
+        await sleep(200);
+        const active = document.activeElement;
+        if (
+          active &&
+          active !== searchInput &&
+          !active.closest('#cope-fudo-hud') &&
+          (active.tagName === 'TEXTAREA' ||
+            (active.tagName === 'INPUT' &&
+              (normalizeText(active.placeholder).includes('comentar') ||
+                normalizeText(active.placeholder).includes('nota') ||
+                normalizeText(active.getAttribute('ng-model') || '').includes('comment'))))
+        ) {
+          targetInput = active;
+          break;
+        }
 
-      const strictCommentInputs = allRightInputs.filter(i => {
-        const ph = normalizeText(i.placeholder);
-        const ngModel = normalizeText(i.getAttribute('ng-model') || '');
-        return ph.includes('comentar') || ph.includes('nota') || ph.includes('observ') || ngModel.includes('comment') || i.tagName === 'TEXTAREA';
-      });
+        const allRightInputs = Array.from(document.querySelectorAll('input:not([type="hidden"]), textarea'))
+          .filter(i => i !== searchInput && !i.closest('#cope-fudo-hud') && !i.closest('header') && !i.closest('nav') && isElementVisible(i));
+        const strictCommentInputs = allRightInputs.filter(i => {
+          const ph = normalizeText(i.placeholder);
+          const ngModel = normalizeText(i.getAttribute('ng-model') || '');
+          return ph.includes('comentar') || ph.includes('nota') || ph.includes('observ') || ngModel.includes('comment') || i.tagName === 'TEXTAREA';
+        });
+        if (strictCommentInputs.length > 0) {
+          targetInput = strictCommentInputs[strictCommentInputs.length - 1];
+        }
+      }
 
-      const targetInput =
-        (document.activeElement && strictCommentInputs.includes(document.activeElement) ? document.activeElement : null) ||
-        strictCommentInputs[strictCommentInputs.length - 1];
       if (targetInput) {
         await typeTextIntoInput(targetInput, commentText);
+        if (!targetInput.value) {
+          try {
+            targetInput.focus();
+            document.execCommand('insertText', false, commentText);
+            targetInput.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+          } catch (e) {}
+        }
         await sleep(120);
         targetInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, bubbles: true }));
         await sleep(150);
