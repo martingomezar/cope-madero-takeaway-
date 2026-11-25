@@ -30,6 +30,17 @@ window.COPE_I18N = (function () {
       cat_acompanamientos: 'Papas Fritas',
       cat_bebidas: 'Bebidas',
 
+      // Spotlight Promos
+      promo_btn_action: 'Pedir Promo ➔',
+      promo_lunch_badge: '⚡ PROMO ALMUERZO · LU A VI 12 A 18 HS',
+      promo_lunch_title: 'Cheeseburger + Papas Fritas',
+      promo_lunch_desc: 'Burger simple 110g con cheddar americano + Papas Fritas Cope. <strong>Exclusivo para consumo en el local o Take Away.</strong>',
+      promo_lunch_pill: '🍔 Burger + Papas',
+      promo_after_badge: '🍻 AFTER OFFICE · LU A VI 18 A 20 HS',
+      promo_after_title: '2 Cervezas + Papas Fritas',
+      promo_after_desc: '2 Cervezas Quilmes heladas + Papas Fritas Cope para compartir. <strong>Exclusivo para consumo en el local o Take Away.</strong>',
+      promo_after_pill: '🍻 2 Cervezas + Papas',
+
       // Tarjetas de Producto
       btn_customize: 'Personalizar',
       btn_add: 'Agregar',
@@ -136,6 +147,17 @@ window.COPE_I18N = (function () {
       cat_veggie: 'Not Burger 🌱',
       cat_acompanamientos: 'French Fries',
       cat_bebidas: 'Drinks',
+
+      // Spotlight Promos
+      promo_btn_action: 'Order Deal ➔',
+      promo_lunch_badge: '⚡ LUNCH DEAL · MON TO FRI 12 TO 6 PM',
+      promo_lunch_title: 'Cheeseburger + French Fries',
+      promo_lunch_desc: 'Single 110g burger with melted American cheddar + crispy Cope Fries. <strong>Dine-in or Take Away only.</strong>',
+      promo_lunch_pill: '🍔 Burger + Fries',
+      promo_after_badge: '🍻 AFTER OFFICE · MON TO FRI 6 TO 8 PM',
+      promo_after_title: '2 Beers + French Fries',
+      promo_after_desc: '2 Chilled Quilmes beers + crispy Cope Fries to share. <strong>Dine-in or Take Away only.</strong>',
+      promo_after_pill: '🍻 2 Beers + Fries',
 
       // Product Cards
       btn_customize: 'Customize',
@@ -244,6 +266,17 @@ window.COPE_I18N = (function () {
       cat_acompanamientos: 'Batatas Fritas',
       cat_bebidas: 'Bebidas',
 
+      // Spotlight Promos
+      promo_btn_action: 'Pedir Promo ➔',
+      promo_lunch_badge: '⚡ PROMO ALMOÇO · SEG A SEX 12 ÀS 18 HS',
+      promo_lunch_title: 'Cheeseburger + Batatas Fritas',
+      promo_lunch_desc: 'Hambúrguer simples 110g com cheddar americano + Batatas Fritas Cope. <strong>Exclusivo para consumo no local ou Take Away.</strong>',
+      promo_lunch_pill: '🍔 Burger + Batatas',
+      promo_after_badge: '🍻 AFTER OFFICE · SEG A SEX 18 ÀS 20 HS',
+      promo_after_title: '2 Cervejas + Batatas Fritas',
+      promo_after_desc: '2 Cervejas Quilmes geladas + Batatas Fritas Cope para compartilhar. <strong>Exclusivo para consumo no local ou Take Away.</strong>',
+      promo_after_pill: '🍻 2 Cervejas + Batatas',
+
       // Product Cards
       btn_customize: 'Personalizar',
       btn_add: 'Adicionar',
@@ -335,24 +368,28 @@ window.COPE_I18N = (function () {
       en: {
         name: 'Lunch Promo: Cheeseburger + Fries',
         description: 'Single Cheese Burger (110g beef) with melted American cheddar on potato bun + generous portion of golden crispy Cope fries. Dine-in or Take Away only (Mon to Fri 12:00 to 18:00).',
-        badge: '⚡ Lunch Deal · Mon-Fri 12-18h · Dine-in / Take Away · $10,900'
+        badge: '⚡ Lunch Deal · Mon-Fri 12-18h · Dine-in / Take Away · $10,900',
+        scheduleBadge: 'Mon to Fri · 12 to 18h · Dine-in / Take Away'
       },
       pt: {
         name: 'Promo Almoço: Cheeseburger + Batatas',
         description: 'Cheese Burger Simples (110g) com cheddar americano derretido no pão de batata + porção de batatas fritas crocantes Cope. Exclusivo para consumo no local ou Take Away (Seg a Sex das 12h às 18h).',
-        badge: '⚡ Promo Almoço · Seg-Sex 12-18h · Local / Take Away · $10.900'
+        badge: '⚡ Promo Almoço · Seg-Sex 12-18h · Local / Take Away · $10.900',
+        scheduleBadge: 'Seg a Sex · 12 às 18h · Local / Take Away'
       }
     },
     'promo-after-office-cervezas-papas': {
       en: {
         name: 'After Office Promo: 2 Beers + Fries',
         description: '2 Chilled Quilmes beers + generous portion of golden crispy Cope fries for sharing. Dine-in or Take Away only (Mon to Fri 18:00 to 20:00).',
-        badge: '🍻 After Office · Mon-Fri 18-20h · Dine-in / Take Away · $10,000'
+        badge: '🍻 After Office · Mon-Fri 18-20h · Dine-in / Take Away · $10,000',
+        scheduleBadge: 'Mon to Fri · 18 to 20h · Dine-in / Take Away'
       },
       pt: {
         name: 'Promo After Office: 2 Cervejas + Batatas',
         description: '2 Cervejas Quilmes geladas + porção de batatas fritas crocantes Cope para compartilhar. Exclusivo para consumo no local ou Take Away (Seg a Sex das 18h às 20h).',
-        badge: '🍻 After Office · Seg-Sex 18-20h · Local / Take Away · $10.000'
+        badge: '🍻 After Office · Seg-Sex 18-20h · Local / Take Away · $10.000',
+        scheduleBadge: 'Seg a Sex · 18 às 20h · Local / Take Away'
       }
     },
     'simple-cheese-burger': {
@@ -613,7 +650,8 @@ window.COPE_I18N = (function () {
       ...p,
       name: trans.name || p.name,
       description: trans.description || p.description,
-      badge: trans.badge || p.badge
+      badge: trans.badge || p.badge,
+      scheduleBadge: trans.scheduleBadge || p.scheduleBadge
     };
   }
 

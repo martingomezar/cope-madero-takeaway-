@@ -237,6 +237,29 @@
       waBtn.setAttribute('aria-label', t('wa_order_btn') || 'WhatsApp');
     }
 
+    // Promociones Destacadas (Spotlight Bar)
+    const slBadge = document.getElementById('spotlightLunchBadge');
+    if (slBadge) slBadge.textContent = t('promo_lunch_badge');
+    const slTitle = document.getElementById('spotlightLunchTitle');
+    if (slTitle) slTitle.textContent = t('promo_lunch_title');
+    const slDesc = document.getElementById('spotlightLunchDesc');
+    if (slDesc) slDesc.innerHTML = t('promo_lunch_desc');
+    const slBtn = document.getElementById('spotlightLunchBtn');
+    if (slBtn) slBtn.textContent = t('promo_btn_action');
+    const slPill = document.getElementById('spotlightLunchPill');
+    if (slPill) slPill.textContent = t('promo_lunch_pill');
+
+    const saBadge = document.getElementById('spotlightAfterBadge');
+    if (saBadge) saBadge.textContent = t('promo_after_badge');
+    const saTitle = document.getElementById('spotlightAfterTitle');
+    if (saTitle) saTitle.textContent = t('promo_after_title');
+    const saDesc = document.getElementById('spotlightAfterDesc');
+    if (saDesc) saDesc.innerHTML = t('promo_after_desc');
+    const saBtn = document.getElementById('spotlightAfterBtn');
+    if (saBtn) saBtn.textContent = t('promo_btn_action');
+    const saPill = document.getElementById('spotlightAfterPill');
+    if (saPill) saPill.textContent = t('promo_after_pill');
+
     renderCategories();
     renderProducts();
     populatePaymentMethods();
