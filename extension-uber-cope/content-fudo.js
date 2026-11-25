@@ -454,6 +454,23 @@
       parts.push('Take Away');
     }
     if (order.customerPhone) parts.push(`Tel: ${order.customerPhone}`);
+
+    // Sumar notas/extras/bebidas de cada ítem para que salgan en comanda
+    const itemNotes = [];
+    (order.items || []).forEach(it => {
+      const details = [];
+      if (it.hasExtraCheddar) details.push('+Extra Cheddar');
+      if (it.hasExtraBacon) details.push('+Extra Bacon');
+      if (it.selectedDrink) details.push(`Bebida: ${it.selectedDrink}`);
+      if (it.notes) details.push(it.notes);
+      if (details.length > 0) {
+        itemNotes.push(`${it.quantity || 1}x ${it.name}: ${details.join(', ')}`);
+      }
+    });
+    if (itemNotes.length > 0) {
+      parts.push(`Notas: ${itemNotes.join(' / ')}`);
+    }
+
     await typeTextIntoInput(commentInput, parts.join(' | '));
     return true;
   }
@@ -462,9 +479,9 @@
   function expandOrderItemsForFudo(items) {
     const queue = [];
 
-    const pushProduct = (fudoName, quantity) => {
+    const pushProduct = (fudoName, quantity, itemComment) => {
       if (!fudoName) return;
-      queue.push({ fudoName, quantity: Number(quantity) || 1 });
+      queue.push({ fudoName, quantity: Number(quantity) || 1, itemComment: itemComment || '' });
     };
 
     for (const it of items) {
@@ -477,6 +494,12 @@
       const isCombo = id.startsWith('combo-') || name.includes('combo');
 
       let extraMeatConsumed = false;
+
+      const mainNotes = [];
+      if (it.selectedDrink && isCombo) mainNotes.push(`Bebida: ${it.selectedDrink}`);
+      if (it.notes) mainNotes.push(it.notes);
+      const mainComment = mainNotes.join(' · ');
+      const mainIdxBefore = queue.length;
 
       // 1. Producto principal
       if (id === 'sampler-cope' || name.includes('sampler')) {
@@ -547,15 +570,19 @@
         pushProduct(cleanProductNameForFudo(it.name), qty);
       }
 
-      // 2. Adicionales (Extra Carne / Cheddar / Bacon)
+      if (mainComment && queue.length > mainIdxBefore) {
+        queue[mainIdxBefore].itemComment = mainComment;
+      }
+
+      // 2. Adicionales (Extra Carne ya precargado; Extra... lleva comentario Cheddar/Bacon)
       if (it.hasExtraMeat && !extraMeatConsumed) {
         pushProduct('Extra Carne.', qty);
       }
       if (it.hasExtraCheddar) {
-        pushProduct('Extra...', qty);
+        pushProduct('Extra...', qty, 'Extra Cheddar');
       }
       if (it.hasExtraBacon) {
-        pushProduct('Extra...', qty);
+        pushProduct('Extra...', qty, 'Extra Bacon');
       }
     }
 
@@ -601,6 +628,10 @@
         const nextEl = findMatchingProductElement(exactFudoName) || findMatchingProductElement(noDotsName);
         if (nextEl) triggerRealClick(nextEl);
       }
+      if (item.itemComment) {
+        await sleep(250);
+        await attachItemCommentInFudo(item.itemComment, searchInput);
+      }
       return true;
     }
 
@@ -613,6 +644,58 @@
       await sleep(250);
     } catch (e) {}
 
+    return false;
+  }
+
+  // Agregar comentario al último ítem agregado en ADICIONAR (ej: Extra Cheddar, Extra Bacon, Sin salsa)
+  async function attachItemCommentInFudo(commentText, searchInput) {
+    if (!commentText) return false;
+    try {
+      const commentBtns = Array.from(document.querySelectorAll(
+        '[ng-click*="comment" i], [title*="comentar" i], [aria-label*="comentar" i], [class*="comment" i], button, a, i, span'
+      )).filter(el => {
+        if (el.closest('#cope-fudo-hud') || el.closest('header') || el.closest('nav')) return false;
+        if (!isElementVisible(el)) return false;
+        const rect = el.getBoundingClientRect();
+        if (rect.left < window.innerWidth * 0.45) return false;
+        const ngClick = normalizeText(el.getAttribute('ng-click') || '');
+        const title = normalizeText(el.getAttribute('title') || el.getAttribute('aria-label') || '');
+        const cls = normalizeText(typeof el.className === 'string' ? el.className : '');
+        return ngClick.includes('comment') || title.includes('comentar') || title.includes('nota') || cls.includes('comment');
+      });
+
+      if (commentBtns.length === 0) return false;
+      // El ítem recién agregado suele ser el último (o el primero según orden de Fudo; en ADICIONAR es el último renglón amarillo)
+      const targetBtn = commentBtns[commentBtns.length - 1];
+      triggerRealClick(targetBtn);
+      await sleep(300);
+
+      // Buscar el input/textarea que se abrió para escribir el comentario del ítem
+      const commentInputs = Array.from(document.querySelectorAll('input:not([type="hidden"]), textarea'))
+        .filter(i => i !== searchInput && !i.closest('#cope-fudo-hud') && !i.closest('header') && !i.closest('nav') && isElementVisible(i))
+        .filter(i => {
+          const ph = normalizeText(i.placeholder);
+          const ngModel = normalizeText(i.getAttribute('ng-model') || '');
+          const type = normalizeText(i.type);
+          return i.tagName === 'TEXTAREA' || ph.includes('comentar') || ph.includes('nota') || ngModel.includes('comment') || type === 'text';
+        });
+
+      const targetInput = commentInputs[commentInputs.length - 1];
+      if (targetInput) {
+        await typeTextIntoInput(targetInput, commentText);
+        await sleep(120);
+        targetInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, bubbles: true }));
+        await sleep(150);
+        // Si abrió modal con botón Guardar/Aceptar, tocarlo
+        const okBtn = Array.from(document.querySelectorAll('button, [role="button"]'))
+          .filter(b => !b.closest('#cope-fudo-hud') && isElementVisible(b))
+          .find(b => ['aceptar', 'guardar', 'ok'].includes(normalizeText(b.innerText || b.textContent)));
+        if (okBtn) triggerRealClick(okBtn);
+        return true;
+      }
+    } catch (e) {
+      console.warn('🍔 [Cope POS Agent] Aviso agregando comentario al ítem:', e);
+    }
     return false;
   }
 
