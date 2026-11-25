@@ -2389,6 +2389,7 @@
           paymentMethod: order.payment_method || 'Mercado Pago Online',
           autoLoad: autoLoad !== false,
           items: rawItems.map(it => ({
+            id: it.id || '',
             name: it.name || it.title || 'Producto',
             quantity: Number(it.quantity) || 1,
             variant: it.variant || '',

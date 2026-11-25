@@ -261,28 +261,28 @@
       return;
     }
 
-    // 4. Cargar cada producto en la orden
-    const items = order.items || [];
+    // 4. Expandir ítems del pedido web al catálogo exacto de Fudo
+    const fudoQueue = expandOrderItemsForFudo(order.items || []);
     let addedCount = 0;
     const notFound = [];
 
-    for (let i = 0; i < items.length; i++) {
-      const it = items[i];
-      setFudoStatus(`🔍 Agregando (${i + 1}/${items.length}): <b>${escapeHtml(it.name)}</b>...`);
-      const added = await addProductToFudo(it, custInput);
+    for (let i = 0; i < fudoQueue.length; i++) {
+      const fItem = fudoQueue[i];
+      setFudoStatus(`🔍 Agregando (${i + 1}/${fudoQueue.length}): <b>${escapeHtml(fItem.fudoName)}</b>...`);
+      const added = await addProductToFudo(fItem, custInput);
       if (added) {
         addedCount++;
         await sleep(500);
       } else {
-        notFound.push(it.name);
-        console.warn('No se pudo autoseleleccionar el ítem:', it.name);
+        notFound.push(fItem.fudoName);
+        console.warn('No se pudo autoseleccionar el ítem en Fudo:', fItem.fudoName);
       }
     }
 
     if (notFound.length === 0 && addedCount > 0) {
-      setFudoStatus(`✅ <b>¡${addedCount} producto(s) agregado(s)!</b> Verificá y tocá <b>Comandar / Guardar</b>.`);
+      setFudoStatus(`✅ <b>¡${addedCount} ítem(s) cargado(s) en Fudo!</b> Verificá y tocá <b>Comandar / Guardar</b>.`);
     } else if (addedCount > 0) {
-      setFudoStatus(`⚠️ Cargados ${addedCount}/${items.length}. Faltó: <b>${escapeHtml(notFound.join(', '))}</b>`);
+      setFudoStatus(`⚠️ Cargados ${addedCount}/${fudoQueue.length}. Faltó: <b>${escapeHtml(notFound.join(', '))}</b>`);
     } else {
       setFudoStatus(`⚠️ Cliente cargado, pero no coincidieron los ítems en Fudo. Usá "Buscar Primer Ítem" o copialos.`);
     }
@@ -419,16 +419,120 @@
     return true;
   }
 
+  // 6B. MAPEO EXACTO AL CATÁLOGO DE FUDO (CSV OFICIAL)
+  function expandOrderItemsForFudo(items) {
+    const queue = [];
+
+    const pushProduct = (fudoName, quantity) => {
+      if (!fudoName) return;
+      queue.push({ fudoName, quantity: Number(quantity) || 1 });
+    };
+
+    for (const it of items) {
+      const qty = Number(it.quantity) || 1;
+      const id = normalizeText(it.id);
+      const name = normalizeText(it.name);
+      const variant = normalizeText(it.variantTitle || it.variant);
+      const isVeggie = !!it.isVeggie || id.includes('not') || name.includes('notburger') || name.includes('not burger') || name.includes('veggie');
+      const isDoble = id.startsWith('doble-') || variant.includes('doble') || name.includes('doble');
+      const isCombo = id.startsWith('combo-') || name.includes('combo');
+
+      let extraMeatConsumed = false;
+
+      // 1. Producto principal
+      if (id === 'sampler-cope' || name.includes('sampler')) {
+        pushProduct('SAMPLER COPE', qty);
+      } else if (id === 'papas-fritas' || (name.includes('papas') && !name.includes('promo') && !name.includes('combo'))) {
+        pushProduct('PAPAS FRITAS', qty);
+      } else if (id === 'promo-after-office-cervezas-papas' || name.includes('after office')) {
+        pushProduct('Cerveza Tirada x 350cc', qty * 2);
+        pushProduct('PAPAS FRITAS', qty);
+      } else if (id === 'promo-almuerzo-cheeseburger-papas' || (name.includes('promo') && name.includes('cheeseburger'))) {
+        pushProduct(isVeggie ? 'CHEESEBURGUER NOT CO' : 'CHEESE BURGUER SIMPLE', qty);
+        pushProduct('PAPAS FRITAS', qty);
+      } else if (id === 'pepsi-black-lata' || name.includes('pepsi black')) {
+        pushProduct('Pepsi Black Lata 350cc', qty);
+      } else if (id === 'pepsi-lata' || name.includes('pepsi')) {
+        pushProduct('Pepsi Lata 350cc', qty);
+      } else if (id === '7up-lata' || name.includes('7up')) {
+        pushProduct('7UP Lata 350cc', qty);
+      } else if (id === 'agua-con-gas' || (name.includes('agua') && name.includes('gas'))) {
+        pushProduct('Agua Con Gas Eco de los Andes 500cc', qty);
+      } else if (id === 'agua-mineral' || name.includes('agua')) {
+        pushProduct('Agua Sin Gas Nestle PV 500cc', qty);
+      } else if (isCombo) {
+        if (isVeggie) {
+          if (id.includes('bacon') || name.includes('bacon')) pushProduct('Cheese & Bacon Not Co', qty);
+          else if (id.includes('clasica') || name.includes('clasica')) pushProduct('Clasica Not Co', qty);
+          else if (id.includes('gran-cope') || name.includes('gran cope')) pushProduct('Gran Cope Not Co', qty);
+          else pushProduct('CHEESEBURGUER NOT CO', qty);
+          pushProduct('PAPAS FRITAS', qty);
+        } else {
+          const wantDoble = !!it.hasExtraMeat || isDoble;
+          if (wantDoble) extraMeatConsumed = true;
+          if (id.includes('bacon') || name.includes('bacon')) {
+            pushProduct(wantDoble ? 'combo cheese bacon doble' : 'combo cheese bacon simple', qty);
+          } else if (id.includes('clasica') || name.includes('clasica')) {
+            pushProduct(wantDoble ? 'combo clasica doble' : 'combo clasica simple', qty);
+          } else if (id.includes('gran-cope') || name.includes('gran cope')) {
+            pushProduct(wantDoble ? 'combo gran cope doble' : 'combo gran cope simple', qty);
+          } else {
+            pushProduct(wantDoble ? 'combo cheese burguer doble' : 'combo cheese burguer simple', qty);
+          }
+        }
+      } else if (id.includes('bacon') || name.includes('bacon')) {
+        if (isVeggie) {
+          pushProduct('Cheese & Bacon Not Co', qty);
+        } else {
+          pushProduct(isDoble ? 'CHEESE BACON DOBL' : 'CHEESE BACON SIMPLE', qty);
+        }
+      } else if (id.includes('gran-cope') || name.includes('gran cope')) {
+        if (isVeggie) {
+          pushProduct('Gran Cope Not Co', qty);
+        } else {
+          pushProduct(isDoble ? 'GRAN COPE DOBL' : 'GRAN COPE SIMPLE', qty);
+        }
+      } else if (id.includes('clasica') && !name.includes('cheeseburger')) {
+        if (isVeggie) {
+          pushProduct('Clasica Not Co', qty);
+        } else {
+          pushProduct(isDoble ? 'CLASICA DOBLE' : 'CLASICA SIMPLE', qty);
+        }
+      } else if (id.includes('cheese-burger') || id.includes('cheeseburger') || id.includes('not-burger') || name.includes('cheeseburger') || name.includes('cheese burger') || isVeggie) {
+        if (isVeggie) {
+          pushProduct('CHEESEBURGUER NOT CO', qty);
+        } else {
+          pushProduct(isDoble ? 'CHEESE BURGUER DOBLE' : 'CHEESE BURGUER SIMPLE', qty);
+        }
+      } else {
+        pushProduct(cleanProductNameForFudo(it.name), qty);
+      }
+
+      // 2. Adicionales (Extra Carne / Cheddar / Bacon)
+      if (it.hasExtraMeat && !extraMeatConsumed) {
+        pushProduct('Extra Carne.', qty);
+      }
+      if (it.hasExtraCheddar) {
+        pushProduct('Extra...', qty);
+      }
+      if (it.hasExtraBacon) {
+        pushProduct('Extra...', qty);
+      }
+    }
+
+    return queue;
+  }
+
   // 7. AGREGAR PRODUCTO EN FUDO
   async function addProductToFudo(item, excludeEl) {
     const searchInput = findFudoSearchInput(excludeEl);
     if (!searchInput) return false;
 
-    const cleanSearchName = cleanProductNameForFudo(item.name);
-    const searchVariants = [cleanSearchName];
-    const words = cleanSearchName.split(' ').filter(w => w.length > 2);
+    const exactFudoName = item.fudoName || cleanProductNameForFudo(item.name);
+    const searchVariants = [exactFudoName];
+    const words = normalizeText(exactFudoName).split(' ').filter(w => w.length > 2);
     if (words.length > 1) {
-      searchVariants.push(words[0]);
+      searchVariants.push(words.slice(0, 2).join(' '));
     }
 
     let targetEl = null;
@@ -437,7 +541,7 @@
       await typeTextIntoInput(searchInput, query);
       await sleep(550);
 
-      targetEl = findMatchingProductElement(query);
+      targetEl = findMatchingProductElement(exactFudoName) || findMatchingProductElement(query);
       if (targetEl) break;
     }
 
@@ -447,8 +551,7 @@
       const qty = Number(item.quantity || 1);
       for (let q = 1; q < qty; q++) {
         await sleep(350);
-        // Re-buscar o volver a hacer clic
-        const nextEl = findMatchingProductElement(cleanSearchName) || targetEl;
+        const nextEl = findMatchingProductElement(exactFudoName) || targetEl;
         triggerRealClick(nextEl);
       }
       return true;
