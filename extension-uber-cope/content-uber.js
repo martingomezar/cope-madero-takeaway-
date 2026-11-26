@@ -234,7 +234,7 @@
     }, true);
   }
 
-  // 5. FLUJO DE CARGA AUTOMATIZADO PRINCIPAL
+  // 5. FLUJO DE CARGA AUTOMATIZADO PRINCIPAL (Soporta SPA /connect/home -> /pickup -> /dropoff)
   async function runAutomatedWorkflow(data) {
     const cleanDest = cleanAddressForSearch(data.cleanDestination || data.destination);
     setStatus('📍 Localizando campos de dirección en Uber...');
@@ -243,57 +243,84 @@
 
     // Paso 1: Rellenar Punto de Recogida / Remitente (Local Cope)
     if (els.pickupEl) {
-      const val = els.pickupEl.value || els.pickupEl.innerText || '';
-      if (!val || val.length < 5 || val.toLowerCase().includes('elegir la ubicaci')) {
+      const val = (els.pickupEl.value || els.pickupEl.innerText || '').toLowerCase();
+      if (!val || val.length < 5 || val.includes('elegir') || val.includes('remite')) {
         setStatus('📍 Escribiendo remitente: <b>Macacha Güemes 260</b>...');
-        await typeTextIntoInput(els.pickupEl, STORE_ORIGIN_ADDRESS);
-        await sleep(500);
+        await fillUberLocationField(els.pickupEl, STORE_ORIGIN_ADDRESS, ['macacha', 'guemes', '260']);
+        await sleep(900);
       }
     }
 
-    await sleep(600);
+    // Esperar a volver a la vista principal donde está Destinatario
+    let dropTarget = null;
+    for (let i = 0; i < 8 && !dropTarget; i++) {
+      const updatedEls = findLocationElements();
+      dropTarget = updatedEls.dropoffEl;
+      if (!dropTarget) await sleep(250);
+    }
 
     // Paso 2: Rellenar y confirmar Destino / Destinatario del Cliente
-    const updatedEls = findLocationElements();
-    const dropTarget = updatedEls.dropoffEl || els.dropoffEl;
     if (dropTarget) {
+      const streetTokens = cleanDest.split(',')[0].toLowerCase().split(/\s+/).filter(w => w.length > 2);
       setStatus(`🏁 Escribiendo destinatario: <b>${escapeHtml(cleanDest)}</b>...`);
-      await typeTextIntoInput(dropTarget, cleanDest);
-      await sleep(500);
+      await fillUberLocationField(dropTarget, cleanDest, streetTokens);
+      await sleep(900);
     } else {
       console.warn('🍔 [Cope Delivery Agent] No se detectó campo dropoffEl.');
       setStatus('⚠️ No se detectó el campo Destino. Tocá el campo y usá "Pegar Destino".');
       return;
     }
 
-    await sleep(800);
+    // Paso 3: Esperar a que vuelva a /connect/home y habilitar Buscar
+    let clickedSearch = false;
+    for (let i = 0; i < 6 && !clickedSearch; i++) {
+      clickedSearch = clickSearchButton();
+      if (!clickedSearch) await sleep(350);
+    }
 
-    // Paso 3: Clic en Buscar para calcular tarifas
-    setStatus('🔍 Solicitando cálculo de tarifas...');
-    const clickedSearch = clickSearchButton();
-
-    // Paso 4: Solo monitorear Moto si Buscar fue presionado (o ya estamos en lista de tarifas)
+    // Paso 4: Solo monitorear Moto si Buscar fue presionado
     if (clickedSearch) {
+      setStatus('🔍 Solicitando cálculo de tarifas...');
       watchAndSelectMoto();
     } else {
       setStatus('👉 Verificá las direcciones y tocá <b>Buscar</b> en Uber.');
     }
   }
 
+  async function fillUberLocationField(targetEl, addressText, requiredTokens) {
+    let inputEl = targetEl;
+    if (inputEl.tagName !== 'INPUT') {
+      triggerRealClick(inputEl);
+      inputEl = await waitForActiveOrVisibleInput(3000);
+    }
+    if (!inputEl) return false;
+
+    await typeTextIntoInput(inputEl, addressText, requiredTokens);
+    return true;
+  }
+
+  async function waitForActiveOrVisibleInput(timeoutMs) {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      if (document.activeElement && document.activeElement.tagName === 'INPUT' && !document.activeElement.closest('#cope-uber-hud')) {
+        return document.activeElement;
+      }
+      const visibleInp = Array.from(document.querySelectorAll('input:not([type="hidden"])'))
+        .find(i => !i.closest('#cope-uber-hud') && !i.closest('header') && i.offsetParent !== null);
+      if (visibleInp) return visibleInp;
+      await sleep(200);
+    }
+    return null;
+  }
+
   // 6. ESCRITURA REAL EN INPUT CON EVENTOS NATIVOS
-  async function typeTextIntoInput(input, text) {
+  async function typeTextIntoInput(input, text, requiredTokens) {
     if (!input) return false;
 
-    // Si es un div o button que abre el input, hacerle clic
     if (input.tagName !== 'INPUT') {
       triggerRealClick(input);
-      await sleep(350);
-      const innerInput = document.activeElement && document.activeElement.tagName === 'INPUT' ? document.activeElement : input.querySelector('input');
-      if (innerInput) {
-        input = innerInput;
-      } else {
-        return false;
-      }
+      input = await waitForActiveOrVisibleInput(2500);
+      if (!input) return false;
     }
 
     input.focus();
@@ -327,25 +354,17 @@
     // Disparar eventos de input y change para React y validaciones
     input.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
     input.dispatchEvent(new Event('change', { bubbles: true, cancelable: true }));
-    await sleep(250);
+    await sleep(300);
 
-    // Disparar Flecha Abajo para desplegar el autocompletado
-    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', code: 'ArrowDown', keyCode: 40, which: 40, bubbles: true }));
-    input.dispatchEvent(new KeyboardEvent('keyup', { key: 'ArrowDown', code: 'ArrowDown', keyCode: 40, which: 40, bubbles: true }));
-    // Esperar hasta 1.5s a que aparezcan sugerencias del autocompletado de Uber
+    // Esperar hasta 2.5s a que aparezcan sugerencias reales de Google Places (ignorando Favoritos)
     let selected = false;
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 10; i++) {
       await sleep(250);
-      selected = selectFirstAutocompleteOption();
+      selected = selectFirstAutocompleteOption(requiredTokens);
       if (selected) break;
     }
-    if (!selected) {
-      // Simular tecla Enter para forzar selección de la primera opción
-      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }));
-      input.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }));
-    }
 
-    return true;
+    return selected;
   }
 
   // 7. BUSCADOR INTELIGENTE DE ELEMENTOS DE UBICACIÓN
@@ -423,15 +442,38 @@
     return { pickupEl, dropoffEl };
   }
 
-  // 8. AUTOCOMPLETADO
-  function selectFirstAutocompleteOption() {
+  // 8. AUTOCOMPLETADO (ignorando Favoritos / Establece en mapa / Busca en otra ciudad)
+  function selectFirstAutocompleteOption(requiredTokens) {
     const options = Array.from(document.querySelectorAll(
-      '[role="option"], ul[role="listbox"] > li, [data-testid*="location-item"], [data-tracking-name*="suggestion"], li[tabindex], [data-testid*="autocomplete"], div[role="listbox"] div[role="button"]'
-    )).filter(el => !el.closest('#cope-uber-hud'));
+      '[role="option"], ul[role="listbox"] > li, [data-testid*="location-item"], [data-tracking-name*="suggestion"], li[tabindex], [data-testid*="autocomplete"], div[role="listbox"] div[role="button"], ul li'
+    )).filter(el => !el.closest('#cope-uber-hud') && !el.closest('header') && !el.closest('nav') && el.offsetParent !== null);
 
-    if (options.length > 0) {
-      console.log('🍔 [Cope Delivery Agent] Seleccionando sugerencia de dirección...');
-      triggerRealClick(options[0]);
+    const validOptions = options.filter(el => {
+      const txt = (el.innerText || el.textContent || '').trim().toLowerCase();
+      if (!txt || txt.length > 180) return false;
+      if (
+        txt.includes('favorito') ||
+        txt.includes('establece la ubicacion') ||
+        txt.includes('establece la ubicación') ||
+        txt.includes('busca en otra ciudad') ||
+        txt.includes('set location on map') ||
+        txt.includes('saved places')
+      ) {
+        return false;
+      }
+      if (requiredTokens && requiredTokens.length > 0) {
+        const normTxt = txt.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        return requiredTokens.some(tok => {
+          const normTok = tok.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+          return normTxt.includes(normTok);
+        });
+      }
+      return true;
+    });
+
+    if (validOptions.length > 0) {
+      console.log('🍔 [Cope Delivery Agent] Seleccionando sugerencia de dirección:', validOptions[0].innerText);
+      triggerRealClick(validOptions[0]);
       return true;
     }
     return false;
