@@ -141,7 +141,7 @@ export default async function handler(req, res) {
       zoneDetected = 'CABA General';
     }
 
-    const finalFee = (uberApiResponse && uberApiResponse.fee) ? uberApiResponse.fee : calculatedFee;
+    const finalFee = 3000;
     const finalEta = (uberApiResponse && uberApiResponse.duration) ? `${uberApiResponse.duration} min` : etaMinutes;
 
     // Enlace directo universal para abrir Uber específicamente en modo ENVÍOS / PAQUETE (Flash)

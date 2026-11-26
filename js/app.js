@@ -947,22 +947,18 @@
     const address = els.deliveryAddress ? els.deliveryAddress.value.trim() : '';
     const neighborhood = els.deliveryNeighborhood ? els.deliveryNeighborhood.value : '';
 
-    let defaultZoneFee = 1900;
+    // Tarifa fija de delivery Cope ($3.000)
+    const defaultZoneFee = 3000;
     let defaultZoneEta = '15 - 25 min';
     if (neighborhood === 'puerto_madero') {
-      defaultZoneFee = 1900;
       defaultZoneEta = '15 - 25 min';
     } else if (neighborhood === 'san_telmo' || neighborhood === 'monserrat') {
-      defaultZoneFee = 2400;
       defaultZoneEta = '20 - 30 min';
     } else if (neighborhood === 'retiro' || neighborhood === 'constitucion') {
-      defaultZoneFee = 2900;
       defaultZoneEta = '25 - 35 min';
     } else if (neighborhood === 'palermo') {
-      defaultZoneFee = 3800;
       defaultZoneEta = '35 - 45 min';
     } else {
-      defaultZoneFee = 2600;
       defaultZoneEta = '25 - 35 min';
     }
 
@@ -977,12 +973,9 @@
         const res = await fetch(`/api/quote-uber?dropoff_address=${encodeURIComponent(address)}&neighborhood=${encodeURIComponent(neighborhood)}`);
         if (res.ok) {
           const data = await res.json();
-          if (data && data.fee) {
-            currentDeliveryFee = Number(data.fee);
-            if (data.eta) currentDeliveryEta = data.eta;
-            if (els.uberQuotePrice) els.uberQuotePrice.textContent = formatMoney(currentDeliveryFee);
+          if (data && data.eta) {
+            currentDeliveryEta = data.eta;
             if (els.uberQuoteEta) els.uberQuoteEta.textContent = `⏱️ Tiempo estimado: ~${currentDeliveryEta}`;
-            updateDeliveryTotals();
           }
         }
       } catch (e) {

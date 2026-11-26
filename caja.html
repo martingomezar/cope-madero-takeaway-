@@ -3171,7 +3171,7 @@
               isDelivery: true,
               address: 'Juana Manso 1200',
               apartment: '4° B, Dique 2',
-              fee: 1900,
+              fee: 3000,
               eta: '25-35 min'
             },
             items: [
@@ -3199,8 +3199,8 @@
               }
             ],
             subtotal: 51000,
-            delivery_fee: 1900,
-            total: 52900,
+            delivery_fee: 3000,
+            total: 54000,
             payment_method: 'Mercado Pago Online',
             payment_status: 'aprobado',
             kitchen_status: 'recibido',
@@ -3219,7 +3219,7 @@
           // También agregar a pagos MP
           const fakePayment = {
             id: 'PAY-' + Math.floor(Math.random() * 900000 + 100000),
-            amount: 52900,
+            amount: 54000,
             payer_name: 'Santiago Morales (Prueba Delivery)',
             payment_type: 'account_money',
             payment_method: 'Dinero en Cuenta MP',
@@ -3230,7 +3230,7 @@
             order_type: 'delivery',
             delivery_address: 'Juana Manso 1200',
             delivery_apartment: '4° B, Dique 2',
-            delivery_fee: 1900,
+            delivery_fee: 3000,
             uber_link: 'https://m.uber.com/go/connect/home?pickup=' + encodeURIComponent(JSON.stringify({addressLine1:'Macacha Güemes 260',addressLine2:'Puerto Madero, CABA',id:'cope-burgers-puerto-madero',name:'Cope Burgers Puerto Madero',latitude:-34.6049,longitude:-58.3647,provider:'uber_places',source:'SEARCH'})) + '&pickupAddressName=' + encodeURIComponent('Cope Burgers Puerto Madero') + '&pickupLat=-34.6049&pickupLng=-58.3647&drop%5B0%5D=' + encodeURIComponent(JSON.stringify({addressLine1:'Juana Manso 1200',addressLine2:'4° B, Dique 2, Puerto Madero, CABA',name:'Santiago Morales',latitude:-34.6080,longitude:-58.3630,provider:'uber_places',source:'SEARCH'})) + '&destinationAddressName=' + encodeURIComponent('Juana Manso 1200 (4° B), Puerto Madero, CABA') + '&destinationLat=-34.6080&destinationLng=-58.3630'
           };
           allPaymentsMap.set(fakePayment.id, fakePayment);

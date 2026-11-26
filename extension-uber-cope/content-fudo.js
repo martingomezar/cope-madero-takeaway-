@@ -329,6 +329,14 @@
 
     // 4. Expandir ítems del pedido web al catálogo exacto de Fudo
     const fudoQueue = expandOrderItemsForFudo(order.items || []);
+    if (order.orderType === 'delivery') {
+      fudoQueue.push({
+        fudoName: 'delivery propio',
+        fallbackQuery: 'delivery',
+        quantity: 1,
+        itemComment: order.destination ? `Envío: ${order.destination}` : ''
+      });
+    }
     let addedCount = 0;
     const notFound = [];
 
@@ -636,6 +644,9 @@
     const exactFudoName = item.fudoName || cleanProductNameForFudo(item.name);
     const noDotsName = exactFudoName.replace(/\.+$/g, '').trim();
     const searchVariants = [exactFudoName];
+    if (item.fallbackQuery && item.fallbackQuery !== exactFudoName) {
+      searchVariants.push(item.fallbackQuery);
+    }
     if (noDotsName && noDotsName !== exactFudoName) {
       searchVariants.push(noDotsName);
     }
@@ -856,7 +867,7 @@
     const candidates = Array.from(document.querySelectorAll(
       '[role="option"], .dropdown-menu li a, .dropdown-menu li, ul[class*="typeahead"] li, ul[class*="autocomplete"] li, .dropdown-item, .autocomplete-item, [data-testid*="product"], .product-item, .product, .item, li, a, button, div, span'
     )).filter(el => {
-      if (el.closest('#cope-fudo-hud') || el.closest('header') || el.closest('nav')) return false;
+      if (el.closest('#cope-fudo-hud') || el.closest('header') || el.closest('nav') || el.closest('.nav, .tabs, [role="tablist"]')) return false;
       if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') return false;
       // Evitar hacer clic en ítems ya agregados dentro de la tabla de ventas o renglones amarillos de ADICIONAR
       if (el.closest('table') && !el.closest('.dropdown-menu')) return false;
