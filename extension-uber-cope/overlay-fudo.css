@@ -305,5 +305,17 @@
   transform: translateY(-1px);
   box-shadow: 0 6px 18px rgba(34, 197, 94, 0.35);
 }
+
+.btn-fudo-takeaway-badge {
+  background: rgba(2, 132, 199, 0.22);
+  color: #7dd3fc;
+  border: 2px solid #38bdf8;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 900;
+  font-size: 13px;
+  text-align: center;
+  letter-spacing: 0.4px;
+}
   text-align: center;
 }

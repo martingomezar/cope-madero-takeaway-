@@ -145,7 +145,11 @@
           <button type="button" id="btnCopeFudoUberMoto" class="btn-fudo-uber">
             🛵 PEDIR MOTO EN UBER
           </button>
-        ` : ''}
+        ` : `
+          <div class="btn-fudo-takeaway-badge">
+            🛍️ TAKE AWAY · RETIRA POR EL LOCAL
+          </div>
+        `}
 
         <div class="cope-fudo-actions">
           <button type="button" id="btnCopeFudoCopySummary" class="btn-fudo-tool">
