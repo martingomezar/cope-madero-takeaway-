@@ -225,11 +225,20 @@
       if (span) span.textContent = t('btn_submit_order');
     }
 
-    if (els.bottomCartLabel) {
-      els.bottomCartLabel.textContent = t('coming_soon_order');
-    }
-    if (els.btnModalAddCartLabel) {
-      els.btnModalAddCartLabel.textContent = t('coming_soon_order');
+    if (!CFG.ENABLE_ORDERING) {
+      if (els.bottomCartLabel) {
+        els.bottomCartLabel.textContent = t('coming_soon_order');
+      }
+      if (els.btnModalAddCartLabel) {
+        els.btnModalAddCartLabel.textContent = t('coming_soon_order');
+      }
+    } else {
+      if (els.bottomCartLabel) {
+        els.bottomCartLabel.textContent = 'Ver Pedido';
+      }
+      if (els.btnModalAddCartLabel) {
+        els.btnModalAddCartLabel.textContent = t('btn_add') ? `${t('btn_add')} al Pedido` : 'Agregar al Pedido';
+      }
     }
 
     const waBtn = document.getElementById('floatingWhatsappBtn');
@@ -456,9 +465,13 @@
         : '';
 
       const isCustomizable = origProd.hasVariants || origProd.hasDrinkSelection || origProd.canAddExtraMeat || origProd.hasVeggieOption || origProd.canAddExtraCheddar || origProd.canAddExtraBacon;
-      const btnLabel = isCustomizable
-        ? (window.COPE_I18N ? window.COPE_I18N.t('btn_customize') : 'Personalizar')
-        : (window.COPE_I18N ? `+ ${window.COPE_I18N.t('btn_add')}` : '+ Agregar');
+      const promoOpen = !origProd.isPromo || isPromoAvailableNow(origProd);
+      const btnDisabled = !CFG.ENABLE_ORDERING || !promoOpen;
+      const btnLabel = !promoOpen && origProd.promoSchedule
+        ? `⏰ Solo ${origProd.promoSchedule.startHour} a ${origProd.promoSchedule.endHour} hs`
+        : (isCustomizable
+          ? (window.COPE_I18N ? window.COPE_I18N.t('btn_customize') : 'Personalizar')
+          : (window.COPE_I18N ? `+ ${window.COPE_I18N.t('btn_add')}` : '+ Agregar'));
 
       return `
         <article class="product-card ${origProd.isPromo ? 'is-promo-card' : ''}" data-product-id="${origProd.id}">
@@ -474,7 +487,7 @@
             <p class="card-desc">${prod.description}</p>
             <div class="card-footer">
               <div class="card-price">${priceHtml}</div>
-              <button type="button" class="btn btn-sm btn-primary btn-add" ${!CFG.ENABLE_ORDERING ? 'disabled style="opacity:0.55; cursor:not-allowed;"' : ''} data-quick-id="${prod.id}">
+              <button type="button" class="btn btn-sm btn-primary btn-add" ${btnDisabled ? 'disabled style="opacity:0.55; cursor:not-allowed;"' : ''} data-quick-id="${prod.id}">
                 ${btnLabel}
               </button>
             </div>
@@ -495,6 +508,12 @@
           showToast(window.COPE_I18N ? window.COPE_I18N.t('coming_soon_order') : 'Próximamente podrás pedir aquí');
           return;
         }
+        if (prod.isPromo && !isPromoAvailableNow(prod)) {
+          e.stopPropagation();
+          const schedLabel = prod.promoSchedule ? prod.promoSchedule.label : 'en el horario de la promo';
+          showToast(`⏰ Promo disponible únicamente ${schedLabel}`);
+          return;
+        }
         if (e.target.closest('.btn-add') && !prod.hasVariants && !prod.hasDrinkSelection && !prod.canAddExtraMeat && !prod.hasVeggieOption && !prod.canAddExtraCheddar && !prod.canAddExtraBacon) {
           e.stopPropagation();
           Cart.addItem(prod, { quantity: 1 });
@@ -504,6 +523,20 @@
         openProductModal(prod);
       });
     });
+  }
+
+  function isPromoAvailableNow(prod) {
+    if (!prod || !prod.isPromo || !prod.promoSchedule) return true;
+    try {
+      const arNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' }));
+      const day = arNow.getDay(); // 0=Dom, 1=Lun .. 5=Vie, 6=Sab
+      const hour = arNow.getHours();
+      const { days, startHour, endHour } = prod.promoSchedule;
+      if (Array.isArray(days) && !days.includes(day)) return false;
+      return hour >= startHour && hour < endHour;
+    } catch (e) {
+      return true;
+    }
   }
 
   // =========================================================================
@@ -636,6 +669,15 @@
       }
       if (els.modalAddCartPrice) {
         els.modalAddCartPrice.style.display = 'none';
+      }
+    } else if (origProd.isPromo && !isPromoAvailableNow(origProd)) {
+      if (els.btnModalAddCart) {
+        els.btnModalAddCart.disabled = true;
+        els.btnModalAddCart.style.opacity = '0.6';
+        els.btnModalAddCart.style.cursor = 'not-allowed';
+      }
+      if (els.btnModalAddCartLabel && origProd.promoSchedule) {
+        els.btnModalAddCartLabel.textContent = `⏰ Solo ${origProd.promoSchedule.startHour} a ${origProd.promoSchedule.endHour} hs`;
       }
     } else {
       if (els.btnModalAddCart) {

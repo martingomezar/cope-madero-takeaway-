@@ -217,16 +217,15 @@
   <!-- =======================================================================
        BARRA INFERIOR FLOTANTE (BOTTOM STICKY BAR)
        ======================================================================= -->
-  <div id="bottomCartBar" class="bottom-cart-bar">
+  <div id="bottomCartBar" class="bottom-cart-bar hidden">
     <div class="bottom-cart-container">
-      <button id="btnOpenCart" type="button" class="btn-cart-floating" disabled style="cursor:default; background:linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border:1px solid #334155; box-shadow:0 6px 20px rgba(0,0,0,0.25);">
-        <div class="cart-floating-left" style="width:100%; justify-content:center; gap:8px;">
+      <button id="btnOpenCart" type="button" class="btn-cart-floating">
+        <div class="cart-floating-left">
           <span>🛍️</span>
-          <span id="bottomCartLabel" style="font-weight:800; font-size:15px; letter-spacing:0.2px;">Próximamente podrás pedir aquí</span>
-          <span>🍔</span>
-          <span id="bottomCartCount" class="cart-icon-badge hidden" style="display:none;">0 ítems</span>
+          <span id="bottomCartLabel">Ver Pedido</span>
+          <span id="bottomCartCount" class="cart-icon-badge">0 ítems</span>
         </div>
-        <div id="bottomCartTotal" class="cart-floating-total tabular hidden" style="display:none;">$0</div>
+        <div id="bottomCartTotal" class="cart-floating-total tabular">$0</div>
       </button>
     </div>
   </div>
