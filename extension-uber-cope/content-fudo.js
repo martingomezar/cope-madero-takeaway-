@@ -229,23 +229,7 @@
           cleanDestination: cleanStreet,
           apartment: order.destinationApartment || ''
         };
-        setFudoStatus('🛵 Geocodificando destino y abriendo Uber Envíos...');
-
-        let dropLat = -34.6080;
-        let dropLng = -58.3630;
-        try {
-          const cleanGeo = cleanStreet.replace(/\(.*?\)/g, '').replace(/piso.*?$/i, '').trim();
-          const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(cleanGeo + ', CABA, Argentina')}`, {
-            headers: { 'Accept': 'application/json' }
-          });
-          if (geoRes.ok) {
-            const list = await geoRes.json();
-            if (list && list.length > 0) {
-              dropLat = parseFloat(list[0].lat);
-              dropLng = parseFloat(list[0].lon);
-            }
-          }
-        } catch (e) {}
+        setFudoStatus('🛵 Abriendo Uber Envíos con local pre-cargado...');
 
         const pickupObj = {
           addressLine1: 'Macacha Güemes 260',
@@ -257,22 +241,10 @@
           provider: 'uber_places',
           source: 'SEARCH'
         };
-        const dropObj = {
-          addressLine1: cleanStreet || fullDest,
-          addressLine2: (order.destinationApartment ? order.destinationApartment + ', ' : '') + 'CABA, Argentina',
-          name: order.customerName || 'Cliente Cope',
-          latitude: dropLat,
-          longitude: dropLng,
-          provider: 'uber_places',
-          source: 'SEARCH'
-        };
         const uberUrl =
           'https://m.uber.com/go/connect/home?pickup=' + encodeURIComponent(JSON.stringify(pickupObj)) +
           '&pickupAddressName=' + encodeURIComponent('Cope Burgers Puerto Madero') +
-          '&pickupLat=-34.604912&pickupLng=-58.364747' +
-          '&drop%5B0%5D=' + encodeURIComponent(JSON.stringify(dropObj)) +
-          '&destinationAddressName=' + encodeURIComponent(fullDest || cleanStreet) +
-          `&destinationLat=${dropLat}&destinationLng=${dropLng}`;
+          '&pickupLat=-34.604912&pickupLng=-58.364747';
 
         try {
           if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id && chrome.runtime.sendMessage) {

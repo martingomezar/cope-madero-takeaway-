@@ -251,13 +251,13 @@
 
     const els = findLocationElements();
 
-    // Paso 1: Rellenar Punto de Recogida / Remitente (Local Cope)
+    // Paso 1: Rellenar Punto de Recogida / Remitente (Local Cope) solo si no está ya cargado
     if (els.pickupEl) {
       const val = (els.pickupEl.value || els.pickupEl.innerText || '').toLowerCase();
-      if (!val || val.length < 5 || val.includes('elegir') || val.includes('remite')) {
+      if (!val.includes('macacha')) {
         setStatus('📍 Escribiendo remitente: <b>Macacha Güemes 260</b>...');
         await fillUberLocationField(els.pickupEl, STORE_ORIGIN_ADDRESS, ['macacha', 'guemes', '260']);
-        await sleep(900);
+        await sleep(700);
       }
     }
 
