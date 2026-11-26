@@ -613,15 +613,15 @@
         queue[mainIdxBefore].itemComment = mainComment;
       }
 
-      // 2. Adicionales (Extra Carne ya precargado; Extra... lleva comentario Cheddar/Bacon)
+      // 2. Adicionales (Extra Carne ya precargado $4000; Extra... $2000 c/u con comentario Cheddar/Bacon)
       if (it.hasExtraMeat && !extraMeatConsumed) {
         pushProduct('Extra Carne.', qty);
       }
-      if (it.hasExtraCheddar) {
-        pushProduct('Extra...', qty, 'Cheddar');
-      }
-      if (it.hasExtraBacon) {
-        pushProduct('Extra...', qty, 'Bacon');
+      const extraTwoKLabels = [];
+      if (it.hasExtraCheddar) extraTwoKLabels.push(qty > 1 ? `${qty}x Cheddar` : 'Cheddar');
+      if (it.hasExtraBacon) extraTwoKLabels.push(qty > 1 ? `${qty}x Bacon` : 'Bacon');
+      if (extraTwoKLabels.length > 0) {
+        pushProduct('Extra...', qty * extraTwoKLabels.length, extraTwoKLabels.join(' + '));
       }
     }
 
@@ -851,13 +851,16 @@
     if (!normQuery) return null;
     const queryWords = normQuery.split(' ').filter(Boolean);
 
+    const existingRows = getAdicionarRows(findFudoSearchInput());
+
     const candidates = Array.from(document.querySelectorAll(
       '[role="option"], .dropdown-menu li a, .dropdown-menu li, ul[class*="typeahead"] li, ul[class*="autocomplete"] li, .dropdown-item, .autocomplete-item, [data-testid*="product"], .product-item, .product, .item, li, a, button, div, span'
     )).filter(el => {
       if (el.closest('#cope-fudo-hud') || el.closest('header') || el.closest('nav')) return false;
       if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') return false;
-      // Evitar hacer clic en ítems ya agregados dentro de la tabla de ventas o totales
+      // Evitar hacer clic en ítems ya agregados dentro de la tabla de ventas o renglones amarillos de ADICIONAR
       if (el.closest('table') && !el.closest('.dropdown-menu')) return false;
+      if (existingRows.some(r => r === el || r.contains(el)) && !el.closest('.dropdown-menu, [role="listbox"]')) return false;
       return isElementVisible(el);
     });
 
