@@ -914,11 +914,10 @@
 
   function populatePaymentMethods() {
     if (!els.paymentMethodsList) return;
-    // Efectivo ELIMINADO completamente
-    let methods = (CFG.PAYMENT_METHODS || []).filter(m => m.id !== 'efectivo');
+    let methods = [...(CFG.PAYMENT_METHODS || [])];
     if (isDeliverySelected) {
-      // En envíos delivery solo se permite pago online por Mercado Pago o Transferencia Alias
-      methods = methods.filter(m => m.id !== 'tarjeta');
+      // En envíos delivery solo se permite pago online por Mercado Pago o Transferencia Alias (sin pagar al retirar)
+      methods = methods.filter(m => m.id !== 'efectivo' && m.id !== 'tarjeta');
     }
 
     els.paymentMethodsList.innerHTML = methods.map((m, idx) => {

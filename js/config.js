@@ -50,9 +50,9 @@ window.COPE_CONFIG = {
       icon: '📱'
     },
     {
-      id: 'tarjeta',
-      label: 'Tarjeta Débito / Crédito al retirar',
-      icon: '💳'
+      id: 'efectivo',
+      label: 'Efectivo al retirar en el local (Solo Take Away)',
+      icon: '💵'
     }
   ],
 
