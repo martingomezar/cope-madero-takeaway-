@@ -931,7 +931,13 @@
         els.orderTypeDelivery.checked = false;
         els.orderTypeDelivery.disabled = true;
         const deliveryPill = els.orderTypeDelivery.closest('.time-radio-pill');
-        if (deliveryPill) deliveryPill.style.display = 'none';
+        if (deliveryPill) {
+          deliveryPill.style.opacity = '0.55';
+          deliveryPill.style.cursor = 'not-allowed';
+          deliveryPill.title = 'Próximamente Delivery';
+          const span = deliveryPill.querySelector('span');
+          if (span) span.textContent = '🛵 Próximamente Delivery';
+        }
       }
     }
     isDeliverySelected = Boolean(CFG.ENABLE_DELIVERY && els.orderTypeDelivery && els.orderTypeDelivery.checked);
