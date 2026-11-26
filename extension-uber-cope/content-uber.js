@@ -216,18 +216,18 @@
       const ph = (e.target.placeholder || '').toLowerCase();
       const aria = (e.target.getAttribute('aria-label') || '').toLowerCase();
 
-      // Si es el campo de recogida
-      if (ph.includes('recogida') || ph.includes('origen') || aria.includes('recogida') || aria.includes('pickup')) {
+      // Si es el campo de recogida / remitente
+      if (ph.includes('recogida') || ph.includes('origen') || ph.includes('remite') || ph.includes('pickup') || aria.includes('recogida') || aria.includes('remite') || aria.includes('pickup')) {
         if (!e.target.value || e.target.value.length < 5) {
-          console.log('🍔 [Cope Delivery Agent] Foco en Recogida detectado.');
+          console.log('🍔 [Cope Delivery Agent] Foco en Recogida/Remitente detectado.');
           await typeTextIntoInput(e.target, STORE_ORIGIN_ADDRESS);
         }
       }
 
-      // Si es el campo de destino
-      if (ph.includes('destino') || ph.includes('dónde') || ph.includes('donde') || aria.includes('destino') || aria.includes('dropoff') || aria.includes('destination')) {
+      // Si es el campo de destino / destinatario
+      if (ph.includes('destino') || ph.includes('destinatario') || ph.includes('dónde') || ph.includes('donde') || ph.includes('del de') || aria.includes('destino') || aria.includes('destinatario') || aria.includes('dropoff') || aria.includes('destination')) {
         if (!e.target.value || e.target.value.length < 5) {
-          console.log('🍔 [Cope Delivery Agent] Foco en Destino detectado.');
+          console.log('🍔 [Cope Delivery Agent] Foco en Destino/Destinatario detectado.');
           await typeTextIntoInput(e.target, cleanDest);
         }
       }
@@ -241,38 +241,43 @@
 
     const els = findLocationElements();
 
-    // Paso 1: Rellenar y confirmar Destino del Cliente
-    if (els.dropoffEl) {
-      setStatus(`🏁 Escribiendo destino: <b>${escapeHtml(cleanDest)}</b>...`);
-      await typeTextIntoInput(els.dropoffEl, cleanDest);
-      await sleep(600);
-      selectFirstAutocompleteOption();
+    // Paso 1: Rellenar Punto de Recogida / Remitente (Local Cope)
+    if (els.pickupEl) {
+      const val = els.pickupEl.value || els.pickupEl.innerText || '';
+      if (!val || val.length < 5 || val.toLowerCase().includes('elegir la ubicaci')) {
+        setStatus('📍 Escribiendo remitente: <b>Macacha Güemes 260</b>...');
+        await typeTextIntoInput(els.pickupEl, STORE_ORIGIN_ADDRESS);
+        await sleep(500);
+      }
+    }
+
+    await sleep(600);
+
+    // Paso 2: Rellenar y confirmar Destino / Destinatario del Cliente
+    const updatedEls = findLocationElements();
+    const dropTarget = updatedEls.dropoffEl || els.dropoffEl;
+    if (dropTarget) {
+      setStatus(`🏁 Escribiendo destinatario: <b>${escapeHtml(cleanDest)}</b>...`);
+      await typeTextIntoInput(dropTarget, cleanDest);
+      await sleep(500);
     } else {
-      console.warn('🍔 [Cope Delivery Agent] No se detectó campo dropoffEl en la primera pasada.');
+      console.warn('🍔 [Cope Delivery Agent] No se detectó campo dropoffEl.');
+      setStatus('⚠️ No se detectó el campo Destino. Tocá el campo y usá "Pegar Destino".');
+      return;
     }
 
     await sleep(800);
 
-    // Paso 2: Rellenar Punto de Recogida (Local Cope) si está vacío
-    const updatedEls = findLocationElements();
-    if (updatedEls.pickupEl) {
-      const val = updatedEls.pickupEl.value || updatedEls.pickupEl.innerText || '';
-      if (!val || val.length < 5) {
-        setStatus('📍 Escribiendo punto de retiro: <b>Macacha Güemes 260</b>...');
-        await typeTextIntoInput(updatedEls.pickupEl, STORE_ORIGIN_ADDRESS);
-        await sleep(600);
-        selectFirstAutocompleteOption();
-      }
-    }
-
-    await sleep(900);
-
     // Paso 3: Clic en Buscar para calcular tarifas
     setStatus('🔍 Solicitando cálculo de tarifas...');
-    clickSearchButton();
+    const clickedSearch = clickSearchButton();
 
-    // Paso 4: Monitorear y seleccionar opción Moto
-    watchAndSelectMoto();
+    // Paso 4: Solo monitorear Moto si Buscar fue presionado (o ya estamos en lista de tarifas)
+    if (clickedSearch) {
+      watchAndSelectMoto();
+    } else {
+      setStatus('👉 Verificá las direcciones y tocá <b>Buscar</b> en Uber.');
+    }
   }
 
   // 6. ESCRITURA REAL EN INPUT CON EVENTOS NATIVOS
@@ -327,10 +332,13 @@
     // Disparar Flecha Abajo para desplegar el autocompletado
     input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', code: 'ArrowDown', keyCode: 40, which: 40, bubbles: true }));
     input.dispatchEvent(new KeyboardEvent('keyup', { key: 'ArrowDown', code: 'ArrowDown', keyCode: 40, which: 40, bubbles: true }));
-    await sleep(400);
-
-    // Intentar seleccionar la sugerencia que aparece en el desplegable
-    const selected = selectFirstAutocompleteOption();
+    // Esperar hasta 1.5s a que aparezcan sugerencias del autocompletado de Uber
+    let selected = false;
+    for (let i = 0; i < 6; i++) {
+      await sleep(250);
+      selected = selectFirstAutocompleteOption();
+      if (selected) break;
+    }
     if (!selected) {
       // Simular tecla Enter para forzar selección de la primera opción
       input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }));
@@ -360,15 +368,15 @@
       const id = (inp.id || '').toLowerCase();
 
       if (
-        ph.includes('recogida') || ph.includes('origen') || ph.includes('pickup') ||
-        aria.includes('recogida') || aria.includes('pickup') ||
+        ph.includes('recogida') || ph.includes('origen') || ph.includes('remite') || ph.includes('pickup') || ph.includes('sender') ||
+        aria.includes('recogida') || aria.includes('remite') || aria.includes('pickup') ||
         name.includes('pickup') || id.includes('pickup')
       ) {
         pickupEl = inp;
       } else if (
-        ph.includes('destino') || ph.includes('dropoff') || ph.includes('dónde') || ph.includes('donde') ||
-        ph.includes('where to') || ph.includes('entrega') ||
-        aria.includes('destino') || aria.includes('dropoff') || aria.includes('destination') ||
+        ph.includes('destino') || ph.includes('destinatario') || ph.includes('dropoff') || ph.includes('dónde') || ph.includes('donde') ||
+        ph.includes('where to') || ph.includes('entrega') || ph.includes('del de') || ph.includes('recipient') ||
+        aria.includes('destino') || aria.includes('destinatario') || aria.includes('dropoff') || aria.includes('destination') ||
         name.includes('dropoff') || id.includes('dropoff')
       ) {
         dropoffEl = inp;
@@ -379,27 +387,32 @@
     if (!pickupEl || !dropoffEl) {
       for (const el of allInteractives) {
         const txt = (el.innerText || el.textContent || '').trim().toLowerCase();
-        if (txt.length > 70) continue;
+        if (txt.length > 90) continue;
 
-        if (!pickupEl && (txt.includes('ubicación de recogida') || txt === 'recogida' || txt.includes('punto de partida'))) {
+        if (!pickupEl && (txt.includes('ubicación de recogida') || txt.includes('del remite') || txt.includes('remitente') || txt === 'recogida' || txt.includes('punto de partida'))) {
           pickupEl = el.querySelector('input') || el;
         }
-        if (!dropoffEl && (txt.includes('ubicación de destino') || txt === 'destino' || txt.includes('¿a dónde vas?') || txt.includes('a donde vas'))) {
+        if (!dropoffEl && (txt.includes('ubicación de destino') || txt.includes('del de') || txt.includes('destinatario') || txt === 'destino' || txt.includes('¿a dónde vas?') || txt.includes('a donde vas'))) {
           dropoffEl = el.querySelector('input') || el;
         }
       }
     }
 
-    // Fallback específico para la tarjeta "Consigue un viaje" (m.uber.com/go/home)
+    // Fallback específico para la tarjeta de Envíos (m.uber.com/go/connect/home) o Viaje (m.uber.com/go/home)
     if (!pickupEl || !dropoffEl) {
       const card = Array.from(document.querySelectorAll('div, section, form')).find(c => {
-        if (c.closest('#cope-uber-hud') || c.closest('header')) return false;
+        if (c.closest('#cope-uber-hud') || c.closest('header') || c.closest('nav')) return false;
         const t = (c.innerText || '').toLowerCase();
-        return t.includes('consigue un viaje') || t.includes('get a ride');
+        return t.includes('consigue un viaje') || t.includes('get a ride') || (t.includes('enviar') && t.includes('buscar')) || t.includes('elegir la ubicación');
       });
 
       if (card) {
-        const cardInputs = Array.from(card.querySelectorAll('input:not([type="hidden"])'));
+        const cardInputs = Array.from(card.querySelectorAll('input:not([type="hidden"]), [role="combobox"], [role="button"]'))
+          .filter(el => {
+            if (el.tagName === 'INPUT') return true;
+            const txt = (el.innerText || '').toLowerCase();
+            return txt.includes('elegir') || txt.includes('ubicaci') || txt.includes('remite') || txt.includes('destin');
+          });
         if (cardInputs.length >= 2) {
           if (!pickupEl) pickupEl = cardInputs[0];
           if (!dropoffEl) dropoffEl = cardInputs[1];
@@ -432,7 +445,7 @@
       return t === 'buscar' || t.includes('buscar') || t.includes('search') || t.includes('ver precios') || t.includes('conseguir un viaje');
     });
 
-    if (searchBtn) {
+    if (searchBtn && !searchBtn.disabled) {
       console.log('🍔 [Cope Delivery Agent] Botón Buscar presionado...');
       triggerRealClick(searchBtn);
       setStatus('⏳ Calculando tarifas y opciones...');
@@ -479,7 +492,7 @@
     });
 
     for (const img of motoImages) {
-      const card = img.closest('[role="radio"], [role="button"], button, li, [data-testid*="product"]') || img.parentElement;
+      const card = img.closest('[role="radio"], [data-testid*="product"], [data-testid*="ride-option"], [data-testid*="vehicle"]');
       if (card && !card.closest('#cope-uber-hud') && card.offsetParent !== null) {
         console.log('🍔 [Cope Delivery Agent] Moto encontrada por imagen:', img.alt || img.src);
         triggerRealClick(card);
