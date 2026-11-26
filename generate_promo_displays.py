@@ -43,7 +43,8 @@ def make_rounded_photo(photo_path, target_w, target_h, radius=32):
         new_h = int(target_w / src_ratio)
     img = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
     left = (new_w - target_w) // 2
-    top = (new_h - target_h) // 2
+    # Enfocar levemente hacia abajo donde están la burger/cervezas/papas
+    top = int((new_h - target_h) * 0.72)
     img = img.crop((left, top, left + target_w, top + target_h))
 
     mask = Image.new("L", (target_w, target_h), 0)
@@ -137,17 +138,24 @@ def generate_promo_plate(cfg):
     draw.text((495, price_y + 24), "EXCLUSIVO", fill=(56, 189, 248, 255), font=get_font(FONT_BOLD, 18))
     draw.text((495, price_y + 56), "Local o Take Away", fill=(255, 255, 255, 255), font=get_font(FONT_BOLD, 28))
 
-    # Foto derecha de producto
-    photo_x, photo_y, photo_w, photo_h = 1000, 75, 845, 860
+    # Foto derecha de producto (encuadre ajustado sin espacio blanco vacío)
+    photo_x, photo_y, photo_w, photo_h = 1000, 75, 845, 590
     draw.rounded_rectangle((photo_x - 5, photo_y - 5, photo_x + photo_w + 5, photo_y + photo_h + 5), radius=36, fill=(255, 184, 0, 255))
     photo = make_rounded_photo(os.path.join(IMG_DIR, cfg["photo"]), photo_w, photo_h, radius=32)
     canvas.paste(photo, (photo_x, photo_y), mask=photo)
 
-    # QR ABAJO A LA DERECHA (sobre la esquina inferior derecha)
-    qr_card = make_qr_card(STORE_URL, qr_size=210)
-    qr_x = w - qr_card.width - 42
-    qr_y = h - qr_card.height - 38
+    # QR ABAJO A LA DERECHA (sin tapar la foto)
+    qr_card = make_qr_card(STORE_URL, qr_size=220)
+    qr_x = w - qr_card.width - 75
+    qr_y = h - qr_card.height - 55
     canvas.paste(qr_card, (qr_x, qr_y), mask=qr_card)
+
+    # Texto guía junto al QR
+    draw.rounded_rectangle((1000, qr_y + 40, qr_x - 25, qr_y + 235), radius=22, fill=(15, 23, 42, 235), outline=(56, 189, 248, 255), width=2)
+    draw.text((1030, qr_y + 72), "PEDÍ POR TAKE AWAY", fill=(56, 189, 248, 255), font=get_font(FONT_BOLD, 24))
+    draw.text((1030, qr_y + 114), "Escaneá el código QR,", fill=(255, 255, 255, 255), font=get_font(FONT_REG, 22))
+    draw.text((1030, qr_y + 148), "elegí tu promo y retirá", fill=(255, 255, 255, 255), font=get_font(FONT_REG, 22))
+    draw.text((1030, qr_y + 182), "en menos de 15 min.", fill=(255, 184, 0, 255), font=get_font(FONT_BOLD, 22))
 
     # Footer izquierda
     draw.text((85, 985), "Cope Burgers Puerto Madero · Macacha Güemes 260 · Retirá sin filas", fill=(148, 163, 184, 255), font=get_font(FONT_REG, 22))
