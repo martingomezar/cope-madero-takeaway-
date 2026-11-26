@@ -2341,7 +2341,7 @@
       }
 
       // Enviar comanda virtual a Fudo POS
-      window.copeDispatchFudo = function(orderId, autoLoad = true) {
+      window.copeDispatchFudo = function(orderId, autoLoad = false) {
         let order = null;
         if (orderId) {
           order = (cachedOrders || []).find(o => String(o.order_id || o.id) === String(orderId));
@@ -2385,9 +2385,11 @@
           customerPhone: order.payer_phone || order.customer?.phone || '',
           orderType: order.order_type || (destAddress ? 'delivery' : 'takeaway'),
           destination: destAddress ? (destAddress + (destApt ? ' (' + destApt + ')' : '')) : '',
+          destinationAddress: destAddress,
+          destinationApartment: destApt,
           total: order.amount || order.total || 0,
           paymentMethod: order.payment_method || 'Mercado Pago Online',
-          autoLoad: autoLoad !== false,
+          autoLoad: autoLoad === true,
           items: rawItems.map(it => ({
             id: it.id || '',
             name: it.name || it.title || 'Producto',
@@ -2894,7 +2896,7 @@
                   }
                   if (autoFudoEnabled && ordKey && !autoDispatchedFudoIds.has(ordKey)) {
                     autoDispatchedFudoIds.add(ordKey);
-                    window.copeDispatchFudo(ordKey, true);
+                    window.copeDispatchFudo(ordKey, false);
                   }
                 }
               }
@@ -3213,7 +3215,7 @@
           playKitchenBell();
           renderKds();
           if (autoFudoEnabled) {
-            window.copeDispatchFudo(fakeDeliveryOrder.id, true);
+            window.copeDispatchFudo(fakeDeliveryOrder.id, false);
           }
 
           // También agregar a pagos MP

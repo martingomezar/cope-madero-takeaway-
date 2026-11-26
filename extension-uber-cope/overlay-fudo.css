@@ -249,3 +249,61 @@
   font-weight: 800;
   text-align: center;
 }
+
+#cope-fudo-hud.is-delivery {
+  border-color: #22c55e;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), 0 0 24px rgba(34, 197, 94, 0.45);
+}
+
+#cope-fudo-hud.is-takeaway {
+  border-color: #38bdf8;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), 0 0 24px rgba(56, 189, 248, 0.45);
+}
+
+.cope-fudo-alert-banner {
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-transform: uppercase;
+}
+
+.cope-fudo-alert-banner.delivery {
+  background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
+  color: #ffffff;
+  border: 1px solid #4ade80;
+}
+
+.cope-fudo-alert-banner.takeaway {
+  background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+  color: #ffffff;
+  border: 1px solid #7dd3fc;
+}
+
+.btn-fudo-uber {
+  background: #000000;
+  color: #4ade80;
+  border: 2px solid #22c55e;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 900;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-fudo-uber:hover {
+  background: #052e16;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(34, 197, 94, 0.35);
+}
+  text-align: center;
+}

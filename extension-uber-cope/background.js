@@ -8,6 +8,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       timestamp: Date.now()
     };
     chrome.storage.local.set({ activeCopeDispatch: dataWithTimestamp }, () => {
+      if (message.openTab) {
+        chrome.tabs.create({
+          url: message.url || 'https://m.uber.com/go/connect/home',
+          active: true
+        });
+      }
       sendResponse({ status: 'STORED', data: dataWithTimestamp });
     });
     return true;

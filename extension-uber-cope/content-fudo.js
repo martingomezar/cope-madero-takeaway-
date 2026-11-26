@@ -75,6 +75,7 @@
 
     const items = order.items || [];
     const isDelivery = order.orderType === 'delivery';
+    hud.className = isDelivery ? 'is-delivery' : 'is-takeaway';
 
     const itemsHtml = items.map((it) => {
       const variantText = it.variantTitle || (it.variant === 'doble' ? 'Doble' : (it.variant === 'simple' ? 'Simple' : ''));
@@ -107,11 +108,9 @@
       </div>
 
       <div class="cope-fudo-body">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span class="cope-fudo-tag ${isDelivery ? 'delivery' : 'takeaway'}">
-            ${isDelivery ? '🛵 Delivery en Moto' : '🛍️ Retiro en Local (Take Away)'}
-          </span>
-          <span style="font-size:12px; font-weight:800; color:#38bdf8;">#${escapeHtml(order.orderId || '')}</span>
+        <div class="cope-fudo-alert-banner ${isDelivery ? 'delivery' : 'takeaway'}">
+          <span>${isDelivery ? '🛵 NUEVO PEDIDO · DELIVERY' : '🛍️ NUEVO PEDIDO · TAKE AWAY'}</span>
+          <span>#${escapeHtml(order.orderId || '')}</span>
         </div>
 
         <div class="cope-fudo-field">
@@ -134,13 +133,19 @@
         </div>
 
         <div id="copeFudoStatus" class="cope-fudo-status">
-          <span>⏳</span>
-          <span id="copeFudoStatusText">Listo para cargar en Fudo.</span>
+          <span>🔔</span>
+          <span id="copeFudoStatusText">Pedido entrante. Tocá <b>Cargar Pedido</b> para cargarlo en Fudo.</span>
         </div>
 
         <button type="button" id="btnCopeFudoAutoLoad" class="btn-fudo-primary">
-          🚀 AUTO-CARGAR EN FUDO
+          🚀 CARGAR PEDIDO EN FUDO
         </button>
+
+        ${isDelivery ? `
+          <button type="button" id="btnCopeFudoUberMoto" class="btn-fudo-uber">
+            🛵 PEDIR MOTO EN UBER
+          </button>
+        ` : ''}
 
         <div class="cope-fudo-actions">
           <button type="button" id="btnCopeFudoCopySummary" class="btn-fudo-tool">
@@ -203,6 +208,40 @@
     hud.querySelector('#btnCopeFudoAutoLoad').addEventListener('click', () => {
       runFudoAutoLoad(order);
     });
+
+    const btnUberMoto = hud.querySelector('#btnCopeFudoUberMoto');
+    if (btnUberMoto) {
+      btnUberMoto.addEventListener('click', () => {
+        let fullDest = (order.destination || order.destinationAddress || '').trim();
+        if (fullDest && !fullDest.toLowerCase().includes('caba') && !fullDest.toLowerCase().includes('buenos aires')) {
+          fullDest += ', CABA, Argentina';
+        }
+        const cleanStreet = (order.destinationAddress || fullDest.replace(/\(.*?\)/g, '').replace(/, CABA, Argentina/i, '')).trim();
+        const uberPayload = {
+          orderId: order.orderId || '',
+          customerName: order.customerName || '',
+          customerPhone: order.customerPhone || '',
+          destination: fullDest,
+          cleanDestination: cleanStreet,
+          apartment: order.destinationApartment || ''
+        };
+        setFudoStatus('🛵 Abriendo Uber Envíos para pedir moto...');
+        try {
+          if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id && chrome.runtime.sendMessage) {
+            chrome.runtime.sendMessage({
+              type: 'COPE_PREPARE_UBER_DISPATCH',
+              payload: uberPayload,
+              openTab: true,
+              url: 'https://m.uber.com/go/connect/home'
+            });
+          } else {
+            window.open('https://m.uber.com/go/connect/home', '_blank', 'noopener,noreferrer');
+          }
+        } catch (err) {
+          window.open('https://m.uber.com/go/connect/home', '_blank', 'noopener,noreferrer');
+        }
+      });
+    }
 
     hud.querySelector('#btnCopeFudoCopySummary').addEventListener('click', () => {
       const summaryText = buildKitchenSummaryText(order);
