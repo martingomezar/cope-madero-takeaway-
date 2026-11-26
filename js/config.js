@@ -46,7 +46,7 @@ window.COPE_CONFIG = {
     },
     {
       id: 'transferencia',
-      label: 'Transferencia por Alias MP (Envío de comprobante)',
+      label: 'Transferencia por Alias MP (Verificación automática en Caja)',
       icon: '📱'
     },
     {
