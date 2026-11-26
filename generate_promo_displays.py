@@ -16,12 +16,15 @@ def get_font(path, size):
         return ImageFont.load_default()
 
 
-def remove_white_bg(img_path, thresh=14, clean_bottom_shadow=False):
+def remove_white_bg(img_path, thresh=14, clean_bottom_shadow=False, extra_seeds=None):
     """Elimina el fondo blanco de estudio desde las 4 esquinas usando floodfill nativo de Pillow."""
     img = Image.open(img_path).convert("RGBA")
     w, h = img.size
     sentinel = (255, 0, 255, 0)
-    for corner in [(0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1)]:
+    seeds = [(0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1)]
+    if extra_seeds:
+        seeds.extend(extra_seeds)
+    for corner in seeds:
         try:
             ImageDraw.floodfill(img, corner, sentinel, thresh=thresh)
         except Exception:
@@ -143,7 +146,9 @@ def build_cervezas_poster():
     fries_path = os.path.join(UPLOADED_DIR, "media_1795710884630_1819e0b5.jpg")
 
     canvas = Image.open(bg_path).convert("RGBA").resize((1920, 1080), Image.Resampling.LANCZOS)
-    beers = remove_white_bg(beers_path, thresh=8, clean_bottom_shadow=True)
+    beers_raw = Image.open(beers_path)
+    bw, bh = beers_raw.size
+    beers = remove_white_bg(beers_path, thresh=12, clean_bottom_shadow=True, extra_seeds=[(bw // 2, bh // 2), (bw // 2, int(bh * 0.7))])
     fries = remove_white_bg(fries_path, thresh=12, clean_bottom_shadow=True)
 
     # Posicionar las 2 cervezas reales y las Papas Cope reales sobre la barra de pizarra
