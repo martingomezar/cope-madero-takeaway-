@@ -925,7 +925,16 @@
   }
 
   function updateDeliveryMode() {
-    isDeliverySelected = Boolean(els.orderTypeDelivery && els.orderTypeDelivery.checked);
+    if (!CFG.ENABLE_DELIVERY) {
+      if (els.orderTypeTakeaway) els.orderTypeTakeaway.checked = true;
+      if (els.orderTypeDelivery) {
+        els.orderTypeDelivery.checked = false;
+        els.orderTypeDelivery.disabled = true;
+        const deliveryPill = els.orderTypeDelivery.closest('.time-radio-pill');
+        if (deliveryPill) deliveryPill.style.display = 'none';
+      }
+    }
+    isDeliverySelected = Boolean(CFG.ENABLE_DELIVERY && els.orderTypeDelivery && els.orderTypeDelivery.checked);
     if (els.deliveryFieldsWrapper) {
       els.deliveryFieldsWrapper.classList.toggle('hidden', !isDeliverySelected);
     }

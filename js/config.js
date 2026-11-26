@@ -10,7 +10,9 @@ window.COPE_CONFIG = {
   ADDRESS: 'Macacha Güemes 260',
   CITY: 'Puerto Madero, CABA',
   // Control de pedidos online (true = habilitado, false = solo carta digital / próximamente)
-  ENABLE_ORDERING: false,
+  ENABLE_ORDERING: true,
+  // Control de modalidad Delivery (true = Take Away + Delivery, false = solo Take Away)
+  ENABLE_DELIVERY: false,
 
   // Redes Sociales y Ubicación
   INSTAGRAM_URL: 'https://www.instagram.com/cope_burgers/',
