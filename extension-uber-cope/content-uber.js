@@ -3,7 +3,7 @@
 (function () {
   console.log('🍔 [Cope Delivery Agent] Inicializando en Uber...');
 
-  const STORE_ORIGIN_ADDRESS = 'Macacha Güemes 260, Puerto Madero';
+  const STORE_ORIGIN_ADDRESS = 'Cope Burgers Puerto Madero Cerveza y Hamburguesas, Macacha Güemes 260';
   let activeDispatchData = null;
 
   // Limpiar dirección para que el buscador de Uber (Places) no falle por notas de depto o piso
@@ -254,9 +254,9 @@
     // Paso 1: Rellenar Punto de Recogida / Remitente (Local Cope) solo si no está ya cargado
     if (els.pickupEl) {
       const val = (els.pickupEl.value || els.pickupEl.innerText || '').toLowerCase();
-      if (!val.includes('macacha')) {
-        setStatus('📍 Escribiendo remitente: <b>Macacha Güemes 260</b>...');
-        await fillUberLocationField(els.pickupEl, STORE_ORIGIN_ADDRESS, ['macacha', 'guemes', '260']);
+      if (!val.includes('macacha') && !val.includes('cope')) {
+        setStatus('📍 Escribiendo remitente: <b>Cope Burgers Puerto Madero</b>...');
+        await fillUberLocationField(els.pickupEl, STORE_ORIGIN_ADDRESS, ['cope', 'macacha', 'guemes', '260']);
         await sleep(700);
       }
     }
@@ -461,11 +461,13 @@
   // 8. AUTOCOMPLETADO (priorizando direcciones reales de CABA/Buenos Aires y evitando Favoritos)
   function selectFirstAutocompleteOption(requiredTokens) {
     const options = Array.from(document.querySelectorAll(
-      '[role="option"], ul[role="listbox"] > li, [data-testid*="location-item"], [data-tracking-name*="suggestion"], li[tabindex], [data-testid*="autocomplete"], div[role="listbox"] div[role="button"], ul li, div[role="button"], div[tabindex], button, a'
+      '[role="option"], [role="listbox"] > *, [data-baseweb="menu"] li, [data-baseweb="menu"] > *, ul[role="listbox"] > li, [data-testid*="location-item"], [data-tracking-name*="suggestion"], li[tabindex], [data-testid*="autocomplete"], ul li, div[role="button"], div[tabindex], button, a, div'
     )).filter(el => {
       if (el.closest('#cope-uber-hud') || el.closest('header') || el.closest('nav')) return false;
+      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') return false;
+      if (el.querySelectorAll('div, li').length > 6) return false;
       const r = el.getBoundingClientRect();
-      return r.width > 80 && r.left < window.innerWidth * 0.45 && r.top > 180 && r.height >= 32 && r.height <= 130;
+      return r.width > 120 && r.left < window.innerWidth * 0.45 && r.top > 200 && r.height >= 34 && r.height <= 125;
     });
 
     const validOptions = options.filter(el => {
@@ -480,6 +482,8 @@
         txt.includes('establece la ubicacion') ||
         txt.includes('establece la ubicación') ||
         txt.includes('busca en otra ciudad') ||
+        txt.includes('ver más resultados') ||
+        txt.includes('ver mas resultados') ||
         txt.includes('set location on map') ||
         txt.includes('saved places') ||
         txt.includes('lote 305')
@@ -505,13 +509,17 @@
           if (t.includes('puerto madero') || t.includes('buenos aires') || t.includes('argentina')) return 1;
           return 2;
         };
-        return score(a) - score(b);
+        const diff = score(a) - score(b);
+        if (diff !== 0) return diff;
+        // Preferir el contenedor de fila más específico (li / [role="option"] / menor cantidad de hijos)
+        const tagBonus = (el) => (el.matches('li, [role="option"], [role="button"], button, a') ? 0 : 10);
+        return tagBonus(a) - tagBonus(b);
       });
 
       const chosen = validOptions[0];
-      console.log('🍔 [Cope Delivery Agent] Seleccionando sugerencia de dirección:', chosen.innerText);
-      chosen.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
-      chosen.click();
+      const clickTarget = chosen.closest('li, [role="option"], [role="button"], button, a') || chosen;
+      console.log('🍔 [Cope Delivery Agent] Seleccionando sugerencia de dirección:', clickTarget.innerText);
+      triggerRealClick(clickTarget);
       return true;
     }
     return false;

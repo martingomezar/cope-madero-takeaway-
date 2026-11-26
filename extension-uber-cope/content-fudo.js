@@ -235,7 +235,7 @@
           addressLine1: 'Macacha Güemes 260',
           addressLine2: 'Puerto Madero, CABA',
           id: 'cope-burgers-puerto-madero',
-          name: 'Cope Burgers Puerto Madero',
+          name: 'Cope Burgers Puerto Madero Cerveza y Hamburguesas',
           latitude: -34.604912,
           longitude: -58.364747,
           provider: 'uber_places',
@@ -243,7 +243,7 @@
         };
         const uberUrl =
           'https://m.uber.com/go/connect/home?pickup=' + encodeURIComponent(JSON.stringify(pickupObj)) +
-          '&pickupAddressName=' + encodeURIComponent('Cope Burgers Puerto Madero') +
+          '&pickupAddressName=' + encodeURIComponent('Cope Burgers Puerto Madero Cerveza y Hamburguesas') +
           '&pickupLat=-34.604912&pickupLng=-58.364747';
 
         try {
