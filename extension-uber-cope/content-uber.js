@@ -370,11 +370,17 @@
   // 7. BUSCADOR INTELIGENTE DE ELEMENTOS DE UBICACIÓN
   function findLocationElements() {
     const allInputs = Array.from(document.querySelectorAll('input:not([type="hidden"])'))
-      .filter(i => !i.closest('#cope-uber-hud'));
+      .filter(i => !i.closest('#cope-uber-hud') && !i.closest('header') && !i.closest('nav') && i.offsetParent !== null);
+
+    // En m.uber.com/go/connect/home, los 2 inputs visibles del panel izquierdo son Remitente [0] y Destinatario [1]
+    const leftInputs = allInputs.filter(i => i.getBoundingClientRect().left < window.innerWidth * 0.45);
+    if (leftInputs.length >= 2) {
+      return { pickupEl: leftInputs[0], dropoffEl: leftInputs[1] };
+    }
 
     const allInteractives = Array.from(document.querySelectorAll(
       'input, button, [role="button"], [role="combobox"], [data-testid*="input"], [data-testid*="location"], div[tabindex]'
-    )).filter(el => !el.closest('#cope-uber-hud') && !el.closest('header') && !el.closest('nav'));
+    )).filter(el => !el.closest('#cope-uber-hud') && !el.closest('header') && !el.closest('nav') && el.offsetParent !== null);
 
     let pickupEl = null;
     let dropoffEl = null;
@@ -442,22 +448,27 @@
     return { pickupEl, dropoffEl };
   }
 
-  // 8. AUTOCOMPLETADO (ignorando Favoritos / Establece en mapa / Busca en otra ciudad)
+  // 8. AUTOCOMPLETADO (priorizando direcciones reales de CABA/Buenos Aires y evitando Favoritos)
   function selectFirstAutocompleteOption(requiredTokens) {
     const options = Array.from(document.querySelectorAll(
-      '[role="option"], ul[role="listbox"] > li, [data-testid*="location-item"], [data-tracking-name*="suggestion"], li[tabindex], [data-testid*="autocomplete"], div[role="listbox"] div[role="button"], ul li'
-    )).filter(el => !el.closest('#cope-uber-hud') && !el.closest('header') && !el.closest('nav') && el.offsetParent !== null);
+      '[role="option"], ul[role="listbox"] > li, [data-testid*="location-item"], [data-tracking-name*="suggestion"], li[tabindex], [data-testid*="autocomplete"], div[role="listbox"] div[role="button"], ul li, div[role="button"]'
+    )).filter(el => {
+      if (el.closest('#cope-uber-hud') || el.closest('header') || el.closest('nav') || el.offsetParent === null) return false;
+      const r = el.getBoundingClientRect();
+      return r.left < window.innerWidth * 0.45 && r.height >= 32 && r.height <= 130;
+    });
 
     const validOptions = options.filter(el => {
       const txt = (el.innerText || el.textContent || '').trim().toLowerCase();
-      if (!txt || txt.length > 180) return false;
+      if (!txt || txt.length > 200) return false;
       if (
         txt.includes('favorito') ||
         txt.includes('establece la ubicacion') ||
         txt.includes('establece la ubicación') ||
         txt.includes('busca en otra ciudad') ||
         txt.includes('set location on map') ||
-        txt.includes('saved places')
+        txt.includes('saved places') ||
+        txt.includes('lote 305')
       ) {
         return false;
       }
@@ -472,6 +483,17 @@
     });
 
     if (validOptions.length > 0) {
+      // Priorizar fuertemente resultados reales de Google Places (Ciudad Autónoma de Buenos Aires / CABA / Puerto Madero / Argentina)
+      validOptions.sort((a, b) => {
+        const score = (el) => {
+          const t = (el.innerText || el.textContent || '').toLowerCase();
+          if (t.includes('ciudad autónoma de buenos aires') || t.includes('ciudad autonoma de buenos aires') || t.includes('caba')) return 0;
+          if (t.includes('puerto madero') || t.includes('buenos aires') || t.includes('argentina')) return 1;
+          return 2;
+        };
+        return score(a) - score(b);
+      });
+
       console.log('🍔 [Cope Delivery Agent] Seleccionando sugerencia de dirección:', validOptions[0].innerText);
       triggerRealClick(validOptions[0]);
       return true;
