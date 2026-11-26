@@ -215,7 +215,7 @@
 
     const btnUberMoto = hud.querySelector('#btnCopeFudoUberMoto');
     if (btnUberMoto) {
-      btnUberMoto.addEventListener('click', () => {
+      btnUberMoto.addEventListener('click', async () => {
         let fullDest = (order.destination || order.destinationAddress || '').trim();
         if (fullDest && !fullDest.toLowerCase().includes('caba') && !fullDest.toLowerCase().includes('buenos aires')) {
           fullDest += ', CABA, Argentina';
@@ -229,20 +229,64 @@
           cleanDestination: cleanStreet,
           apartment: order.destinationApartment || ''
         };
-        setFudoStatus('🛵 Abriendo Uber Envíos para pedir moto...');
+        setFudoStatus('🛵 Geocodificando destino y abriendo Uber Envíos...');
+
+        let dropLat = -34.6080;
+        let dropLng = -58.3630;
+        try {
+          const cleanGeo = cleanStreet.replace(/\(.*?\)/g, '').replace(/piso.*?$/i, '').trim();
+          const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(cleanGeo + ', CABA, Argentina')}`, {
+            headers: { 'Accept': 'application/json' }
+          });
+          if (geoRes.ok) {
+            const list = await geoRes.json();
+            if (list && list.length > 0) {
+              dropLat = parseFloat(list[0].lat);
+              dropLng = parseFloat(list[0].lon);
+            }
+          }
+        } catch (e) {}
+
+        const pickupObj = {
+          addressLine1: 'Macacha Güemes 260',
+          addressLine2: 'Puerto Madero, CABA',
+          id: 'cope-burgers-puerto-madero',
+          name: 'Cope Burgers Puerto Madero',
+          latitude: -34.604912,
+          longitude: -58.364747,
+          provider: 'uber_places',
+          source: 'SEARCH'
+        };
+        const dropObj = {
+          addressLine1: cleanStreet || fullDest,
+          addressLine2: (order.destinationApartment ? order.destinationApartment + ', ' : '') + 'CABA, Argentina',
+          name: order.customerName || 'Cliente Cope',
+          latitude: dropLat,
+          longitude: dropLng,
+          provider: 'uber_places',
+          source: 'SEARCH'
+        };
+        const uberUrl =
+          'https://m.uber.com/go/connect/home?pickup=' + encodeURIComponent(JSON.stringify(pickupObj)) +
+          '&pickupAddressName=' + encodeURIComponent('Cope Burgers Puerto Madero') +
+          '&pickupLat=-34.604912&pickupLng=-58.364747' +
+          '&drop%5B0%5D=' + encodeURIComponent(JSON.stringify(dropObj)) +
+          '&destinationAddressName=' + encodeURIComponent(fullDest || cleanStreet) +
+          `&destinationLat=${dropLat}&destinationLng=${dropLng}`;
+
         try {
           if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id && chrome.runtime.sendMessage) {
             chrome.runtime.sendMessage({
               type: 'COPE_PREPARE_UBER_DISPATCH',
               payload: uberPayload,
               openTab: true,
-              url: 'https://m.uber.com/go/connect/home'
+              url: uberUrl
             });
           } else {
-            window.open('https://m.uber.com/go/connect/home', '_blank', 'noopener,noreferrer');
+            window.open(uberUrl, '_blank', 'noopener,noreferrer');
           }
         } catch (err) {
-          window.open('https://m.uber.com/go/connect/home', '_blank', 'noopener,noreferrer');
+          window.open(uberUrl, '_blank', 'noopener,noreferrer');
         }
       });
     }

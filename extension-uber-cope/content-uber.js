@@ -234,8 +234,18 @@
     }, true);
   }
 
-  // 5. FLUJO DE CARGA AUTOMATIZADO PRINCIPAL (Soporta SPA /connect/home -> /pickup -> /dropoff)
+  // 5. FLUJO DE CARGA AUTOMATIZADO PRINCIPAL (Soporta URL pre-cargada y SPA /connect/home)
   async function runAutomatedWorkflow(data) {
+    // Si la URL ya trajo pickup y drop[0] pre-cargados y Buscar está habilitado, ir directo a Buscar + Moto
+    if (window.location.search.includes('pickup=') && window.location.search.includes('drop')) {
+      await sleep(800);
+      if (clickSearchButton()) {
+        setStatus('🔍 Direcciones pre-cargadas. Solicitando tarifas...');
+        watchAndSelectMoto();
+        return;
+      }
+    }
+
     const cleanDest = cleanAddressForSearch(data.cleanDestination || data.destination);
     setStatus('📍 Localizando campos de dirección en Uber...');
 
@@ -451,17 +461,21 @@
   // 8. AUTOCOMPLETADO (priorizando direcciones reales de CABA/Buenos Aires y evitando Favoritos)
   function selectFirstAutocompleteOption(requiredTokens) {
     const options = Array.from(document.querySelectorAll(
-      '[role="option"], ul[role="listbox"] > li, [data-testid*="location-item"], [data-tracking-name*="suggestion"], li[tabindex], [data-testid*="autocomplete"], div[role="listbox"] div[role="button"], ul li, div[role="button"]'
+      '[role="option"], ul[role="listbox"] > li, [data-testid*="location-item"], [data-tracking-name*="suggestion"], li[tabindex], [data-testid*="autocomplete"], div[role="listbox"] div[role="button"], ul li, div[role="button"], div[tabindex], button, a'
     )).filter(el => {
-      if (el.closest('#cope-uber-hud') || el.closest('header') || el.closest('nav') || el.offsetParent === null) return false;
+      if (el.closest('#cope-uber-hud') || el.closest('header') || el.closest('nav')) return false;
       const r = el.getBoundingClientRect();
-      return r.left < window.innerWidth * 0.45 && r.height >= 32 && r.height <= 130;
+      return r.width > 80 && r.left < window.innerWidth * 0.45 && r.top > 180 && r.height >= 32 && r.height <= 130;
     });
 
     const validOptions = options.filter(el => {
       const txt = (el.innerText || el.textContent || '').trim().toLowerCase();
       if (!txt || txt.length > 200) return false;
       if (
+        txt === 'enviar' ||
+        txt === 'recibir' ||
+        txt === 'buscar' ||
+        txt.includes('elegir la ubicaci') ||
         txt.includes('favorito') ||
         txt.includes('establece la ubicacion') ||
         txt.includes('establece la ubicación') ||
@@ -494,8 +508,10 @@
         return score(a) - score(b);
       });
 
-      console.log('🍔 [Cope Delivery Agent] Seleccionando sugerencia de dirección:', validOptions[0].innerText);
-      triggerRealClick(validOptions[0]);
+      const chosen = validOptions[0];
+      console.log('🍔 [Cope Delivery Agent] Seleccionando sugerencia de dirección:', chosen.innerText);
+      chosen.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+      chosen.click();
       return true;
     }
     return false;
