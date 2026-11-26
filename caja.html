@@ -3176,33 +3176,31 @@
             },
             items: [
               {
-                id: 'cheeseburger',
-                name: 'Cheeseburger Clásica',
+                id: 'doble-cheese-burger',
+                name: 'Cheese Burger Doble',
                 quantity: 2,
-                unitPrice: 7750,
-                variantLabel: 'Doble carne vacuna + Cheddar',
+                unitPrice: 13000,
+                variantLabel: '2 Medallones (220g)',
                 isVeggie: false,
                 hasExtraMeat: true,
                 hasExtraCheddar: true,
                 hasExtraBacon: true,
-                drinkChoice: 'Coca Cola Sin Azúcar',
                 notes: 'Sin cebolla por favor'
               },
               {
-                id: 'not-burger',
-                name: 'NotBurger Veggie Cope',
+                id: 'simple-cheese-burger',
+                name: 'Cheese Burger Simple (NotBurger)',
                 quantity: 1,
-                unitPrice: 8200,
+                unitPrice: 9000,
                 variantLabel: 'Medallón NotCo Plant-Based',
                 isVeggie: true,
                 hasExtraMeat: false,
-                drinkChoice: 'Agua mineral',
                 notes: ''
               }
             ],
-            subtotal: 23700,
+            subtotal: 51000,
             delivery_fee: 1900,
-            total: 25600,
+            total: 52900,
             payment_method: 'Mercado Pago Online',
             payment_status: 'aprobado',
             kitchen_status: 'recibido',
@@ -3221,7 +3219,7 @@
           // También agregar a pagos MP
           const fakePayment = {
             id: 'PAY-' + Math.floor(Math.random() * 900000 + 100000),
-            amount: 25600,
+            amount: 52900,
             payer_name: 'Santiago Morales (Prueba Delivery)',
             payment_type: 'account_money',
             payment_method: 'Dinero en Cuenta MP',
