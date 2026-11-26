@@ -60,12 +60,12 @@ def main():
     # Fondo blanco estudio limpio 720x720 (matching original studio photos)
     canvas = Image.new("RGBA", (720, 720), (250, 250, 250, 255))
 
-    # 1 Papas Fritas atrás a la derecha
-    canvas = paste_with_studio_shadow(canvas, fries, x=415, y=145, target_h=365, shadow_alpha=42)
+    # 1 Papas Fritas atrás a la derecha (con logo COPE bien visible)
+    canvas = paste_with_studio_shadow(canvas, fries, x=435, y=135, target_h=345, shadow_alpha=42)
     # Burger 1 (atrás-izquierda)
-    canvas = paste_with_studio_shadow(canvas, burger, x=55, y=245, target_h=245, shadow_alpha=50)
-    # Burger 2 (adelante-centro)
-    canvas = paste_with_studio_shadow(canvas, burger, x=210, y=310, target_h=265, shadow_alpha=60)
+    canvas = paste_with_studio_shadow(canvas, burger, x=35, y=250, target_h=225, shadow_alpha=50)
+    # Burger 2 (adelante-centro-izquierda sin tapar el logo COPE)
+    canvas = paste_with_studio_shadow(canvas, burger, x=155, y=335, target_h=245, shadow_alpha=60)
 
     final = canvas.convert("RGB")
     out_repo = os.path.join(BASE_DIR, "promo-2-cheeseburgers-papas-720x720.jpg")
