@@ -16,7 +16,7 @@ def get_font(path, size):
         return ImageFont.load_default()
 
 
-def remove_white_bg(img_path, thresh=26):
+def remove_white_bg(img_path, thresh=14, clean_bottom_shadow=False):
     """Elimina el fondo blanco de estudio desde las 4 esquinas usando floodfill nativo de Pillow."""
     img = Image.open(img_path).convert("RGBA")
     w, h = img.size
@@ -27,14 +27,21 @@ def remove_white_bg(img_path, thresh=26):
         except Exception:
             pass
 
-    # Extraer canal alfa donde sentinel quedó con alpha=0
+    if clean_bottom_shadow:
+        # Limpiar islas de sombra gris clara debajo del producto (parte inferior)
+        px = img.load()
+        y_start = int(h * 0.72)
+        for y in range(y_start, h):
+            for x in range(w):
+                r, g, b, a = px[x, y]
+                if a > 0 and r > 215 and g > 215 and b > 215 and (max(r, g, b) - min(r, g, b)) < 16:
+                    px[x, y] = (0, 0, 0, 0)
+
     r, g, b, a = img.split()
-    # Suavizar borde 1px para eliminar halo blanco
     a = a.filter(ImageFilter.MinFilter(3))
-    a = a.filter(ImageFilter.GaussianBlur(1.0))
+    a = a.filter(ImageFilter.GaussianBlur(1.2))
     clean = Image.merge("RGBA", (r, g, b, a))
 
-    # Recortar al bounding box del objeto real
     bbox = clean.getbbox()
     if bbox:
         clean = clean.crop(bbox)
@@ -113,8 +120,8 @@ def build_cheeseburger_poster():
     fries_path = os.path.join(UPLOADED_DIR, "media_1795710884630_1819e0b5.jpg")
 
     canvas = Image.open(bg_path).convert("RGBA").resize((1920, 1080), Image.Resampling.LANCZOS)
-    burger = remove_white_bg(burger_path, thresh=26)
-    fries = remove_white_bg(fries_path, thresh=24)
+    burger = remove_white_bg(burger_path, thresh=14, clean_bottom_shadow=True)
+    fries = remove_white_bg(fries_path, thresh=12, clean_bottom_shadow=True)
 
     # Posicionar Papas Cope reales atrás a la derecha y Cheeseburger real adelante
     canvas = paste_with_contact_shadow(canvas, fries, x=1380, y=245, target_h=500, shadow_strength=175)
@@ -136,8 +143,8 @@ def build_cervezas_poster():
     fries_path = os.path.join(UPLOADED_DIR, "media_1795710884630_1819e0b5.jpg")
 
     canvas = Image.open(bg_path).convert("RGBA").resize((1920, 1080), Image.Resampling.LANCZOS)
-    beers = remove_white_bg(beers_path, thresh=26)
-    fries = remove_white_bg(fries_path, thresh=24)
+    beers = remove_white_bg(beers_path, thresh=8, clean_bottom_shadow=True)
+    fries = remove_white_bg(fries_path, thresh=12, clean_bottom_shadow=True)
 
     # Posicionar las 2 cervezas reales y las Papas Cope reales sobre la barra de pizarra
     canvas = paste_with_contact_shadow(canvas, beers, x=940, y=190, target_h=515, shadow_strength=185)
