@@ -108,9 +108,37 @@ def build_3_simples_combo():
     save_all(canvas, "combo-3-simples-papas-bebida-720x720.jpg")
 
 
+def build_4_cheese_2_papas_4_bebidas():
+    cheese = remove_white_bg(os.path.join(IMG_DIR, "cheeseburger.jpeg"), thresh=14)
+    fries = remove_white_bg(os.path.join(IMG_DIR, "papas-fritas.jpeg"), thresh=12)
+    pepsi = remove_white_bg(os.path.join(IMG_DIR, "pepsi-lata.jpg"), thresh=16)
+    sevenup = remove_white_bg(os.path.join(IMG_DIR, "7up.webp"), thresh=16)
+
+    canvas = Image.new("RGBA", (720, 720), (250, 250, 250, 255))
+    # Fila trasera: 4 latas (2 izq, 2 der) + 2 Papas Cope al centro
+    canvas = paste_with_studio_shadow(canvas, pepsi, x=22, y=105, target_h=225, shadow_alpha=36)
+    canvas = paste_with_studio_shadow(canvas, sevenup, x=92, y=115, target_h=225, shadow_alpha=36)
+    canvas = paste_with_studio_shadow(canvas, sevenup, x=520, y=115, target_h=225, shadow_alpha=36)
+    canvas = paste_with_studio_shadow(canvas, pepsi, x=590, y=105, target_h=225, shadow_alpha=36)
+
+    canvas = paste_with_studio_shadow(canvas, fries, x=175, y=95, target_h=265, shadow_alpha=42)
+    canvas = paste_with_studio_shadow(canvas, fries, x=375, y=95, target_h=265, shadow_alpha=42)
+
+    # Fila media: 2 Cheese Simple
+    canvas = paste_with_studio_shadow(canvas, cheese, x=28, y=265, target_h=185, shadow_alpha=50)
+    canvas = paste_with_studio_shadow(canvas, cheese, x=440, y=265, target_h=185, shadow_alpha=50)
+
+    # Fila delantera: 2 Cheese Simple
+    canvas = paste_with_studio_shadow(canvas, cheese, x=130, y=390, target_h=200, shadow_alpha=62)
+    canvas = paste_with_studio_shadow(canvas, cheese, x=350, y=390, target_h=200, shadow_alpha=62)
+
+    save_all(canvas, "combo-4-cheese-2-papas-4-bebidas-720x720.jpg")
+
+
 if __name__ == "__main__":
     build_single_combo("cheeseburger-doble.jpeg", "pepsi-lata.jpg", "combo-cheeseburger-doble-papas-bebida-720x720.jpg")
     build_single_combo("cheesebacon-doble.jpeg", "7up.webp", "combo-cheesebacon-doble-papas-bebida-720x720.jpg")
     build_single_combo("grancope-doble.jpeg", "pepsi-lata.jpg", "combo-grancope-doble-papas-bebida-720x720.jpg")
     build_2_simples_papas()
     build_3_simples_combo()
+    build_4_cheese_2_papas_4_bebidas()
