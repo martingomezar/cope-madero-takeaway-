@@ -9,6 +9,10 @@ ARTIFACTS_DIR = r"C:\Users\magak\.gemini\antigravity\brain\cc8295bc-ccc8-461c-87
 def remove_white_bg(img_path, thresh=14, clean_bottom=True):
     img = Image.open(img_path).convert("RGBA")
     w, h = img.size
+    # Recortar 8px de borde por si la foto original tiene marco lateral (ej. 7up.webp)
+    if w > 40 and h > 40:
+        img = img.crop((8, 8, w - 8, h - 8))
+        w, h = img.size
     sentinel = (255, 0, 255, 0)
     for corner in [(0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1)]:
         try:
